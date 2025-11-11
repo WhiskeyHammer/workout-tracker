@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workout Tracker - Cloud Edition</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <!-- MODULAR ARCHITECTURE - All components loaded from separate files -->
+    
+    <!-- 1. Configuration & Utilities -->
+    <script type="text/babel" src="./js/config/api.js"></script>
+    <script type="text/babel" src="./js/utils/workoutHelpers.js"></script>
+    
+    <!-- 2. Icon Components -->
+    <script type="text/babel" src="./js/components/icons/AuthIcons.jsx"></script>
+    <script type="text/babel" src="./js/components/icons/TrackerIcons.jsx"></script>
+    
+    <!-- 3. Feature Components -->
+    <script type="text/babel" src="./js/components/Auth/AuthScreen.jsx"></script>
+    <script type="text/babel" src="./js/components/Library/WorkoutLibrary.jsx"></script>
+    <script type="text/babel" src="./js/components/Tracker/WorkoutTracker.jsx"></script>
+    <script type="text/babel" src="./js/components/Tracker/WorkoutTrackerWithCloud.jsx"></script>
+    
+    <!-- 4. Main Application -->
+    <script type="text/babel" src="./js/App.jsx"></script>
+    
+    <!-- 5. Initialize Application -->
+    <script type="text/babel">
+        const { useState } = React;
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
