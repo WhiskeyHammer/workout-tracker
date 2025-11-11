@@ -625,7 +625,7 @@ function WorkoutTracker({
             </div>
             <input
               type="file"
-              className="hidden"
+              className="hidden zz_btn_upload_workout_file"
               accept=".csv,.json"
               onChange={handleFileUpload}
             />
@@ -633,7 +633,7 @@ function WorkoutTracker({
           <div className="mt-4">
             <button
               onClick={() => openAddExerciseDialog(null)}
-              className={`w-full py-4 border-2 border-dashed rounded-lg transition-colors flex items-center justify-center gap-3 ${darkMode ? "border-green-700 bg-gray-800 hover:bg-gray-750 text-green-400" : "border-green-400 bg-green-50 hover:bg-green-100 text-green-600"}`}
+              className={`zz_btn_create_workout_manual w-full py-4 border-2 border-dashed rounded-lg transition-colors flex items-center justify-center gap-3 ${darkMode ? "border-green-700 bg-gray-800 hover:bg-gray-750 text-green-400" : "border-green-400 bg-green-50 hover:bg-green-100 text-green-600"}`}
             >
               <Plus className="w-6 h-6" />
               <div className="text-left">
@@ -665,7 +665,7 @@ function WorkoutTracker({
                   }}
                   className={
                     editMode
-                      ? `text-xl font-bold mb-3 pl-1 hover:text-blue-600 transition-colors ${darkMode ? "text-gray-100" : "text-gray-800"}`
+                      ? `zz_editable_exercise_name text-xl font-bold mb-3 pl-1 hover:text-blue-600 transition-colors ${darkMode ? "text-gray-100" : "text-gray-800"}`
                       : `text-xl font-bold mb-3 pl-1 transition-colors ${darkMode ? "text-gray-100" : "text-gray-800"}`
                   }
                 >
@@ -709,7 +709,7 @@ function WorkoutTracker({
                                     cursor: "pointer",
                                     userSelect: "none",
                                   }}
-                                  className={`text-sm hover:text-blue-500 hover:underline transition-colors ${darkMode ? "text-gray-100" : "text-gray-900"}`}
+                                  className={`zz_editable_reps text-sm hover:text-blue-500 hover:underline transition-colors ${darkMode ? "text-gray-100" : "text-gray-900"}`}
                                 >
                                   {e.reps}
                                 </span>
@@ -730,7 +730,7 @@ function WorkoutTracker({
                                     cursor: "pointer",
                                     userSelect: "none",
                                   }}
-                                  className={`text-sm font-semibold hover:text-blue-500 hover:underline transition-colors ${darkMode ? "text-gray-100" : "text-gray-900"}`}
+                                  className={`zz_editable_weight text-sm font-semibold hover:text-blue-500 hover:underline transition-colors ${darkMode ? "text-gray-100" : "text-gray-900"}`}
                                 >
                                   {e.weight}
                                 </span>
@@ -756,7 +756,7 @@ function WorkoutTracker({
                                   }}
                                   className={
                                     editMode
-                                      ? `text-sm hover:text-blue-500 hover:underline transition-colors ${darkMode ? "text-gray-100" : "text-gray-900"}`
+                                      ? `zz_editable_rest text-sm hover:text-blue-500 hover:underline transition-colors ${darkMode ? "text-gray-100" : "text-gray-900"}`
                                       : `text-sm transition-colors ${darkMode ? "text-gray-100" : "text-gray-900"}`
                                   }
                                 >
@@ -783,7 +783,7 @@ function WorkoutTracker({
                                     cursor: "pointer",
                                     userSelect: "none",
                                   }}
-                                  className={`text-sm font-medium hover:text-blue-500 hover:underline transition-colors ${darkMode ? "text-blue-400" : "text-blue-600"}`}
+                                  className={`zz_editable_group text-sm font-medium hover:text-blue-500 hover:underline transition-colors ${darkMode ? "text-blue-400" : "text-blue-600"}`}
                                 >
                                   {e["weight group"] || "None"}
                                 </span>
@@ -805,7 +805,7 @@ function WorkoutTracker({
                                 }}
                                 className={
                                   editMode
-                                    ? `text-sm italic hover:text-blue-500 transition-colors ${darkMode ? "text-gray-400" : "text-gray-600"}`
+                                    ? `zz_editable_set_notes text-sm italic hover:text-blue-500 transition-colors ${darkMode ? "text-gray-400" : "text-gray-600"}`
                                     : `text-sm italic transition-colors ${darkMode ? "text-gray-400" : "text-gray-600"}`
                                 }
                               >
@@ -824,7 +824,7 @@ function WorkoutTracker({
                           {!e.completed && editMode && (
                             <button
                               onClick={() => openDeleteDialog(e.id)}
-                              className="text-gray-400 hover:text-red-500 transition-colors p-2"
+                              className="zz_btn_delete_set text-gray-400 hover:text-red-500 transition-colors p-2"
                               title="Delete exercise"
                             >
                               <Trash className="w-5 h-5" />
@@ -833,7 +833,7 @@ function WorkoutTracker({
                           <button
                             onClick={() => toggleComplete(e.id)}
                             disabled={s}
-                            className={`flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center transition-colors ${e.completed ? (o ? "bg-green-600 text-white cursor-not-allowed" : "bg-green-500 text-white") : s ? "bg-gray-300 text-gray-400 cursor-not-allowed" : "bg-gray-200 text-gray-400 hover:bg-gray-300"}`}
+                            className={`zz_btn_toggle_set_complete flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center transition-colors ${e.completed ? (o ? "bg-green-600 text-white cursor-not-allowed" : "bg-green-500 text-white") : s ? "bg-gray-300 text-gray-400 cursor-not-allowed" : "bg-gray-200 text-gray-400 hover:bg-gray-300"}`}
                           >
                             <Check className="w-8 h-8" />
                           </button>
@@ -843,7 +843,7 @@ function WorkoutTracker({
                     {editMode && isLastSet && (
                       <button
                         onClick={() => addSetToExercise(exerciseName)}
-                        className={`w-full mt-2 py-2 border-2 border-dashed rounded-lg transition-colors flex items-center justify-center gap-2 ${darkMode ? "border-gray-600 text-gray-400 hover:border-green-500 hover:text-green-400" : "border-gray-300 text-gray-500 hover:border-green-400 hover:text-green-600"}`}
+                        className={`zz_btn_add_set w-full mt-2 py-2 border-2 border-dashed rounded-lg transition-colors flex items-center justify-center gap-2 ${darkMode ? "border-gray-600 text-gray-400 hover:border-green-500 hover:text-green-400" : "border-gray-300 text-gray-500 hover:border-green-400 hover:text-green-600"}`}
                       >
                         <Plus className="w-4 h-4" />
                         <span className="text-sm font-medium">Add Set</span>
@@ -866,7 +866,7 @@ function WorkoutTracker({
                         onClick={() =>
                           updateExerciseNote(exerciseName, importedExerciseNotes[exerciseName])
                         }
-                        className={`text-xs px-2 py-1 rounded transition-colors ${darkMode ? "bg-gray-700 text-blue-400 hover:bg-gray-600" : "bg-blue-100 text-blue-600 hover:bg-blue-200"}`}
+                        className={`zz_btn_copy_previous_notes text-xs px-2 py-1 rounded transition-colors ${darkMode ? "bg-gray-700 text-blue-400 hover:bg-gray-600" : "bg-blue-100 text-blue-600 hover:bg-blue-200"}`}
                       >
                         Copy from previous
                       </button>
@@ -876,7 +876,7 @@ function WorkoutTracker({
                     value={exerciseNotes[exerciseName] || ""}
                     onChange={(t) => updateExerciseNote(exerciseName, t.target.value)}
                     placeholder="Add notes about this exercise..."
-                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-colors ${darkMode ? "bg-gray-600 border-gray-500 text-gray-100 placeholder-gray-400" : "bg-white border-gray-300 text-gray-900"}`}
+                    className={`zz_textarea_exercise_notes w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-colors ${darkMode ? "bg-gray-600 border-gray-500 text-gray-100 placeholder-gray-400" : "bg-white border-gray-300 text-gray-900"}`}
                     rows="3"
                   />
                 </div>
@@ -885,14 +885,14 @@ function WorkoutTracker({
                   (exercisesWithWeightSet.has(exerciseName) ? (
                     <button
                       onClick={() => openWeightGroupModal(exerciseName, t)}
-                      className={`w-full mt-3 py-3 rounded-lg font-medium transition-colors ${darkMode ? "bg-green-900/40 text-green-300 hover:bg-green-900/60" : "bg-green-100 text-green-700 hover:bg-green-200"}`}
+                      className={`zz_btn_exercise_complete w-full mt-3 py-3 rounded-lg font-medium transition-colors ${darkMode ? "bg-green-900/40 text-green-300 hover:bg-green-900/60" : "bg-green-100 text-green-700 hover:bg-green-200"}`}
                     >
                       Exercise Complete
                     </button>
                   ) : (
                     <button
                       onClick={() => openWeightGroupModal(exerciseName, t)}
-                      className={`w-full mt-3 py-3 text-white rounded-lg font-medium transition-colors ${darkMode ? "bg-green-700 hover:bg-green-600" : "bg-green-600 hover:bg-green-700"}`}
+                      className={`zz_btn_set_next_weight w-full mt-3 py-3 text-white rounded-lg font-medium transition-colors ${darkMode ? "bg-green-700 hover:bg-green-600" : "bg-green-600 hover:bg-green-700"}`}
                     >
                       Set Weight For Next Lift
                     </button>
@@ -901,7 +901,7 @@ function WorkoutTracker({
               {r < Object.entries(groupedExercises).length - 1 && editMode && (
                 <button
                   onClick={() => openAddExerciseDialog(exerciseName)}
-                  className={`w-full py-2 border-2 border-dashed rounded-lg transition-colors flex items-center justify-center gap-2 ${darkMode ? "border-gray-600 text-gray-500 hover:border-blue-500 hover:text-blue-400" : "border-gray-300 text-gray-400 hover:border-blue-400 hover:text-blue-500"}`}
+                  className={`zz_btn_add_exercise_between w-full py-2 border-2 border-dashed rounded-lg transition-colors flex items-center justify-center gap-2 ${darkMode ? "border-gray-600 text-gray-500 hover:border-blue-500 hover:text-blue-400" : "border-gray-300 text-gray-400 hover:border-blue-400 hover:text-blue-500"}`}
                 >
                   <Plus className="w-5 h-5" />
                   <span className="text-sm font-medium">Add Exercise</span>
@@ -912,7 +912,7 @@ function WorkoutTracker({
           {editMode && (
             <button
               onClick={() => openAddExerciseDialog(null)}
-              className={`w-full py-2 border-2 border-dashed rounded-lg transition-colors flex items-center justify-center gap-2 ${darkMode ? "border-gray-600 text-gray-500 hover:border-blue-500 hover:text-blue-400" : "border-gray-300 text-gray-400 hover:border-blue-400 hover:text-blue-500"}`}
+              className={`zz_btn_add_exercise_end w-full py-2 border-2 border-dashed rounded-lg transition-colors flex items-center justify-center gap-2 ${darkMode ? "border-gray-600 text-gray-500 hover:border-blue-500 hover:text-blue-400" : "border-gray-300 text-gray-400 hover:border-blue-400 hover:text-blue-500"}`}
             >
               <Plus className="w-5 h-5" />
               <span className="text-sm font-medium">Add Exercise</span>
@@ -920,7 +920,7 @@ function WorkoutTracker({
           )}
           <button
             onClick={() => setShowCompleteDialog(true)}
-            className={`w-full mt-6 py-3 rounded-lg font-medium transition-colors ${darkMode ? "bg-green-700 text-white hover:bg-green-600" : "bg-green-600 text-white hover:bg-green-700"}`}
+            className={`zz_btn_complete_workout w-full mt-6 py-3 rounded-lg font-medium transition-colors ${darkMode ? "bg-green-700 text-white hover:bg-green-600" : "bg-green-600 text-white hover:bg-green-700"}`}
           >
             Complete Workout
           </button>
@@ -966,7 +966,7 @@ function WorkoutTracker({
               </div>
               <button
                 onClick={handleSkipRestClick}
-                className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                className="zz_btn_skip_rest w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
               >
                 Skip Rest
               </button>
@@ -986,13 +986,13 @@ function WorkoutTracker({
             <div className="flex gap-3">
               <button
                 onClick={cancelUncomplete}
-                className={`flex-1 py-3 rounded-lg font-medium transition-colors ${darkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                className={`zz_btn_cancel_uncomplete flex-1 py-3 rounded-lg font-medium transition-colors ${darkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
               >
                 Cancel
               </button>
               <button
                 onClick={confirmUncomplete}
-                className="flex-1 py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+                className="zz_btn_confirm_uncomplete flex-1 py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
               >
                 Uncomplete
               </button>
@@ -1012,13 +1012,13 @@ function WorkoutTracker({
             <div className="flex gap-3">
               <button
                 onClick={cancelSkipRest}
-                className={`flex-1 py-3 rounded-lg font-medium transition-colors ${darkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                className={`zz_btn_cancel_skip_rest flex-1 py-3 rounded-lg font-medium transition-colors ${darkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
               >
                 Cancel
               </button>
               <button
                 onClick={confirmSkipRest}
-                className="flex-1 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                className="zz_btn_confirm_skip_rest flex-1 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
               >
                 Skip
               </button>
@@ -1072,13 +1072,13 @@ function WorkoutTracker({
             <div className="flex gap-3">
               <button
                 onClick={closeEditDialog}
-                className={`flex-1 py-3 rounded-lg font-medium transition-colors ${darkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                className={`zz_btn_cancel_edit flex-1 py-3 rounded-lg font-medium transition-colors ${darkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
               >
                 Cancel
               </button>
               <button
                 onClick={saveEdit}
-                className="flex-1 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                className="zz_btn_save_edit flex-1 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
               >
                 Save
               </button>
@@ -1109,14 +1109,14 @@ function WorkoutTracker({
             <div className="flex gap-3">
               <button
                 onClick={closeEditExerciseName}
-                className={`flex-1 py-3 rounded-lg font-medium transition-colors ${darkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                className={`zz_btn_cancel_edit_name flex-1 py-3 rounded-lg font-medium transition-colors ${darkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
               >
                 Cancel
               </button>
               <button
                 onClick={saveExerciseName}
                 disabled={!editingExerciseName.newName.trim()}
-                className={`flex-1 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:cursor-not-allowed ${darkMode ? 'disabled:bg-gray-600' : 'disabled:bg-gray-300'}`}
+                className={`zz_btn_save_exercise_name flex-1 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:cursor-not-allowed ${darkMode ? 'disabled:bg-gray-600' : 'disabled:bg-gray-300'}`}
               >
                 Save
               </button>
@@ -1137,13 +1137,13 @@ function WorkoutTracker({
             <div className="flex gap-3">
               <button
                 onClick={cancelDelete}
-                className={`flex-1 py-3 rounded-lg font-medium transition-colors ${darkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                className={`zz_btn_cancel_delete flex-1 py-3 rounded-lg font-medium transition-colors ${darkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDelete}
-                className="flex-1 py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+                className="zz_btn_confirm_delete flex-1 py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
               >
                 Delete
               </button>

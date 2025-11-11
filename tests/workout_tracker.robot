@@ -4,7 +4,7 @@ Documentation    Comprehensive test suite for Workout Tracker - Edit State page
 Library          SeleniumLibrary
 Resource         workout_tracker.resource
 Suite Setup      Open Workout Tracker
-Suite Teardown   Close Browser
+Suite Teardown    Delete all workouts
 Test Setup       Reload Page
 
 

@@ -3,7 +3,7 @@ Resource         import_page.resource
 Resource         workout_tracker.resource
 Library          SeleniumLibrary
 Suite Setup      Open Browser And Login
-Suite Teardown   Close Browser
+Suite Teardown    Delete all workouts
 
 *** Test Cases ***
 Create a workout using csv
@@ -25,20 +25,39 @@ Create a manual workout
     Should Be Equal    '${set_count}'    '2'
     Click Element    ${EDIT_WORKOUT_BTN}  
     Sleep    1s   
-    # Add verification here
+    Element Text Should Be    ${SET1_REPS_VALUE}    0
+    Element Text Should Be    ${SET1_WEIGHT_VALUE}    0
+    Element Text Should Be    ${SET1_REST_VALUE}    0
+    Element Text Should Be    ${SET1_GROUP_VALUE}    Pullups
+    Element Text Should Be    ${SET1_NOTES_TEXT}    Click to add notes...
+    Element Text Should Be    ${SET2_REPS_VALUE}    0
+    Element Text Should Be    ${SET2_WEIGHT_VALUE}    0
+    Element Text Should Be    ${SET2_REST_VALUE}    0
+    Element Text Should Be    ${SET2_GROUP_VALUE}    Pullups
+    Element Text Should Be    ${SET2_NOTES_TEXT}    Click to add notes...
+    Element Text Should Be    ${EXERCISE_NOTES_TEXTAREA}    ${EMPTY}
+    [Teardown]   Click Element   ${BACK_BTN}
+    # Approved
 
 Cancel the creation of a manual import
-    Go to import page
+    ${exists} =     Run Keyword And Return Status    Element should be visible    ${CREATE_NEW_BTN}
+    IF    ${exists}
+        Go to import page
+    END
     Click Element   ${MANUAL_IMPORT_BTN}
     Wait Until Element Is Visible    ${EXERCISE_NAME_INPUT}
     Input Text    ${EXERCISE_NAME_INPUT}    Pullups
     Input Text    ${EXERCISE_SETS_INPUT}    2
     Sleep    1s
+    Click Element    ${CANCEL_BTN}
     Element Should Be Visible    ${MANUAL_IMPORT_BTN}
     # Approved
 
 The back button takes you back to the library page
-    Go to import page
+    ${exists} =     Run Keyword And Return Status    Element should be visible    ${CREATE_NEW_BTN}
+    IF    ${exists}
+        Go to import page
+    END    
     Click Element    ${BACK_BTN}
     Wait Until Element Is Not Visible    ${MANUAL_IMPORT_BTN}
     # Approved

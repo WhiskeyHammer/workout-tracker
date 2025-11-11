@@ -1,8 +1,9 @@
 *** Settings ***
 Resource          common.resource
 Resource          workout_library.resource
+Resource          import_page.resource
 Suite Setup       Open Browser And Login
-Suite Teardown    Close Browser
+Suite Teardown    Delete all workouts
 Test Setup        Go To Library Page
 
 *** Test Cases ***
@@ -12,6 +13,10 @@ Test Setup        Go To Library Page
 
 Test 1 - Verify Page Loads With All Main Buttons
     [Documentation]    Verify that the workout library page loads with all main buttons visible
+    Open New Workout Modal
+    Input Text    ${NEW_MODAL_INPUT}    Test Workout
+    Click Element    ${NEW_MODAL_CONTINUE}
+    Click Element    ${BACK_BTN}
     Wait Until Page Contains Element    ${DARKMODE_BTN}    5s
     Wait Until Page Contains Element    ${LOGOUT_BTN}    5s
     Wait Until Page Contains Element    ${CREATE_NEW_BTN}    5s
@@ -79,10 +84,11 @@ Test 7 - New Workout Modal Continue Button Enabled With Input
     Close New Workout Modal
     # Approved
 
-Test 8 - Create a new workout using a CSV
+Test 8 - Create a new workout
     Open New Workout Modal
     Input Text    ${NEW_MODAL_INPUT}    Test Workout
     Click Element    ${NEW_MODAL_CONTINUE}
+    Click Element    ${BACK_BTN}
     
 # ============================================
 # EDIT MODE TESTS

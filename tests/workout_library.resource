@@ -62,3 +62,31 @@ Open Edit Name Mode For First Workout
     Click Element    ${workout_names}[0]
     Sleep    1s
     Wait Until Page Contains Element    ${EDIT_NAME_INPUT}    5s
+
+
+Delete all workouts
+    [Documentation]    Deletes all workouts from the library page
+    Go To Library Page
+    Enter Edit Mode
+    
+    # Loop until no more workout cards exist
+    FOR    ${i}    IN RANGE    100
+        ${workout_count}=    Get Element Count    ${WORKOUT_CARDS}
+        Exit For Loop If    ${workout_count} == 0
+        
+        # Click the first delete button
+        Click Element    xpath=(${DELETE_BUTTON})[1]
+        Wait Until Page Contains Element    ${DELETE_MODAL}    5s
+        
+        # Confirm deletion
+        @{delete_modal_confirm_btns}=    Get WebElements    ${DELETE_MODAL_DELETE}
+        FOR    ${delete_modal_confirm_btn}    IN    @{delete_modal_confirm_btns}
+            Run Keyword And Ignore Error    Click Element    ${delete_modal_confirm_btn}
+        END
+        Sleep    1s
+        
+        # Wait for modal to close
+        Wait Until Page Does Not Contain Element    ${DELETE_MODAL}    5s
+    END
+    
+    Close Browser
