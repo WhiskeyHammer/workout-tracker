@@ -66,11 +66,13 @@ ${SAVE_BTN}                 //button[contains(text(),'Add')]
 # =============================================================================
 
 # Exercise Title
-${EXERCISE_TITLE_PULLUPS}   //h2[contains(@class, "text-xl") and text()="Pullups"]
+${EXERCISE_TITLE_PULLUPS}   //h2[contains(@class, "zz_editable_exercise_name")]
 
-# Common Set Features
+# Common Features
 ${SET_ROWS}                 //div[./div/button[contains(@class,'rounded-full')]]
 ${ADD_SET}                  //button[contains(@class, 'zz_btn_add_set')]
+${SAVE_WORKOUT_EDIT}        //button[contains(@class,'zz_btn_save')]
+${INPUT_EDIT_WORKOUT}       //input[contains(@class,'zz_input')]
 
 # Set 1 (Active/Highlighted Set)
 ${SET1_REPS_VALUE}          (//span[contains(@class, "zz_editable_reps")])[1]
@@ -78,6 +80,7 @@ ${SET1_WEIGHT_VALUE}        (//span[contains(@class, "zz_editable_weight")])[1]
 ${SET1_REST_VALUE}          (//span[contains(@class, "zz_editable_rest")])[1]
 ${SET1_GROUP_VALUE}         (//span[contains(@class, "zz_editable_group")])[1]
 ${SET1_NOTES_TEXT}          (//p[contains(@class, "zz_editable_set_notes")])[1]
+${SET1_NOTES_TEXT_INPUT}    //textarea[contains(@class, "zz_input_edit_notes")]
 ${SET1_DELETE_BUTTON}       (//button[contains(@class, "zz_btn_delete_set")])[1]
 ${SET1_COMPLETE_BUTTON}     (//button[contains(@class, "zz_btn_toggle_set_complete") and not(@disabled)])[1]
 
@@ -97,7 +100,7 @@ ${ADD_EXERCISE_BUTTON}      //button[contains(@class, "zz_btn_add_exercise_betwe
 
 # Workout Actions
 ${COMPLETE_WORKOUT_BUTTON}  //button[contains(@class, "zz_btn_complete_workout")]
-${EDIT_WORKOUT_BTN}         //button[./span and not(contains(@class,'zz'))]
+${EDIT_WORKOUT_BTN}         //button[contains(@class,'zz_btn_edit_mode')]
 
 # Bottom Bar
 ${THEME_TOGGLE_BUTTON}      //div[contains(@class, "fixed") and contains(@class, "bottom-0")]//button[contains(@class, "inline-flex") and .//circle[@cx="12"]]

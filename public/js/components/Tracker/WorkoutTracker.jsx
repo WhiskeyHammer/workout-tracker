@@ -1014,7 +1014,7 @@ function WorkoutTracker({
       {editingField && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-30 p-4">
           <div className={`rounded-2xl p-6 max-w-sm w-full shadow-2xl transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-            <h2 className={`text-xl font-bold mb-4 transition-colors ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+            <h2 className={`zz_title_edit_field text-xl font-bold mb-4 transition-colors ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
               Edit{" "}
               {"reps" === editingField.field
                 ? "Reps"
@@ -1030,7 +1030,7 @@ function WorkoutTracker({
               <textarea
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
-                className={`w-full px-4 py-3 border-2 rounded-lg text-lg focus:outline-none mb-6 resize-none transition-colors ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 placeholder-gray-400' : 'border-gray-300 text-gray-900 focus:border-blue-500'}`}
+                className={`zz_input_edit_notes w-full px-4 py-3 border-2 rounded-lg text-lg focus:outline-none mb-6 resize-none transition-colors ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 placeholder-gray-400' : 'border-gray-300 text-gray-900 focus:border-blue-500'}`}
                 placeholder="Add notes..."
                 rows="4"
                 autoFocus
@@ -1041,7 +1041,7 @@ function WorkoutTracker({
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
                 onFocus={(e) => e.target.select()}
-                className={`w-full px-4 py-3 border-2 rounded-lg text-lg focus:outline-none mb-6 transition-colors ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 placeholder-gray-400' : 'border-gray-300 text-gray-900 focus:border-blue-500'}`}
+                className={`zz_input_edit_field w-full px-4 py-3 border-2 rounded-lg text-lg focus:outline-none mb-6 transition-colors ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 placeholder-gray-400' : 'border-gray-300 text-gray-900 focus:border-blue-500'}`}
                 placeholder={
                   "reps" === editingField.field
                     ? "e.g. 10"
@@ -1087,7 +1087,7 @@ function WorkoutTracker({
                 })
               }
               onFocus={(e) => e.target.select()}
-              className={`w-full px-4 py-3 border-2 rounded-lg text-lg focus:outline-none mb-6 transition-colors ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 placeholder-gray-400' : 'border-gray-300 text-gray-900 focus:border-blue-500'}`}
+              className={`zz_input_edit_exercise_name w-full px-4 py-3 border-2 rounded-lg text-lg focus:outline-none mb-6 transition-colors ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 placeholder-gray-400' : 'border-gray-300 text-gray-900 focus:border-blue-500'}`}
               placeholder="e.g. Bench Press"
               autoFocus
             />
@@ -1150,7 +1150,7 @@ function WorkoutTracker({
                 type="text"
                 value={newExerciseName}
                 onChange={(e) => setNewExerciseName(e.target.value)}
-                className={`w-full px-4 py-3 border-2 rounded-lg text-lg focus:outline-none transition-colors ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 placeholder-gray-400' : 'border-gray-300 text-gray-900 focus:border-blue-500'}`}
+                className={`zz_input_new_exercise_name w-full px-4 py-3 border-2 rounded-lg text-lg focus:outline-none transition-colors ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 placeholder-gray-400' : 'border-gray-300 text-gray-900 focus:border-blue-500'}`}
                 placeholder="e.g. Dumbbell Curls"
                 autoFocus
               />
@@ -1163,7 +1163,7 @@ function WorkoutTracker({
                 type="number"
                 value={newExerciseSets}
                 onChange={(e) => setNewExerciseSets(e.target.value)}
-                className={`w-full px-4 py-3 border-2 rounded-lg text-lg focus:outline-none transition-colors ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 placeholder-gray-400' : 'border-gray-300 text-gray-900 focus:border-blue-500'}`}
+                className={`zz_input_new_exercise_sets w-full px-4 py-3 border-2 rounded-lg text-lg focus:outline-none transition-colors ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 placeholder-gray-400' : 'border-gray-300 text-gray-900 focus:border-blue-500'}`}
                 placeholder="3"
                 min="1"
               />
@@ -1205,7 +1205,7 @@ function WorkoutTracker({
                       updateWeightGroupValue(group, e.target.value)
                     }
                     onFocus={(e) => e.target.select()}
-                    className={`w-full px-4 py-3 border-2 rounded-lg text-lg focus:outline-none transition-colors ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 placeholder-gray-400' : 'border-gray-300 text-gray-900 focus:border-blue-500'}`}
+                    className={`zz_input_weight_group w-full px-4 py-3 border-2 rounded-lg text-lg focus:outline-none transition-colors ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 placeholder-gray-400' : 'border-gray-300 text-gray-900 focus:border-blue-500'}`}
                     placeholder="e.g. 40 lbs"
                     autoFocus={Object.keys(weightGroupValues)[0] === group}
                   />
@@ -1278,7 +1278,7 @@ function WorkoutTracker({
               </button>
               <button
                 onClick={() => setEditMode(!editMode)}
-                className={`inline-flex items-center justify-center gap-2 px-4 h-10 rounded-lg font-medium transition-colors ${darkMode ? "bg-gray-700 text-gray-200 hover:bg-gray-600" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}
+                className={`zz_btn_edit_mode inline-flex items-center justify-center gap-2 px-4 h-10 rounded-lg font-medium transition-colors ${darkMode ? "bg-gray-700 text-gray-200 hover:bg-gray-600" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}
               >
                 <Edit className="w-5 h-5" />
                 <span>{editMode ? "Done" : "Edit"}</span>
