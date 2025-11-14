@@ -39,16 +39,11 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
                 setWorkoutName(workout.name);
                 setCurrentWorkoutId(workout._id);
                 
-                console.log('=== LOADED WORKOUT TEMPLATE ===');
-                console.log('Workout name:', workout.name);
-                console.log('Template has exercises:', workout.data?.exercises?.length || 0);
-                
                 // Check if the template has saved exercises (from previous editing/auto-save)
                 const hasTemplateExercises = workout.data?.exercises?.length > 0;
                 
                 if (hasTemplateExercises) {
                     // Load the template data (in-progress or previously saved workout)
-                    console.log('✅ Loading saved exercises from template');
                     loadTemplateData(workout);
                 } else {
                     // No template exercises, try to load the most recent completed session for auto-import
@@ -56,12 +51,8 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
                         const sessionResponse = await api.call(`/workout-sessions/workout/${id}/latest`);
                         if (sessionResponse.ok) {
                             const session = await sessionResponse.json();
-                            console.log('=== LOADED LATEST SESSION ===');
-                            console.log('Session date:', session.completedAt);
-                            console.log('Number of exercise groups:', session.exercises?.length);
                             
                             if (session.exercises && session.exercises.length > 0) {
-                                console.log('✅ Setting autoImportData from latest session');
                                 // Pass session data to WorkoutTracker for auto-import
                                 // Exercise notes from session will be shown as "imported" notes with copy button
                                 setAutoImportData({
@@ -72,16 +63,13 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
                                 // Don't set exerciseNotes here - let them start empty
                                 // WorkoutTracker will display imported notes with "Copy from previous" button
                             }
-                        } else {
-                            console.log('No previous session found, starting fresh');
                         }
                     } catch (sessionErr) {
-                        console.log('No session available, starting fresh');
+                        // No session available, starting fresh
                     }
                 }
             }
         } catch (err) {
-            console.error('Error loading workout:', err);
             alert('Failed to load workout');
         } finally {
             // Mark initial load as complete to enable auto-save
@@ -156,7 +144,6 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
                 return false;
             }
         } catch (error) {
-            console.error('Save error:', error);
             setSaveStatus('error');
             setTimeout(() => setSaveStatus(''), 3000);
             return false;
@@ -182,7 +169,6 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
             let workoutIdToUse = currentWorkoutId;
             
             if (!workoutIdToUse) {
-                console.log('No workoutId found, creating workout template first...');
                 const workoutData = {
                     name: workoutName,
                     data: {
@@ -202,7 +188,6 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
                     const result = await createResponse.json();
                     workoutIdToUse = result.workout._id;
                     setCurrentWorkoutId(workoutIdToUse);
-                    console.log('✅ Workout template created:', workoutIdToUse);
                 } else {
                     alert('Failed to create workout template');
                     setSaveStatus('');
@@ -243,18 +228,6 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
                 completedAt: new Date().toISOString()
             };
             
-            // LOG TO CONSOLE for comparison
-            console.log('=== EXPORT DATA (FORMATTED FOR SAVE) ===');
-            console.log(JSON.stringify(completedSessionData, null, 2));
-            console.log('=== SUMMARY ===');
-            console.log('Number of exercise groups:', exercisesArray.length);
-            console.log('Exercise details:');
-            exercisesArray.forEach((group, idx) => {
-                console.log(`  ${idx + 1}. ${group.exercise} - ${group.sets.length} sets, notes: "${group.exerciseNotes}"`);
-            });
-            console.log('Next weights:', nextWeightValues);
-            console.log('Weights set for:', Array.from(exercisesWithWeightSet));
-            
             // PREPARE SESSION DATA for MongoDB - Create new session (historical record)
             const sessionData = {
                 workoutId: workoutIdToUse,
@@ -266,11 +239,6 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
                 completedAt: completedSessionData.completedAt
             };
             
-            console.log('=== SESSION DATA TO SAVE ===');
-            console.log('workoutId:', workoutIdToUse);
-            console.log('workoutName:', workoutName);
-            console.log('Number of exercises:', exercisesArray.length);
-            
             // SAVE NEW SESSION TO MONGODB (creates historical record)
             const response = await api.call('/workout-sessions', {
                 method: 'POST',
@@ -279,8 +247,6 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
             
             if (response.ok) {
                 const result = await response.json();
-                console.log('✅ Workout session successfully saved to MongoDB');
-                console.log('Session ID:', result.session._id);
                 
                 // Clear the template exercises after completing workout
                 // This ensures next time we load, we import from the completed session
@@ -297,24 +263,16 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
                     })
                 });
                 
-                if (clearTemplateResponse.ok) {
-                    console.log('✅ Template cleared for next workout');
-                }
-                
                 setSaveStatus('saved');
                 setTimeout(() => {
                     setSaveStatus('');
                     onBack();
                 }, 1000);
             } else {
-                console.error('❌ Failed to save workout session to MongoDB');
-                const errorData = await response.json();
-                console.error('Error details:', errorData);
                 setSaveStatus('error');
                 setTimeout(() => setSaveStatus(''), 3000);
             }
         } catch (error) {
-            console.error('❌ Save error:', error);
             setSaveStatus('error');
             setTimeout(() => setSaveStatus(''), 3000);
         }

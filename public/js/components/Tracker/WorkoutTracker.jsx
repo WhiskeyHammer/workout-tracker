@@ -438,7 +438,6 @@ function WorkoutTracker({
     });
   };
   const saveWeightGroups = () => {
-    console.log("Saving weight groups:", weightGroupValues);
     const newSet = new Set(exercisesWithWeightSet);
     newSet.add(currentExerciseForWeightGroup);
     setExercisesWithWeightSet(newSet);
@@ -537,28 +536,14 @@ function WorkoutTracker({
 
   // Auto-import lastCompletedSession data when provided
   useEffect(() => {
-    console.log('WorkoutTracker received autoImportData:', autoImportData);
     if (autoImportData) {
-      console.log('autoImportData structure:', {
-        hasExercises: !!autoImportData.exercises,
-        exercisesType: typeof autoImportData.exercises,
-        exercisesIsArray: Array.isArray(autoImportData.exercises),
-        exercisesLength: autoImportData.exercises?.length,
-        hasNextWeights: !!autoImportData.nextWeights,
-        nextWeightsType: typeof autoImportData.nextWeights,
-        keys: Object.keys(autoImportData)
-      });
-      
       if (autoImportData.exercises && Array.isArray(autoImportData.exercises)) {
-        console.log('Processing autoImportData');
         // Ensure nextWeights exists, default to empty object if not
         const dataToProcess = {
           ...autoImportData,
           nextWeights: autoImportData.nextWeights || {}
         };
         processImportData(dataToProcess);
-      } else {
-        console.log('Missing or invalid exercises in autoImportData');
       }
     }
   }, [autoImportData]);

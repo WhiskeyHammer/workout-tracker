@@ -1,10 +1,8 @@
 *** Settings ***
-Resource          common.resource
-Resource          workout_library.resource
-Resource          import_page.resource
+Resource          resources.resource
 Suite Setup       Open Browser And Login
-Suite Teardown    Delete all workouts
-Test Setup        Go To Library Page
+Suite Teardown    Delete All Workouts
+Test Setup        Go to library page
 
 *** Test Cases ***
 # ============================================
@@ -16,7 +14,7 @@ Test 1 - Verify Page Loads With All Main Buttons
     Open New Workout Modal
     Input Text    ${NEW_MODAL_INPUT}    Test Workout
     Click Element    ${NEW_MODAL_CONTINUE}
-    Click Element    ${BACK_BTN}
+    Click Element    ${BACK_BUTTON}
     Wait Until Page Contains Element    ${DARKMODE_BTN}    5s
     Wait Until Page Contains Element    ${LOGOUT_BTN}    5s
     Wait Until Page Contains Element    ${CREATE_NEW_BTN}    5s
@@ -88,7 +86,7 @@ Test 8 - Create a new workout
     Open New Workout Modal
     Input Text    ${NEW_MODAL_INPUT}    Test Workout
     Click Element    ${NEW_MODAL_CONTINUE}
-    Click Element    ${BACK_BTN}
+    Click Element    ${BACK_BUTTON}
     
 # ============================================
 # EDIT MODE TESTS
