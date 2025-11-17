@@ -283,10 +283,10 @@ function WorkoutTracker({
       closeEditDialog());
   };
   const updateExerciseNote = (e, t) => {
-    setExerciseNotes({
-      ...exerciseNotes,
+    setExerciseNotes((prevNotes) => ({
+      ...prevNotes,
       [e]: t,
-    });
+    }));
   };
   const openDeleteDialog = (e) => {
     (setExerciseToDelete(e), setShowDeleteDialog(!0));
@@ -1195,7 +1195,7 @@ function WorkoutTracker({
             <div className="mb-6 space-y-4">
               {Object.keys(weightGroupValues).map((group) => (
                 <div key={group} className="space-y-2">
-                  <label className={`block text-sm font-medium transition-colors ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  <label className={`zz_label_weight_group block text-sm font-medium transition-colors ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     {group}
                   </label>
                   <input
@@ -1215,13 +1215,13 @@ function WorkoutTracker({
             <div className="flex gap-3">
               <button
                 onClick={closeWeightGroupModal}
-                className={`flex-1 py-3 rounded-lg font-medium transition-colors ${darkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                className={`zz_btn_cancel_next_weight flex-1 py-3 rounded-lg font-medium transition-colors ${darkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
               >
                 Cancel
               </button>
               <button
                 onClick={saveWeightGroups}
-                className="flex-1 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+                className="zz_btn_save_next_weight flex-1 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
               >
                 Save
               </button>

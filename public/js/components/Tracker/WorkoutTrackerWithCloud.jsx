@@ -302,7 +302,7 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
                         <span className="text-sm text-blue-600 flex-shrink-0">Saving...</span>
                     )}
                     {saveStatus === 'saved' && (
-                        <span className="text-sm text-green-600 flex-shrink-0">✓ Saved!</span>
+                        <span className="zz_sync_success text-sm text-green-600 flex-shrink-0">✓ Saved!</span>
                     )}
                     {saveStatus === 'error' && (
                         <span className="text-sm text-red-600 flex-shrink-0">Error</span>

@@ -8,11 +8,12 @@ Library          OperatingSystem
 # =============================================================================
 # GLOBAL CONFIGURATION
 # =============================================================================
-${URL}                      http://localhost:3000
-${BROWSER}                  Chrome
-${USERNAME}                 whiskeyhammer@outlook.com
-${PASSWORD}                 workouttrackerpassy
-${OUTPUT_DIR}               tests/test_logs
+${URL}                       http://localhost:3000
+${BROWSER}                   Chrome
+${USERNAME}                  whiskeyhammer@outlook.com
+${PASSWORD}                  workouttrackerpassy
+${OUTPUT_DIR}                tests/test_logs
+${OPERATION_INTERSTITIAL}    0.25s
 
 # =============================================================================
 # COMMON ELEMENTS (Shared Across Pages)
@@ -21,6 +22,7 @@ ${DARKMODE_BTN}             //button[contains(@class, 'p-2') and contains(@class
 ${LOGOUT_BTN}               //button[contains(@title, 'Logout')]
 ${BACK_BUTTON}              //button[@title="Back to library"]
 ${WORKOUT_TITLE}            //h1
+${SYNC_SUCCESS_TOAST}       //span[contains(@class,'zz_sync_success')]
 
 # =============================================================================
 # WORKOUT LIBRARY PAGE ELEMENTS
@@ -66,7 +68,7 @@ ${SAVE_BTN}                 //button[contains(text(),'Add')]
 # =============================================================================
 
 # Exercise Title
-${EXERCISE_TITLE_PULLUPS}   //h2[contains(@class, "zz_editable_exercise_name")]
+${EXERCISE_TITLE}           //h2[contains(@class, "zz_editable_exercise_name")]
 
 # Common Features
 ${SET_ROWS}                 //div[./div/button[contains(@class,'rounded-full')]]
@@ -74,41 +76,42 @@ ${ADD_SET}                  //button[contains(@class, 'zz_btn_add_set')]
 ${SAVE_WORKOUT_EDIT}        //button[contains(@class,'zz_btn_save')]
 ${INPUT_EDIT_WORKOUT}       //input[contains(@class,'zz_input')]
 
-# Set 1 (Active/Highlighted Set)
-${SET1_REPS_VALUE}          (//span[contains(@class, "zz_editable_reps")])[1]
-${SET1_WEIGHT_VALUE}        (//span[contains(@class, "zz_editable_weight")])[1]
-${SET1_REST_VALUE}          (//span[contains(@class, "zz_editable_rest")])[1]
-${SET1_GROUP_VALUE}         (//span[contains(@class, "zz_editable_group")])[1]
-${SET1_NOTES_TEXT}          (//p[contains(@class, "zz_editable_set_notes")])[1]
-${SET1_NOTES_TEXT_INPUT}    //textarea[contains(@class, "zz_input_edit_notes")]
-${SET1_DELETE_BUTTON}       (//button[contains(@class, "zz_btn_delete_set")])[1]
-${SET1_COMPLETE_BUTTON}     (//button[contains(@class, "zz_btn_toggle_set_complete") and not(@disabled)])[1]
+${SKIP_WAIT}                //button[contains(@class,'zz_btn_skip_rest')]
+${CONFIRM_SKIP_WAIT}        //button[contains(@class,'zz_btn_confirm_skip_rest')]
 
-# Set 2 (Inactive/Dimmed Set)
-${SET2_REPS_VALUE}          (//span[contains(@class, "zz_editable_reps")])[2]
-${SET2_WEIGHT_VALUE}        (//span[contains(@class, "zz_editable_weight")])[2]
-${SET2_REST_VALUE}          (//span[contains(@class, "zz_editable_rest")])[2]
-${SET2_GROUP_VALUE}         (//span[contains(@class, "zz_editable_group")])[2]
-${SET2_NOTES_TEXT}          (//p[contains(@class, "zz_editable_set_notes")])[2]
-${SET2_DELETE_BUTTON}       (//button[contains(@class, "zz_btn_delete_set")])[2]
-${SET2_COMPLETE_BUTTON}     (//button[contains(@class, "zz_btn_toggle_set_complete") and @disabled])[1]
+${NEXT_WEIGHT_BTN}     //button[contains(@class,'zz_btn_set_next_weight')]
+${NEXT_WEIGHT_BTN_DONE}     //button[contains(@class,'zz_btn_exercise_complete')]
+${NEXT_WEIGHT_LABEL}        //label[contains(@class,'zz_label_weight_group')]
+${NEXT_WEIGHT_INPUT}        //input[contains(@class,'zz_input_weight_group')]
+${NEXT_WEIGHT_CONFIRM}      //button[contains(@class,'zz_btn_save_next_weight')]
+${NEXT_WEIGHT_CANCEL}       //button[contains(@class,'zz_btn_cancel_next_weight')]
 
-# Exercise Actions
+# Exercise Elements
+${SET_REPS}                 //span[contains(@class, "zz_editable_reps")]
+${SET_WEIGHT}               //span[contains(@class, "zz_editable_weight")]
+${SET_REST}                 //span[contains(@class, "zz_editable_rest")]
+${SET_GROUP}                //span[contains(@class, "zz_editable_group")]
+${SET_NOTES}                //p[contains(@class, "zz_editable_set_notes")]
+${SET_DELETE}               //button[contains(@class, "zz_btn_delete_set")]
+${SET_DELETE_CONFIRM}       //button[contains(@class, "zz_btn_confirm_delete")]
+${SET_DELETE_CANCEL}        //button[contains(@class, "zz_btn_cancel_delete")]
+${SET_COMPLETE}             //button[contains(@class, "zz_btn_toggle_set_complete")]
+${SET_COMPLETE_CONFIRM}     //button[contains(@class, "zz_btn_confirm_uncomplete")]
+${SET_COMPLETE_CANCEL}      //button[contains(@class, "zz_btn_cancel_uncomplete")]
+${SET_NOTES_INPUT}          //textarea[contains(@class, "zz_input_edit_notes")]
 ${ADD_SET_BUTTON}           //button[contains(@class, "zz_btn_add_set")]
 ${EXERCISE_NOTES_TEXTAREA}  //textarea[contains(@class, "zz_textarea_exercise_notes")]
-${ADD_EXERCISE_BUTTON}      //button[contains(@class, "zz_btn_add_exercise_between") or contains(@class, "zz_btn_add_exercise_end")]
 
-# Workout Actions
 ${COMPLETE_WORKOUT_BUTTON}  //button[contains(@class, "zz_btn_complete_workout")]
-${EDIT_WORKOUT_BTN}         //button[contains(@class,'zz_btn_edit_mode')]
+${ADD_EXERCISE_BUTTON}      //button[contains(@class, "zz_btn_add_exercise_between") or contains(@class, "zz_btn_add_exercise_end")]
 
 # Bottom Bar
 ${THEME_TOGGLE_BUTTON}      //div[contains(@class, "fixed") and contains(@class, "bottom-0")]//button[contains(@class, "inline-flex") and .//circle[@cx="12"]]
+${EDIT_WORKOUT_BTN}         //button[contains(@class,'zz_btn_edit_mode')]
 ${DONE_BUTTON}              //div[contains(@class, "fixed") and contains(@class, "bottom-0")]//button[.//span[text()="Done"]]
 ${PROGRESS_TEXT}            //span[contains(@class, "text-blue-600") and contains(text(), "completed")]
 ${PROGRESS_BAR_CONTAINER}   //div[contains(@class, "w-full") and contains(@class, "bg-gray-200") and contains(@class, "rounded-full") and contains(@class, "h-2")]
 ${PROGRESS_BAR_FILL}        //div[contains(@class, "bg-blue-600") and contains(@class, "h-2") and contains(@class, "rounded-full")]
-
 
 *** Keywords ***
 # =============================================================================
@@ -119,7 +122,7 @@ Open Browser And Login
     Set Screenshot Directory    ${OUTPUT_DIR}
     Open Browser    ${URL}    ${BROWSER}
     Maximize Browser Window
-    Set Selenium Speed    0.5
+    Set Selenium Speed    ${OPERATION_INTERSTITIAL}
     Wait Until Page Contains Element    //input[@placeholder='you@example.com']    10s
     Input Text    //input[@placeholder='you@example.com']    ${USERNAME}
     Input Text    //input[@type='password']    ${PASSWORD}
@@ -145,9 +148,13 @@ Create Manual Exercise
     [Documentation]    Create a manual exercise with specified name and number of sets
     [Arguments]    ${exercise_name}    ${num_sets}
     Click Element    ${MANUAL_IMPORT_BTN}
+    Populate new exercise info    ${exercise_name}    ${num_sets}
+
+Populate new exercise info
+    [Arguments]    ${exercise_name}    ${sets}
     Wait Until Element Is Visible    ${EXERCISE_NAME_INPUT}
     Input Text    ${EXERCISE_NAME_INPUT}    ${exercise_name}
-    Input Text    ${EXERCISE_SETS_INPUT}    ${num_sets}
+    Input Text    ${EXERCISE_SETS_INPUT}    ${sets}
     Click Element    ${SAVE_BTN}
     Wait Until Element Is Visible    //h2[contains(@class, "text-xl") and text()="${exercise_name}"]
 
@@ -166,7 +173,7 @@ Go to a workout
     ${on_library_page} =     Run Keyword And Return Status    Element should be visible    ${workout_elem}
     IF    ${on_library_page}
         Click Element    ${workout_elem}
-        Wait Until Element Is Visible    ${SET1_COMPLETE_BUTTON}
+        Wait Until Element Is Visible    ${SET_COMPLETE}
     ELSE
         Click Element    ${CREATE_NEW_BTN}
         Input Text    ${NEW_MODAL_INPUT}    ${workout_name}
@@ -240,3 +247,12 @@ Delete All Workouts
         Wait Until Page Does Not Contain Element    ${DELETE_MODAL}    5s
     END
     Close Browser
+
+Element Should Have Class
+    [Arguments]    ${locator}    ${class_name}
+    ${classes}=    Get Element Attribute    ${locator}    class
+    Should Contain    ${classes}    ${class_name}
+
+Get nth set elem of exercise
+    [Arguments]    ${exercise}    ${elem}    ${n}
+    RETURN    (//div[./h2[contains(text(),'${exercise}')]]${elem})[${n}]
