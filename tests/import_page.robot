@@ -3,6 +3,7 @@ Resource          resources.resource
 Suite Setup       Open Browser And Login
 Suite Teardown    Delete All Workouts
 Test Setup        Go to import page
+Test Teardown     Delete All Workouts    ${False}
 
 *** Test Cases ***
 Create a workout using csv

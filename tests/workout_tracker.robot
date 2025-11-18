@@ -6,6 +6,7 @@ Library          String
 Resource         resources.resource
 Suite Setup      Open Browser And Login
 Suite Teardown   Delete All Workouts
+Test Teardown    Delete All Workouts    ${False}
 
 
 *** Test Cases ***

@@ -227,8 +227,9 @@ Open Edit Name Mode For First Workout
 
 Delete All Workouts
     [Documentation]    Delete all workouts from the library page
+    [Arguments]    ${close_browser}=${True}
     Go To Library Page
-    Enter Edit Mode
+    Run Keyword And Ignore Error  Enter Edit Mode
     
     # Loop until no more workout cards exist
     FOR    ${i}    IN RANGE    100
@@ -249,7 +250,9 @@ Delete All Workouts
         # Wait for modal to close
         Wait Until Page Does Not Contain Element    ${DELETE_MODAL}    5s
     END
-    Close Browser
+    IF     ${close_browser}
+        Close Browser
+    END
 
 Element Should Have Class
     [Arguments]    ${locator}    ${class_name}
