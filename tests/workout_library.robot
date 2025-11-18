@@ -92,13 +92,13 @@ Test 8 - Create a new workout
 # EDIT MODE TESTS
 # ============================================
 
-Test 8 - Click Edit Workouts Button
+Test 9 - Click Edit Workouts Button
     [Documentation]    Test clicking the Edit Workouts button to enter edit mode
     Enter Edit Mode
     Element Text Should Be    ${EDIT_WORKOUTS_BTN}    Done Editing
     # Approved
 
-Test 9 - Click Done Editing Button
+Test 10 - Click Done Editing Button
     [Documentation]    Test clicking Done Editing to exit edit mode
     Enter Edit Mode
     Exit Edit Mode
@@ -106,7 +106,7 @@ Test 9 - Click Done Editing Button
     Element Text Should Be    ${EDIT_WORKOUTS_BTN}    Edit Workouts
     # Approved
 
-Test 10 - Verify Delete Buttons Appear In Edit Mode
+Test 11 - Verify Delete Buttons Appear In Edit Mode
     [Documentation]    Verify delete buttons appear for all workouts in edit mode
     ${start_buttons_before}=    Get WebElements    ${START_BUTTON}
     ${count_before}=    Get Length    ${start_buttons_before}
@@ -121,14 +121,14 @@ Test 10 - Verify Delete Buttons Appear In Edit Mode
 # DELETE WORKOUT TESTS
 # ============================================
 
-Test 11 - Click Delete Button Opens Confirmation Modal
+Test 12 - Click Delete Button Opens Confirmation Modal
     [Documentation]    Test that clicking Delete button opens confirmation modal
     Open Delete Modal For First Workout
     Page Should Contain Element    ${DELETE_MODAL_CANCEL}
     Page Should Contain Element    ${DELETE_MODAL_DELETE}
     # Approved
 
-Test 12 - Delete Modal Cancel Button
+Test 13 - Delete Modal Cancel Button
     [Documentation]    Test the Cancel button in delete confirmation modal
     Open Delete Modal For First Workout
     Click Element    ${DELETE_MODAL_CANCEL}
@@ -141,14 +141,14 @@ Test 12 - Delete Modal Cancel Button
 # EDIT WORKOUT NAME TESTS
 # ============================================
 
-Test 13 - Click Workout Name To Edit In Edit Mode
+Test 14 - Click Workout Name To Edit In Edit Mode
     [Documentation]    Test clicking workout name in edit mode opens inline editor
     Open Edit Name Mode For First Workout
     Page Should Contain Element    ${EDIT_NAME_SAVE}
     Page Should Contain Element    ${EDIT_NAME_CANCEL}
     # Approved
 
-Test 14 - Edit Name Cancel Button
+Test 15 - Edit Name Cancel Button
     [Documentation]    Test the Cancel button in edit name mode
     Open Edit Name Mode For First Workout
     Click Element    ${EDIT_NAME_CANCEL}
@@ -157,7 +157,7 @@ Test 14 - Edit Name Cancel Button
     Exit Edit Mode
     # Approved
 
-Test 15 - Edit Name Save Button
+Test 16 - Edit Name Save Button
     [Documentation]    Test the Save button in edit name mode
     Enter Edit Mode
     ${workout_names}=    Get WebElements    //h3[contains(@class, 'font-bold')]
@@ -177,7 +177,7 @@ Test 15 - Edit Name Save Button
 # WORKOUT ACTIONS TESTS
 # ============================================
 
-Test 16 - Click Start Button On First Workout
+Test 17 - Click Start Button On First Workout
     [Documentation]    Test clicking the Start button on the first workout card
     ${start_buttons}=    Get WebElements    ${START_BUTTON}
     ${count}=    Get Length    ${start_buttons}

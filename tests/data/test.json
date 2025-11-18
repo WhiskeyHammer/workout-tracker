@@ -1,0 +1,114 @@
+{
+  "exercises": [
+    {
+      "exercise": "Underhand Pullups",
+      "exerciseNotes": "",
+      "sets": [
+        {
+          "reps": 10,
+          "rest": 0.16,
+          "weight": "10",
+          "notes": "",
+          "weight group": "Underhand Pullups",
+          "id": 0,
+          "completed": false
+        },
+        {
+          "reps": 10,
+          "rest": 0.16,
+          "weight": "10",
+          "notes": "",
+          "weight group": "Underhand Pullups",
+          "id": 1,
+          "completed": false
+        },
+        {
+          "reps": 10,
+          "rest": 0.16,
+          "weight": "10",
+          "notes": "dfsdfsdf",
+          "weight group": "Underhand Pullups",
+          "id": 2,
+          "completed": false
+        },
+        {
+          "reps": 10,
+          "rest": 0,
+          "weight": "10",
+          "notes": "drop set but it's okay to flame out",
+          "weight group": "Underhand Pullups - Dropset",
+          "id": 3,
+          "completed": false
+        }
+      ]
+    },
+    {
+      "exercise": "Dumbbell Curls",
+      "exerciseNotes": "New notes",
+      "sets": [
+        {
+          "id": 10,
+          "reps": "0",
+          "weight": "0",
+          "rest": "0",
+          "notes": "",
+          "weight group": "Dumbbell Curls",
+          "completed": false
+        },
+        {
+          "id": 11,
+          "reps": "0",
+          "weight": "0",
+          "rest": "0",
+          "notes": "",
+          "weight group": "Dumbbell Curls",
+          "completed": false
+        },
+        {
+          "id": 12,
+          "reps": "0",
+          "weight": "0",
+          "rest": "0",
+          "notes": "",
+          "weight group": "Dumbbell Curls",
+          "completed": false
+        }
+      ]
+    },
+    {
+      "exercise": "Incline DB Press",
+      "exerciseNotes": "",
+      "sets": [
+        {
+          "reps": 8,
+          "rest": 2,
+          "weight": 65,
+          "notes": "",
+          "weight group": "Incline DB Press",
+          "id": 7,
+          "completed": false
+        },
+        {
+          "reps": 8,
+          "rest": 2,
+          "weight": 65,
+          "notes": "",
+          "weight group": "Incline DB Press",
+          "id": 8,
+          "completed": false
+        },
+        {
+          "reps": 8,
+          "rest": 0,
+          "weight": 65,
+          "notes": "",
+          "weight group": "Incline DB Press",
+          "id": 9,
+          "completed": false
+        }
+      ]
+    }
+  ],
+  "nextWeights": {},
+  "weightsSet": []
+}

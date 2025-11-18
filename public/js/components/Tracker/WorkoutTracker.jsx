@@ -403,6 +403,36 @@ function WorkoutTracker({
             : r,
         ),
       );
+      
+      // Update exercise notes to use the new exercise name as key
+      if (exerciseNotes[e]) {
+        setExerciseNotes((prevNotes) => {
+          const updatedNotes = { ...prevNotes };
+          updatedNotes[t] = prevNotes[e];
+          delete updatedNotes[e];
+          return updatedNotes;
+        });
+      }
+      
+      // Update nextWeightValues if the old name was used as a weight group
+      if (nextWeightValues[e]) {
+        setNextWeightValues((prevValues) => {
+          const updatedValues = { ...prevValues };
+          updatedValues[t] = prevValues[e];
+          delete updatedValues[e];
+          return updatedValues;
+        });
+      }
+      
+      // Update exercisesWithWeightSet if it contains the old name
+      if (exercisesWithWeightSet.has(e)) {
+        setExercisesWithWeightSet((prevSet) => {
+          const newSet = new Set(prevSet);
+          newSet.delete(e);
+          newSet.add(t);
+          return newSet;
+        });
+      }
     }
     closeEditExerciseName();
   };
@@ -660,7 +690,7 @@ function WorkoutTracker({
                   <div
                     className={`mb-3 px-3 py-2 rounded-lg border-l-4 ${darkMode ? "bg-gray-750 border-blue-600 text-gray-400" : "bg-blue-50 border-blue-400 text-gray-600"}`}
                   >
-                    <p className="text-sm italic">{importedExerciseNotes[exerciseName]}</p>
+                    <p className="zz_last_lift_notes text-sm italic">{importedExerciseNotes[exerciseName]}</p>
                   </div>
                 )}
                 {t.map((e, r) => {
@@ -721,7 +751,7 @@ function WorkoutTracker({
                                 </span>
                               </div>
                             )}
-                            {e.rest && (
+                            {e.rest !== undefined && e.rest !== null && e.rest !== '' && (
                               <div className="flex items-baseline gap-1">
                                 <span
                                   className={`text-sm font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}
@@ -818,7 +848,7 @@ function WorkoutTracker({
                           <button
                             onClick={() => toggleComplete(e.id)}
                             disabled={s}
-                            className={`zz_btn_toggle_set_complete flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center transition-colors ${e.completed ? (o ? "bg-green-600 text-white cursor-not-allowed" : "bg-green-500 text-white") : s ? "bg-gray-300 text-gray-400 cursor-not-allowed" : "bg-gray-200 text-gray-400 hover:bg-gray-300"}`}
+                            className={`zz_btn_toggle_set_complete flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center transition-colors ${e.completed ? (o ? "bg-green-800 text-white cursor-not-allowed" : "bg-green-500 text-white") : s ? "bg-gray-300 text-gray-400 cursor-not-allowed" : "bg-gray-200 text-gray-400 hover:bg-gray-300"}`}
                           >
                             <Check className="w-8 h-8" />
                           </button>
@@ -1241,7 +1271,7 @@ function WorkoutTracker({
             <div className="flex gap-3">
               <button
                 onClick={() => setShowCompleteDialog(false)}
-                className={`flex-1 py-3 rounded-lg font-medium transition-colors ${darkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                className={`zz_btn_cancel_complete_workout flex-1 py-3 rounded-lg font-medium transition-colors ${darkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
               >
                 Cancel
               </button>
@@ -1252,7 +1282,7 @@ function WorkoutTracker({
                     onComplete();
                   }
                 }}
-                className="flex-1 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+                className="zz_btn_confirm_complete_workout flex-1 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
               >
                 Complete
               </button>

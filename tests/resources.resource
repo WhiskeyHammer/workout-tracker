@@ -74,6 +74,7 @@ ${EXERCISE_TITLE}           //h2[contains(@class, "zz_editable_exercise_name")]
 ${SET_ROWS}                 //div[./div/button[contains(@class,'rounded-full')]]
 ${ADD_SET}                  //button[contains(@class, 'zz_btn_add_set')]
 ${SAVE_WORKOUT_EDIT}        //button[contains(@class,'zz_btn_save')]
+${CANCEL_WORKOUT_EDIT}      //button[contains(@class,'zz_btn_cancel_edit ')]
 ${INPUT_EDIT_WORKOUT}       //input[contains(@class,'zz_input')]
 
 ${SKIP_WAIT}                //button[contains(@class,'zz_btn_skip_rest')]
@@ -102,8 +103,10 @@ ${SET_NOTES_INPUT}          //textarea[contains(@class, "zz_input_edit_notes")]
 ${ADD_SET_BUTTON}           //button[contains(@class, "zz_btn_add_set")]
 ${EXERCISE_NOTES_TEXTAREA}  //textarea[contains(@class, "zz_textarea_exercise_notes")]
 
-${COMPLETE_WORKOUT_BUTTON}  //button[contains(@class, "zz_btn_complete_workout")]
-${ADD_EXERCISE_BUTTON}      //button[contains(@class, "zz_btn_add_exercise_between") or contains(@class, "zz_btn_add_exercise_end")]
+${ADD_EXERCISE_BUTTON}       //button[contains(@class, "zz_btn_add_exercise_between") or contains(@class, "zz_btn_add_exercise_end")]
+${COMPLETE_WORKOUT_BUTTON}   //button[contains(@class, "zz_btn_complete_workout")]
+${COMPLETE_WORKOUT_CONFIRM}  //button[contains(@class, "zz_btn_confirm_complete_workout")]
+${COMPLETE_WORKOUT_CANCEL}   //button[contains(@class, "zz_btn_cancel_complete_workout")]
 
 # Bottom Bar
 ${THEME_TOGGLE_BUTTON}      //div[contains(@class, "fixed") and contains(@class, "bottom-0")]//button[contains(@class, "inline-flex") and .//circle[@cx="12"]]
@@ -129,7 +132,7 @@ Open Browser And Login
     Click Button    //button[@type='submit']
     Wait Until Page Contains Element    ${CREATE_NEW_BTN}    10s
 
-Go to library page
+Go To Library Page
     Reload Page
     Wait Until Element Is Visible    ${CREATE_NEW_BTN}
 
@@ -256,3 +259,9 @@ Element Should Have Class
 Get nth set elem of exercise
     [Arguments]    ${exercise}    ${elem}    ${n}
     RETURN    (//div[./h2[contains(text(),'${exercise}')]]${elem})[${n}]
+
+Verify exercise set field value
+    [Documentation]    Verify that a specific field of an exercise set has the expected value
+    [Arguments]    ${exercise}    ${field}    ${n}    ${expected_value}
+    ${target_field} =    Get nth set elem of exercise    ${exercise}    ${field}   ${n}
+    Element Text Should Be    ${target_field}    ${expected_value}

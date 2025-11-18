@@ -9,44 +9,25 @@ Suite Teardown   Delete All Workouts
 
 
 *** Test Cases ***
-# Really these test are about data persistence AND data roll forward
-# In order to check for data persistence we need to check for every possible edit
-    # Simple: exercise title, Reps, Weight, Rest, Group, set notes, completions, exercise notes, new exercisies
-    # Two rounds: deletions, uncompletions, final completion of exercise
-    # Workout rollover
-        # final completion of workout, next weight settings, new sets, new exercises
-# There are also some special roll-over checks
-    # The weight group setting
-    # The exercise notes carry over
-    # The copy button works
-# Other
-    # You can't accidentally delete (tested organically above)
-    # You can't complete a lift without completing the prior lift (actually not tested organically)
-    # We should probably individually check the cancel buttons on all edits and deletes and undos
-    # The final completion warning if not all exercises are marked as done
-    # Limitation on edits until the edit button is hit
-    # Special rest behaviors between sets
-        # Length
-        # Skippable
-        # Time updates as expected
-
 Edits persists
     [Setup]    Setup for workout tests    Manual Test Workout 1
     # Set Normal Modal Fields
-    Make edit to field that uses single input modal    Pullups    1    ${EXERCISE_TITLE}    PULLUPS
-    Make edit to field that uses single input modal    PULLUPS    1    ${SET_REPS}    99
-    Make edit to field that uses single input modal    PULLUPS    1    ${SET_WEIGHT}    98
-    Make edit to field that uses single input modal    PULLUPS    1    ${SET_REST}    97
-    Make edit to field that uses single input modal    PULLUPS    1    ${SET_GROUP}    96
+    Make edit to field that uses single input modal    Pullups    1    ${SET_REPS}    99
+    Make edit to field that uses single input modal    Pullups    1    ${SET_WEIGHT}    98
+    Make edit to field that uses single input modal    Pullups    1    ${SET_REST}    97
+    Make edit to field that uses single input modal    Pullups    1    ${SET_GROUP}    96
     # Set Irregular Modal Fields, Set Notes
-    Edit set note field    PULLUPS    1    95
+    Edit set note field    Pullups    1    95
     # Set Irregular Non-modal Fields, Complete
-    Toggle complete set field    PULLUPS    1    
+    Toggle complete set field    Pullups    1    
     # Set Non-modal Fields, Exercise Notes
-    Set exercise level notes     PULLUPS    94
+    Set exercise level notes     Pullups    94
+    # Edit name to verify that anything tied to the exercise name is proprely accounted for
+    Make edit to field that uses single input modal    Pullups    1    ${EXERCISE_TITLE}    PULLUPS
     # Create New Exercise
     Click Element    ${ADD_EXERCISE_BUTTON}
     Populate new exercise info    Chin Ups    2
+
     # Slight pause for the save process
     Wait Until Element Is Visible    ${SYNC_SUCCESS_TOAST}
     Sleep    1s
@@ -108,6 +89,11 @@ Delete function and guards
     Element Text Should Be    ${SET_REPS}    0
     Element Text Should Be    ${SET_WEIGHT}    0
     Element Text Should Be    ${SET_REST}    0
+
+    # Can't delete a set onces it's marked as complete
+    Toggle complete set field    Pullups    1
+    ${set_delete_btn} =    Run Keyword And Return Status  Get nth set elem of exercise    Pullups    ${SET_DELETE}    1
+    Element Should Not Be Visible    ${set_delete_btn}
 
 Uncomplete function and guards
     [Documentation]    User is prompted to confirm before marking a completed set as uncomplete
@@ -334,7 +320,278 @@ User can create a new set
 
     # From here we just assume that this is a valid and otherwise totally normal set field so I dont bother messign with it
     
+Lifts must be completed and uncompleted in order
+    [Setup]    Setup for workout tests    Manual Test Workout 8
+
+    # Can't complete a set until the one before it is complete
+    Toggle complete set field    Pullups    2
+    ${complete_2} =    Get nth set elem of exercise    Pullups    ${SET_COMPLETE}    2
+    Element Should Be Disabled    ${complete_2}
+
+    # Can't uncomplete a set before the one that preceds is uncomplete
+    Toggle complete set field    Pullups    1
+    Toggle complete set field    Pullups    2
+    Toggle complete set field    Pullups    1
+    Element Should Have Class    ${SET_COMPLETE}    bg-green-800   # Still complete bc the toggle failed
+
+You are warned before trying to complete a workout
+    [Setup]    Setup for workout tests    Manual Test Workout 9
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
+    Sleep    0.5s
+    Click Element    ${COMPLETE_WORKOUT_BUTTON}
+    Element Should Be Visible    ${COMPLETE_WORKOUT_CONFIRM}
+
+Pre-edit toggle visibility and edit rules
+    [Setup]    Setup for workout tests    Manual Test Workout 10
+    Edit set note field    Pullups    1    More test text
+    Click Element    ${EDIT_WORKOUT_BTN}
+
+    # Confirm that the below are visible and editable without toggle engaged and that the cancel button works
+    Validate that edit modal opens on click and cancel works   ${SET_REPS}    0
+    Validate that edit modal opens on click and cancel works   ${SET_WEIGHT}    0
+
+    Element Should Be Visible    ${COMPLETE_WORKOUT_BUTTON}
+    Click Element    ${COMPLETE_WORKOUT_BUTTON}
+    Wait Until Keyword Succeeds    3x    1s    Click Element    ${COMPLETE_WORKOUT_CANCEL}
+    Element Should Be Visible    ${COMPLETE_WORKOUT_BUTTON}
     
+    # Confirm that the below are visible and editable without toggle engaged
+    Element Should Be Visible   ${EXERCISE_NOTES_TEXTAREA}
+    Type Text Slowly   ${EXERCISE_NOTES_TEXTAREA}    Test text
+    Element Text Should Be   ${EXERCISE_NOTES_TEXTAREA}    Test text
+    
+    Element Should Be Visible    ${SET_COMPLETE}
+    Click Element    ${SET_COMPLETE}
+    Element Should Have Class    ${SET_COMPLETE}    bg-green-500   
+
+    # Confirm that the below are visible but not editable
+    Page Should Contain    Pullups
+    Page should Contain    Rest:
+    Page Should Contain    More test text
+    Element Should Not Be Visible    ${EXERCISE_TITLE}
+    Element Should Not Be Visible    ${SET_REST}
+
+Other cancel edit buttons
+    [Setup]    Setup for workout tests    Manual Test Workout 11
+    Validate that edit modal opens on click and cancel works    ${SET_REST}    0
+    Validate that edit modal opens on click and cancel works    ${SET_GROUP}    Pullups
+    Click Element  ${SET_NOTES}    
+    Input text    ${SET_NOTES_INPUT}    More test bs
+    Click Element    ${CANCEL_BTN}
+    Element Text Should Be    ${SET_NOTES}    Click to add notes...
+
+The timer works as expectd
+    [Setup]    Setup for workout tests    Manual Test Workout 12
+    Make edit to field that uses single input modal    Pullups    1    ${SET_REST}    5
+    Click Element    ${SET_COMPLETE}
+    Element Should Be Visible    ${SKIP_WAIT}
+    Wait Until Element Is Visible    ${SKIP_WAIT}    5s
+    
+When a workout is completed it rolls over as expected
+    [Setup]    Setup for workout tests    Manual Test Workout 13
+    # Set normal lift fields
+    Make edit to field that uses single input modal    Pullups    1    ${SET_REPS}    10
+    Make edit to field that uses single input modal    Pullups    1    ${SET_WEIGHT}    30
+    Make edit to field that uses single input modal    Pullups    1    ${SET_REST}   60
+    Make edit to field that uses single input modal    Pullups    1    ${SET_GROUP}    Pullups
+    Edit set note field    Pullups    1    Machine Settings: 2nd pin
+
+    Make edit to field that uses single input modal    Pullups    2    ${SET_REPS}    10
+    Make edit to field that uses single input modal    Pullups    2    ${SET_WEIGHT}    30
+    Make edit to field that uses single input modal    Pullups    2    ${SET_REST}   0
+    Make edit to field that uses single input modal    Pullups    2    ${SET_GROUP}    Pullups
+
+    Click Element    ${ADD_SET}
+    Make edit to field that uses single input modal    Pullups    3    ${SET_WEIGHT}    10
+    Make edit to field that uses single input modal    Pullups    3    ${SET_GROUP}    Pullups Dropset
+    Edit set note field    Pullups    3    DROPSET!
+
+    # Complete the sets
+    Toggle complete set field    Pullups    1
+    Toggle complete set field    Pullups    2
+    Toggle complete set field    Pullups    3
+
+    # Title change and lift notes
+    Set exercise level notes     Pullups    9/10 on last dropset. Keeping weight. Form focus.   
+    Sleep    2s
+    Make edit to field that uses single input modal    Pullups    1    ${EXERCISE_TITLE}    PULLUPS
+
+    # Set next lift info
+    Click Element    ${NEXT_WEIGHT_BTN}
+    Input Text    (${NEXT_WEIGHT_INPUT})[1]    30+2.5
+    Input Text    (${NEXT_WEIGHT_INPUT})[2]    15
+    Click Element    ${NEXT_WEIGHT_CONFIRM}
+    Wait Until Element Is Visible    ${NEXT_WEIGHT_BTN_DONE}
+
+    # Create New Exercise
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
+    Click Element    ${ADD_EXERCISE_BUTTON}
+    Populate new exercise info    Chin Ups    1
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
+
+    # Set simple lift fields
+    Make edit to field that uses single input modal    Chin Ups    1    ${SET_REPS}    10
+    Make edit to field that uses single input modal    Chin Ups    1    ${SET_WEIGHT}    20
+    Make edit to field that uses single input modal    Chin Ups    1    ${SET_REST}   60
+    Edit set note field    Chin Ups    1    Machine Settings: 2/4 pins
+    Sleep    2s
+
+    Click Element    (${ADD_SET})[2]
+    Make edit to field that uses single input modal    Chin Ups    2    ${SET_REST}   0
+
+    # Complete the next lift
+    Toggle complete set field    Chin Ups    1
+    Toggle complete set field    Chin Ups    2
+    Set exercise level notes     Chin Ups    8/10 on last set  
+
+    # Set next lift info
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
+    Click Element    ${NEXT_WEIGHT_BTN}
+    Click Element    ${NEXT_WEIGHT_CONFIRM}
+    Wait Until Element Is Visible    ${NEXT_WEIGHT_BTN_DONE}
+
+    # Slight pause for the save process
+    Sleep    1s
+
+    # VERIFICATION OF THE ABOVE
+    Reload Page
+    Go to a workout    Manual Test Workout 13
+    Click Element    ${EDIT_WORKOUT_BTN}
+
+    # Verify the first exercise group
+    Verify exercise set field value    PULLUPS    ${EXERCISE_TITLE}   1    PULLUPS
+    
+    Verify exercise set field value    PULLUPS    ${SET_REPS}   1    10
+    Verify exercise set field value    PULLUPS    ${SET_WEIGHT}   1    30
+    Verify exercise set field value    PULLUPS    ${SET_REST}   1    60
+    Verify exercise set field value    PULLUPS    ${SET_GROUP}   1    Pullups
+    Verify exercise set field value    PULLUPS    ${SET_NOTES}   1    Machine Settings: 2nd pin
+    Element Should Have Class    ${SET_COMPLETE}    bg-green-800
+
+    Verify exercise set field value    PULLUPS    ${SET_REPS}   2    10
+    Verify exercise set field value    PULLUPS    ${SET_WEIGHT}   2    30
+    Verify exercise set field value    PULLUPS    ${SET_REST}   2    0
+    Verify exercise set field value    PULLUPS    ${SET_GROUP}   2    Pullups
+    Verify exercise set field value    PULLUPS    ${SET_NOTES}   2    Click to add notes...
+    Element Should Have Class    (${SET_COMPLETE})[2]    bg-green-800
+
+    Verify exercise set field value    PULLUPS    ${SET_REPS}   3    10
+    Verify exercise set field value    PULLUPS    ${SET_WEIGHT}   3    10
+    Verify exercise set field value    PULLUPS    ${SET_REST}   3    0
+    Verify exercise set field value    PULLUPS    ${SET_GROUP}   3    Pullups Dropset
+    Verify exercise set field value    PULLUPS    ${SET_NOTES}   3    DROPSET!
+    Element Should Have Class    (${SET_COMPLETE})[3]    bg-green-500
+
+    Verify exercise set field value    PULLUPS    ${EXERCISE_NOTES_TEXTAREA}    1   9/10 on last dropset. Keeping weight. Form focus.
+    Click Element    ${NEXT_WEIGHT_BTN_DONE}
+    Element Attribute Value Should Be    ${NEXT_WEIGHT_INPUT}    value    30+2.5
+    Element Attribute Value Should Be    (${NEXT_WEIGHT_INPUT})[2]    value    15
+    Click Element    ${NEXT_WEIGHT_CANCEL}
+
+    # Verify the second exercise group
+    Verify exercise set field value    Chin Ups    ${EXERCISE_TITLE}   1    Chin Ups
+    
+    Verify exercise set field value    Chin Ups    ${SET_REPS}   1    10
+    Verify exercise set field value    Chin Ups    ${SET_WEIGHT}   1    20
+    Verify exercise set field value    Chin Ups    ${SET_REST}   1    60
+    Verify exercise set field value    Chin Ups    ${SET_GROUP}   1    Chin Ups
+    Verify exercise set field value    Chin Ups    ${SET_NOTES}   1    Machine Settings: 2/4 pins
+    Element Should Have Class    (${SET_COMPLETE})[4]    bg-green-800
+
+    Verify exercise set field value    Chin Ups    ${SET_REPS}   2    10
+    Verify exercise set field value    Chin Ups    ${SET_WEIGHT}   2    20
+    Verify exercise set field value    Chin Ups    ${SET_REST}   2    0
+    Verify exercise set field value    Chin Ups    ${SET_GROUP}   2    Chin Ups
+    Verify exercise set field value    Chin Ups    ${SET_NOTES}   2    Click to add notes...
+    Element Should Have Class    (${SET_COMPLETE})[5]    bg-green-500
+
+    Verify exercise set field value    Chin Ups    ${EXERCISE_NOTES_TEXTAREA}    1   8/10 on last set  
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
+    Click Element    (${NEXT_WEIGHT_BTN_DONE})[2]
+    Element Attribute Value Should Be    ${NEXT_WEIGHT_INPUT}    value    20
+    Click Element    ${NEXT_WEIGHT_CANCEL}
+
+    # ROLL OVER TESTING STARTS
+    Click Element    ${COMPLETE_WORKOUT_BUTTON}
+    Click Element    ${COMPLETE_WORKOUT_CONFIRM}
+    Sleep    1s
+    Go to a workout    Manual Test Workout 13
+    Click Element    ${EDIT_WORKOUT_BTN}
+
+    # Verify the first exercise group
+    Verify exercise set field value    PULLUPS    ${EXERCISE_TITLE}   1    PULLUPS
+    Element Text Should Be   //p[contains(@class,'zz_last_lift_notes')]    9/10 on last dropset. Keeping weight. Form focus.
+    
+    Verify exercise set field value    PULLUPS    ${SET_REPS}   1    10
+    Verify exercise set field value    PULLUPS    ${SET_WEIGHT}   1    30+2.5
+    Verify exercise set field value    PULLUPS    ${SET_REST}   1    60
+    Verify exercise set field value    PULLUPS    ${SET_GROUP}   1    Pullups
+    Verify exercise set field value    PULLUPS    ${SET_NOTES}   1    Machine Settings: 2nd pin
+    Element Should Have Class    ${SET_COMPLETE}    bg-gray-200
+
+    Verify exercise set field value    PULLUPS    ${SET_REPS}   2    10
+    Verify exercise set field value    PULLUPS    ${SET_WEIGHT}   2    30+2.5
+    Verify exercise set field value    PULLUPS    ${SET_REST}   2    0
+    Verify exercise set field value    PULLUPS    ${SET_GROUP}   2    Pullups
+    Verify exercise set field value    PULLUPS    ${SET_NOTES}   2    Click to add notes...
+    Element Should Have Class    (${SET_COMPLETE})[2]    bg-gray-300
+
+    Verify exercise set field value    PULLUPS    ${SET_REPS}   3    10
+    Verify exercise set field value    PULLUPS    ${SET_WEIGHT}   3    15
+    Verify exercise set field value    PULLUPS    ${SET_REST}   3    0
+    Verify exercise set field value    PULLUPS    ${SET_GROUP}   3    Pullups Dropset
+    Verify exercise set field value    PULLUPS    ${SET_NOTES}   3    DROPSET!
+    Element Should Have Class    (${SET_COMPLETE})[3]    bg-gray-300
+
+    Verify exercise set field value    PULLUPS    ${EXERCISE_NOTES_TEXTAREA}    1   ${EMPTY}
+    Element Should Be Visible    //button[contains(@class,'zz_btn_copy_previous_notes')]
+
+    # Verify the second exercise group
+    Verify exercise set field value    Chin Ups    ${EXERCISE_TITLE}   1    Chin Ups
+    Element Text Should Be   (//p[contains(@class,'zz_last_lift_notes')])[2]    8/10 on last set
+    
+    Verify exercise set field value    Chin Ups    ${SET_REPS}   1    10
+    Verify exercise set field value    Chin Ups    ${SET_WEIGHT}   1    20
+    Verify exercise set field value    Chin Ups    ${SET_REST}   1    60
+    Verify exercise set field value    Chin Ups    ${SET_GROUP}   1    Chin Ups
+    Verify exercise set field value    Chin Ups    ${SET_NOTES}   1    Machine Settings: 2/4 pins
+    Element Should Have Class    (${SET_COMPLETE})[4]    bg-gray-200
+
+    Verify exercise set field value    Chin Ups    ${SET_REPS}   2    10
+    Verify exercise set field value    Chin Ups    ${SET_WEIGHT}   2    20
+    Verify exercise set field value    Chin Ups    ${SET_REST}   2    0
+    Verify exercise set field value    Chin Ups    ${SET_GROUP}   2    Chin Ups
+    Verify exercise set field value    Chin Ups    ${SET_NOTES}   2    Click to add notes...
+    Element Should Have Class    (${SET_COMPLETE})[5]    bg-gray-300
+
+    Verify exercise set field value    Chin Ups    ${EXERCISE_NOTES_TEXTAREA}    1   ${EMPTY}
+    Element Should Be Visible    (//button[contains(@class,'zz_btn_copy_previous_notes')])[2]
+
+    # Copy button works
+    Click Element    //button[contains(@class,'zz_btn_copy_previous_notes')]
+    Verify exercise set field value    PULLUPS    ${EXERCISE_NOTES_TEXTAREA}    1   9/10 on last dropset. Keeping weight. Form focus.
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
+    Click Element    (//button[contains(@class,'zz_btn_copy_previous_notes')])[2]
+    Verify exercise set field value    Chin Ups    ${EXERCISE_NOTES_TEXTAREA}    1   8/10 on last set  
+
+    # Nothing weird in the next notes section
+    Toggle complete set field    PULLUPS    1
+    Toggle complete set field    PULLUPS    2
+    Toggle complete set field    PULLUPS    3
+
+    Click Element    ${NEXT_WEIGHT_BTN}
+    Element Attribute Value Should Be    ${NEXT_WEIGHT_INPUT}    value    30+2.5
+    Element Attribute Value Should Be    (${NEXT_WEIGHT_INPUT})[2]    value    15
+    Click Element    ${NEXT_WEIGHT_CANCEL}
+
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
+    Toggle complete set field    Chin Ups    1
+    Toggle complete set field    Chin Ups    2
+
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
+    Click Element    (${NEXT_WEIGHT_BTN})[2]
+    Element Attribute Value Should Be    ${NEXT_WEIGHT_INPUT}    value    20
+    Click Element    ${NEXT_WEIGHT_CANCEL}
 
 *** Keywords ***
 Type Text Slowly
@@ -388,7 +645,10 @@ Set exercise level notes
     ${target_exercise_notes} =     Get nth set elem of exercise    ${exercise}     ${EXERCISE_NOTES_TEXTAREA}    1
     Type Text Slowly     ${target_exercise_notes}    ${text}
 
-Verify exercise set field value
-    [Arguments]    ${exercise}    ${field}    ${n}    ${expected_value}
-    ${target_field} =    Get nth set elem of exercise    ${exercise}    ${field}   ${n}
-    Element Text Should Be    ${target_field}    ${expected_value}
+Validate that edit modal opens on click and cancel works
+    [Arguments]    ${elem}    ${expected_value}
+    Click Element    ${elem}
+    Input Text    ${INPUT_EDIT_WORKOUT}    99
+    Element Should Be Visible    ${SAVE_WORKOUT_EDIT}
+    Click Element    ${CANCEL_WORKOUT_EDIT}
+    Element Text Should Be    ${elem}    ${expected_value}
