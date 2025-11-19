@@ -35,6 +35,24 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
         }
     };
     
+    const moveWorkout = async (workoutId, direction) => {
+        try {
+            const response = await api.call(`/workouts/${workoutId}/reorder`, {
+                method: 'POST',
+                body: JSON.stringify({ direction })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                setWorkouts(data.workouts);
+            } else {
+                alert('Failed to reorder workout');
+            }
+        } catch (err) {
+            alert('Error reordering workout');
+        }
+    };
+    
     const deleteWorkout = async (id, name) => {
         setWorkoutToDelete({ id, name });
         setShowDeleteConfirmModal(true);
@@ -155,7 +173,7 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
                 ) : (
                     <>
                         <div className="space-y-3 mb-6">
-                            {workouts.map(workout => (
+                            {workouts.map((workout, index) => (
                                 <div
                                     key={workout._id}
                                     className={`rounded-xl shadow-sm p-4 flex items-center justify-between transition-all ${darkMode ? 'bg-gray-800 hover:bg-gray-750' : 'bg-white hover:shadow-md'}`}
@@ -203,6 +221,44 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
                                     </div>
                                     {editingWorkout !== workout._id && (
                                         <div className="flex items-center gap-2">
+                                            {editMode && (
+                                                <div className="flex flex-col gap-1">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            moveWorkout(workout._id, 'up');
+                                                        }}
+                                                        disabled={index === 0}
+                                                        className={`p-1 rounded transition-colors ${
+                                                            index === 0
+                                                                ? 'opacity-30 cursor-not-allowed'
+                                                                : darkMode
+                                                                    ? 'bg-gray-700 hover:bg-gray-600 text-gray-200'
+                                                                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                                                        }`}
+                                                        title="Move up"
+                                                    >
+                                                        <ChevronUp className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            moveWorkout(workout._id, 'down');
+                                                        }}
+                                                        disabled={index === workouts.length - 1}
+                                                        className={`p-1 rounded transition-colors ${
+                                                            index === workouts.length - 1
+                                                                ? 'opacity-30 cursor-not-allowed'
+                                                                : darkMode
+                                                                    ? 'bg-gray-700 hover:bg-gray-600 text-gray-200'
+                                                                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                                                        }`}
+                                                        title="Move down"
+                                                    >
+                                                        <ChevronDown className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            )}
                                             <button
                                                 onClick={() => onSelectWorkout(workout._id)}
                                                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"

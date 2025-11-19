@@ -10,7 +10,7 @@ router.use(authMiddleware);
 router.get('/', async (req, res) => {
   try {
     const workouts = await Workout.find({ userId: req.user.userId })
-      .sort({ updatedAt: -1 });
+      .sort({ order: 1, updatedAt: -1 });
     res.json(workouts);
   } catch (error) {
     res.status(500).json({ error: 'Error fetching workouts' });
@@ -112,12 +112,63 @@ router.get('/library', async (req, res) => {
   try {
     const workouts = await Workout.find({ userId: req.user.userId })
       .select('name updatedAt createdAt')
-      .sort({ updatedAt: -1 });
+      .sort({ order: 1, updatedAt: -1 });
     
     res.json(workouts);
   } catch (error) {
     console.error('Get library error:', error);
     res.status(500).json({ error: 'Error fetching workout library' });
+  }
+});
+
+// Reorder workout (move up or down)
+router.post('/:id/reorder', async (req, res) => {
+  try {
+    const { direction } = req.body; // 'up' or 'down'
+    const workoutId = req.params.id;
+
+    // Get all user's workouts sorted by current order
+    const workouts = await Workout.find({ userId: req.user.userId })
+      .sort({ order: 1, updatedAt: -1 });
+
+    // Find the index of the workout to move
+    const currentIndex = workouts.findIndex(w => w._id.toString() === workoutId);
+    
+    if (currentIndex === -1) {
+      return res.status(404).json({ error: 'Workout not found' });
+    }
+
+    // Calculate new index
+    let newIndex;
+    if (direction === 'up' && currentIndex > 0) {
+      newIndex = currentIndex - 1;
+    } else if (direction === 'down' && currentIndex < workouts.length - 1) {
+      newIndex = currentIndex + 1;
+    } else {
+      // Can't move (already at top/bottom)
+      return res.json({ message: 'No change', workouts });
+    }
+
+    // Swap the workouts
+    const temp = workouts[currentIndex];
+    workouts[currentIndex] = workouts[newIndex];
+    workouts[newIndex] = temp;
+
+    // Update order values for all workouts
+    const updatePromises = workouts.map((workout, index) => {
+      return Workout.findByIdAndUpdate(workout._id, { order: index });
+    });
+
+    await Promise.all(updatePromises);
+
+    // Fetch updated workouts
+    const updatedWorkouts = await Workout.find({ userId: req.user.userId })
+      .sort({ order: 1, updatedAt: -1 });
+
+    res.json({ message: 'Workout reordered', workouts: updatedWorkouts });
+  } catch (error) {
+    console.error('Reorder error:', error);
+    res.status(500).json({ error: 'Error reordering workout' });
   }
 });
 

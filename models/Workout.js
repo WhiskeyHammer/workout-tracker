@@ -11,6 +11,10 @@ const workoutSchema = new mongoose.Schema({
     type: String,
     default: 'My Workout'
   },
+  order: {
+    type: Number,
+    default: 0
+  },
   data: {
     exercises: { type: Array, default: [] },
     nextWeights: { type: Object, default: {} },
