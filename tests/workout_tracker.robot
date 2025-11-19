@@ -13,12 +13,12 @@ Test Teardown    Delete All Workouts    ${False}
 Edits persists
     [Setup]    Setup for workout tests    Manual Test Workout 1
     # Set Normal Modal Fields
-    Make edit to field that uses single input modal    Pullups    1    ${SET_REPS}    99
-    Make edit to field that uses single input modal    Pullups    1    ${SET_WEIGHT}    98
-    Make edit to field that uses single input modal    Pullups    1    ${SET_REST}    97
-    Make edit to field that uses single input modal    Pullups    1    ${SET_GROUP}    96
-    # Set Irregular Modal Fields, Set Notes
-    Edit set note field    Pullups    1    95
+    Edit Complete Exercise Set    Pullups    1
+    ...    SET_REPS=99
+    ...    SET_WEIGHT=98
+    ...    SET_REST=97
+    ...    SET_GROUP=96
+    ...    SET_NOTES=95
     # Set Irregular Non-modal Fields, Complete
     Toggle complete set field    Pullups    1    
     # Set Non-modal Fields, Exercise Notes
@@ -39,20 +39,22 @@ Edits persists
     Click Element    ${EDIT_WORKOUT_BTN}
     # Verification of the original exercise
     Element Text Should Be    ${EXERCISE_TITLE}    PULLUPS
-    Element Text Should Be    ${SET_REPS}    99
-    Element Text Should Be    ${SET_WEIGHT}    98
-    Element Text Should Be    ${SET_REST}    97
-    Element Text Should Be    ${SET_GROUP}    96
-    Element Text Should Be    ${SET_NOTES}     95
+    Verify Complete Exercise Set    PULLUPS    1
+    ...    ${SET_REPS}=99
+    ...    ${SET_WEIGHT}=98
+    ...    ${SET_REST}=97
+    ...    ${SET_GROUP}=96
+    ...    ${SET_NOTES}=95
     Element Should Have Class    ${SET_COMPLETE}    bg-green-500
     Element Text Should Be    ${EXERCISE_NOTES_TEXTAREA}    94
     # Verification of the new exercise
     Verify exercise set field value    Chin Ups    ${EXERCISE_TITLE}   1    Chin Ups
-    Verify exercise set field value    Chin Ups    ${SET_REPS}   1    0
-    Verify exercise set field value    Chin Ups    ${SET_WEIGHT}   1    0
-    Verify exercise set field value    Chin Ups    ${SET_REST}   1    0
-    Verify exercise set field value    Chin Ups    ${SET_GROUP}   1    Chin Ups
-    Verify exercise set field value    Chin Ups    ${SET_NOTES}   1    Click to add notes...
+    Verify Complete Exercise Set    Chin Ups    1
+    ...    ${SET_REPS}=0
+    ...    ${SET_WEIGHT}=0
+    ...    ${SET_REST}=0
+    ...    ${SET_GROUP}=Chin Ups
+    ...    ${SET_NOTES}=Click to add notes...
     Verify exercise set field value    Chin Ups    ${EXERCISE_NOTES_TEXTAREA}    1   ${EMPTY}
     ${new_exercise_complete} =    Get nth set elem of exercise    Chin Ups     ${SET_COMPLETE}   1
     Element Should Have Class    ${new_exercise_complete}    bg-gray-300
@@ -60,9 +62,10 @@ Edits persists
 Delete function and guards
     [Documentation]    User is prompted to confirm before deleting the set and both options work
     [Setup]    Setup for workout tests    Manual Test Workout 2
-    Make edit to field that uses single input modal    Pullups    1    ${SET_REPS}    99
-    Make edit to field that uses single input modal    Pullups    1    ${SET_WEIGHT}    98
-    Make edit to field that uses single input modal    Pullups    1    ${SET_REST}    97
+    Edit Complete Exercise Set    Pullups    1
+    ...    SET_REPS=99
+    ...    SET_WEIGHT=98
+    ...    SET_REST=97
 
     Click Element    ${SET_DELETE}
     Wait Until Element Is Visible    ${SET_DELETE_CANCEL}
@@ -73,9 +76,10 @@ Delete function and guards
     Reload Page
     Go to a workout    Manual Test Workout 2
     Click Element    ${EDIT_WORKOUT_BTN}
-    Element Text Should Be    ${SET_REPS}    99
-    Element Text Should Be    ${SET_WEIGHT}    98
-    Element Text Should Be    ${SET_REST}    97
+    Verify Complete Exercise Set    Pullups    1
+    ...    ${SET_REPS}=99
+    ...    ${SET_WEIGHT}=98
+    ...    ${SET_REST}=97
 
     # Now actually delete it
     Click Element    ${SET_DELETE}
@@ -87,9 +91,10 @@ Delete function and guards
     Reload Page
     Go to a workout    Manual Test Workout 2
     Click Element    ${EDIT_WORKOUT_BTN}
-    Element Text Should Be    ${SET_REPS}    0
-    Element Text Should Be    ${SET_WEIGHT}    0
-    Element Text Should Be    ${SET_REST}    0
+    Verify Complete Exercise Set    Pullups    1
+    ...    ${SET_REPS}=0
+    ...    ${SET_WEIGHT}=0
+    ...    ${SET_REST}=0
 
     # Can't delete a set onces it's marked as complete
     Toggle complete set field    Pullups    1
@@ -99,10 +104,11 @@ Delete function and guards
 Uncomplete function and guards
     [Documentation]    User is prompted to confirm before marking a completed set as uncomplete
     [Setup]    Setup for workout tests    Manual Test Workout 3
-    Make edit to field that uses single input modal    Pullups    1    ${SET_REPS}    99
-    Make edit to field that uses single input modal    Pullups    1    ${SET_WEIGHT}    98
-    Make edit to field that uses single input modal    Pullups    1    ${SET_REST}    97
-    Toggle complete set field    Pullups    1    
+    Edit Complete Exercise Set    Pullups    1
+    ...    SET_REPS=99
+    ...    SET_WEIGHT=98
+    ...    SET_REST=97
+    Toggle complete set field    Pullups    1
 
     Click Element    ${SET_COMPLETE}
     Wait Until Element Is Visible    ${SET_COMPLETE_CANCEL}
@@ -113,9 +119,10 @@ Uncomplete function and guards
     Reload Page
     Go to a workout    Manual Test Workout 3
     Click Element    ${EDIT_WORKOUT_BTN}
-    Element Text Should Be    ${SET_REPS}    99
-    Element Text Should Be    ${SET_WEIGHT}    98
-    Element Text Should Be    ${SET_REST}    97
+    Verify Complete Exercise Set    Pullups    1
+    ...    ${SET_REPS}=99
+    ...    ${SET_WEIGHT}=98
+    ...    ${SET_REST}=97
     Element Should Have Class    ${SET_COMPLETE}    bg-green-500
 
     # Now actually delete it
@@ -128,9 +135,10 @@ Uncomplete function and guards
     Reload Page
     Go to a workout    Manual Test Workout 3
     Click Element    ${EDIT_WORKOUT_BTN}
-    Element Text Should Be    ${SET_REPS}    99
-    Element Text Should Be    ${SET_WEIGHT}    98
-    Element Text Should Be    ${SET_REST}    97
+    Verify Complete Exercise Set    Pullups    1
+    ...    ${SET_REPS}=99
+    ...    ${SET_WEIGHT}=98
+    ...    ${SET_REST}=97
     Element Should Have Class    ${SET_COMPLETE}    bg-gray-300
 
 Final exercise completions
@@ -281,19 +289,21 @@ User can create a new set
     ${set_delete_2} =    Set Variable    (${SET_DELETE})[2]
 
     # Set Normal Modal Fields
-    Make edit to field that uses single input modal    Pullups    1    ${SET_REPS}    99
-    Make edit to field that uses single input modal    Pullups    1    ${SET_WEIGHT}    98
-    Make edit to field that uses single input modal    Pullups    1    ${SET_REST}    97
-    Make edit to field that uses single input modal    Pullups    1    ${SET_GROUP}    96
-    Edit set note field    Pullups    1    95
+    Edit Complete Exercise Set    Pullups    1
+    ...    SET_REPS=99
+    ...    SET_WEIGHT=98
+    ...    SET_REST=97
+    ...    SET_GROUP=96
+    ...    SET_NOTES=95
 
     # Copies the last set value
     Click Element    ${ADD_SET}
-    Verify exercise set field value    Pullups    ${SET_REPS}   3    0
-    Verify exercise set field value    Pullups    ${SET_WEIGHT}   3    0
-    Verify exercise set field value    Pullups    ${SET_REST}   3    0
-    Verify exercise set field value    Pullups    ${SET_GROUP}   3    Pullups
-    Verify exercise set field value    Pullups    ${SET_NOTES}   3    Click to add notes...
+    Verify Complete Exercise Set    Pullups    3
+    ...    ${SET_REPS}=0
+    ...    ${SET_WEIGHT}=0
+    ...    ${SET_REST}=0
+    ...    ${SET_GROUP}=Pullups
+    ...    ${SET_NOTES}=Click to add notes...
 
     # Delete the new set and the default second set
     Click Element    ${set_delete_2}
@@ -313,11 +323,12 @@ User can create a new set
 
     # Copies the last set value but this time with non zero/default value
     Click Element    ${ADD_SET}
-    Verify exercise set field value    Pullups    ${SET_REPS}   2    99
-    Verify exercise set field value    Pullups    ${SET_WEIGHT}   2    98
-    Verify exercise set field value    Pullups    ${SET_REST}   2    97
-    Verify exercise set field value    Pullups    ${SET_GROUP}   2    96
-    Verify exercise set field value    Pullups    ${SET_NOTES}   2    Click to add notes...
+    Verify Complete Exercise Set    Pullups    2
+    ...    ${SET_REPS}=99
+    ...    ${SET_WEIGHT}=98
+    ...    ${SET_REST}=97
+    ...    ${SET_GROUP}=96
+    ...    ${SET_NOTES}=Click to add notes...
 
     # From here we just assume that this is a valid and otherwise totally normal set field so I dont bother messign with it
     
@@ -391,21 +402,24 @@ The timer works as expectd
 When a workout is completed it rolls over as expected
     [Setup]    Setup for workout tests    Manual Test Workout 13
     # Set normal lift fields
-    Make edit to field that uses single input modal    Pullups    1    ${SET_REPS}    10
-    Make edit to field that uses single input modal    Pullups    1    ${SET_WEIGHT}    30
-    Make edit to field that uses single input modal    Pullups    1    ${SET_REST}   60
-    Make edit to field that uses single input modal    Pullups    1    ${SET_GROUP}    Pullups
-    Edit set note field    Pullups    1    Machine Settings: 2nd pin
+    Edit Complete Exercise Set    Pullups    1
+    ...    SET_REPS=10
+    ...    SET_WEIGHT=30
+    ...    SET_REST=60
+    ...    SET_GROUP=Pullups
+    ...    SET_NOTES=Machine Settings: 2nd pin
 
-    Make edit to field that uses single input modal    Pullups    2    ${SET_REPS}    10
-    Make edit to field that uses single input modal    Pullups    2    ${SET_WEIGHT}    30
-    Make edit to field that uses single input modal    Pullups    2    ${SET_REST}   0
-    Make edit to field that uses single input modal    Pullups    2    ${SET_GROUP}    Pullups
+    Edit Complete Exercise Set    Pullups    2
+    ...    SET_REPS=10
+    ...    SET_WEIGHT=30
+    ...    SET_REST=0
+    ...    SET_GROUP=Pullups
 
     Click Element    ${ADD_SET}
-    Make edit to field that uses single input modal    Pullups    3    ${SET_WEIGHT}    10
-    Make edit to field that uses single input modal    Pullups    3    ${SET_GROUP}    Pullups Dropset
-    Edit set note field    Pullups    3    DROPSET!
+    Edit Complete Exercise Set    Pullups    3
+    ...    SET_WEIGHT=10
+    ...    SET_GROUP=Pullups Dropset
+    ...    SET_NOTES=DROPSET!
 
     # Complete the sets
     Toggle complete set field    Pullups    1
@@ -431,14 +445,16 @@ When a workout is completed it rolls over as expected
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
 
     # Set simple lift fields
-    Make edit to field that uses single input modal    Chin Ups    1    ${SET_REPS}    10
-    Make edit to field that uses single input modal    Chin Ups    1    ${SET_WEIGHT}    20
-    Make edit to field that uses single input modal    Chin Ups    1    ${SET_REST}   60
-    Edit set note field    Chin Ups    1    Machine Settings: 2/4 pins
+    Edit Complete Exercise Set    Chin Ups    1
+    ...    SET_REPS=10
+    ...    SET_WEIGHT=20
+    ...    SET_REST=60
+    ...    SET_NOTES=Machine Settings: 2/4 pins
     Sleep    2s
 
     Click Element    (${ADD_SET})[2]
-    Make edit to field that uses single input modal    Chin Ups    2    ${SET_REST}   0
+    Edit Complete Exercise Set    Chin Ups    2
+    ...    SET_REST=0
 
     # Complete the next lift
     Toggle complete set field    Chin Ups    1
@@ -462,25 +478,28 @@ When a workout is completed it rolls over as expected
     # Verify the first exercise group
     Verify exercise set field value    PULLUPS    ${EXERCISE_TITLE}   1    PULLUPS
     
-    Verify exercise set field value    PULLUPS    ${SET_REPS}   1    10
-    Verify exercise set field value    PULLUPS    ${SET_WEIGHT}   1    30
-    Verify exercise set field value    PULLUPS    ${SET_REST}   1    60
-    Verify exercise set field value    PULLUPS    ${SET_GROUP}   1    Pullups
-    Verify exercise set field value    PULLUPS    ${SET_NOTES}   1    Machine Settings: 2nd pin
+    Verify Complete Exercise Set    PULLUPS    1
+    ...    ${SET_REPS}=10
+    ...    ${SET_WEIGHT}=30
+    ...    ${SET_REST}=60
+    ...    ${SET_GROUP}=Pullups
+    ...    ${SET_NOTES}=Machine Settings: 2nd pin
     Element Should Have Class    ${SET_COMPLETE}    bg-green-800
 
-    Verify exercise set field value    PULLUPS    ${SET_REPS}   2    10
-    Verify exercise set field value    PULLUPS    ${SET_WEIGHT}   2    30
-    Verify exercise set field value    PULLUPS    ${SET_REST}   2    0
-    Verify exercise set field value    PULLUPS    ${SET_GROUP}   2    Pullups
-    Verify exercise set field value    PULLUPS    ${SET_NOTES}   2    Click to add notes...
+    Verify Complete Exercise Set    PULLUPS    2
+    ...    ${SET_REPS}=10
+    ...    ${SET_WEIGHT}=30
+    ...    ${SET_REST}=0
+    ...    ${SET_GROUP}=Pullups
+    ...    ${SET_NOTES}=Click to add notes...
     Element Should Have Class    (${SET_COMPLETE})[2]    bg-green-800
 
-    Verify exercise set field value    PULLUPS    ${SET_REPS}   3    10
-    Verify exercise set field value    PULLUPS    ${SET_WEIGHT}   3    10
-    Verify exercise set field value    PULLUPS    ${SET_REST}   3    0
-    Verify exercise set field value    PULLUPS    ${SET_GROUP}   3    Pullups Dropset
-    Verify exercise set field value    PULLUPS    ${SET_NOTES}   3    DROPSET!
+    Verify Complete Exercise Set    PULLUPS    3
+    ...    ${SET_REPS}=10
+    ...    ${SET_WEIGHT}=10
+    ...    ${SET_REST}=0
+    ...    ${SET_GROUP}=Pullups Dropset
+    ...    ${SET_NOTES}=DROPSET!
     Element Should Have Class    (${SET_COMPLETE})[3]    bg-green-500
 
     Verify exercise set field value    PULLUPS    ${EXERCISE_NOTES_TEXTAREA}    1   9/10 on last dropset. Keeping weight. Form focus.
@@ -492,18 +511,20 @@ When a workout is completed it rolls over as expected
     # Verify the second exercise group
     Verify exercise set field value    Chin Ups    ${EXERCISE_TITLE}   1    Chin Ups
     
-    Verify exercise set field value    Chin Ups    ${SET_REPS}   1    10
-    Verify exercise set field value    Chin Ups    ${SET_WEIGHT}   1    20
-    Verify exercise set field value    Chin Ups    ${SET_REST}   1    60
-    Verify exercise set field value    Chin Ups    ${SET_GROUP}   1    Chin Ups
-    Verify exercise set field value    Chin Ups    ${SET_NOTES}   1    Machine Settings: 2/4 pins
+    Verify Complete Exercise Set    Chin Ups    1
+    ...    ${SET_REPS}=10
+    ...    ${SET_WEIGHT}=20
+    ...    ${SET_REST}=60
+    ...    ${SET_GROUP}=Chin Ups
+    ...    ${SET_NOTES}=Machine Settings: 2/4 pins
     Element Should Have Class    (${SET_COMPLETE})[4]    bg-green-800
 
-    Verify exercise set field value    Chin Ups    ${SET_REPS}   2    10
-    Verify exercise set field value    Chin Ups    ${SET_WEIGHT}   2    20
-    Verify exercise set field value    Chin Ups    ${SET_REST}   2    0
-    Verify exercise set field value    Chin Ups    ${SET_GROUP}   2    Chin Ups
-    Verify exercise set field value    Chin Ups    ${SET_NOTES}   2    Click to add notes...
+    Verify Complete Exercise Set    Chin Ups    2
+    ...    ${SET_REPS}=10
+    ...    ${SET_WEIGHT}=20
+    ...    ${SET_REST}=0
+    ...    ${SET_GROUP}=Chin Ups
+    ...    ${SET_NOTES}=Click to add notes...
     Element Should Have Class    (${SET_COMPLETE})[5]    bg-green-500
 
     Verify exercise set field value    Chin Ups    ${EXERCISE_NOTES_TEXTAREA}    1   8/10 on last set  
@@ -523,25 +544,28 @@ When a workout is completed it rolls over as expected
     Verify exercise set field value    PULLUPS    ${EXERCISE_TITLE}   1    PULLUPS
     Element Text Should Be   //p[contains(@class,'zz_last_lift_notes')]    9/10 on last dropset. Keeping weight. Form focus.
     
-    Verify exercise set field value    PULLUPS    ${SET_REPS}   1    10
-    Verify exercise set field value    PULLUPS    ${SET_WEIGHT}   1    30+2.5
-    Verify exercise set field value    PULLUPS    ${SET_REST}   1    60
-    Verify exercise set field value    PULLUPS    ${SET_GROUP}   1    Pullups
-    Verify exercise set field value    PULLUPS    ${SET_NOTES}   1    Machine Settings: 2nd pin
+    Verify Complete Exercise Set    PULLUPS    1
+    ...    ${SET_REPS}=10
+    ...    ${SET_WEIGHT}=30+2.5
+    ...    ${SET_REST}=60
+    ...    ${SET_GROUP}=Pullups
+    ...    ${SET_NOTES}=Machine Settings: 2nd pin
     Element Should Have Class    ${SET_COMPLETE}    bg-gray-200
 
-    Verify exercise set field value    PULLUPS    ${SET_REPS}   2    10
-    Verify exercise set field value    PULLUPS    ${SET_WEIGHT}   2    30+2.5
-    Verify exercise set field value    PULLUPS    ${SET_REST}   2    0
-    Verify exercise set field value    PULLUPS    ${SET_GROUP}   2    Pullups
-    Verify exercise set field value    PULLUPS    ${SET_NOTES}   2    Click to add notes...
+    Verify Complete Exercise Set    PULLUPS    2
+    ...    ${SET_REPS}=10
+    ...    ${SET_WEIGHT}=30+2.5
+    ...    ${SET_REST}=0
+    ...    ${SET_GROUP}=Pullups
+    ...    ${SET_NOTES}=Click to add notes...
     Element Should Have Class    (${SET_COMPLETE})[2]    bg-gray-300
 
-    Verify exercise set field value    PULLUPS    ${SET_REPS}   3    10
-    Verify exercise set field value    PULLUPS    ${SET_WEIGHT}   3    15
-    Verify exercise set field value    PULLUPS    ${SET_REST}   3    0
-    Verify exercise set field value    PULLUPS    ${SET_GROUP}   3    Pullups Dropset
-    Verify exercise set field value    PULLUPS    ${SET_NOTES}   3    DROPSET!
+    Verify Complete Exercise Set    PULLUPS    3
+    ...    ${SET_REPS}=10
+    ...    ${SET_WEIGHT}=15
+    ...    ${SET_REST}=0
+    ...    ${SET_GROUP}=Pullups Dropset
+    ...    ${SET_NOTES}=DROPSET!
     Element Should Have Class    (${SET_COMPLETE})[3]    bg-gray-300
 
     Verify exercise set field value    PULLUPS    ${EXERCISE_NOTES_TEXTAREA}    1   ${EMPTY}
@@ -551,18 +575,20 @@ When a workout is completed it rolls over as expected
     Verify exercise set field value    Chin Ups    ${EXERCISE_TITLE}   1    Chin Ups
     Element Text Should Be   (//p[contains(@class,'zz_last_lift_notes')])[2]    8/10 on last set
     
-    Verify exercise set field value    Chin Ups    ${SET_REPS}   1    10
-    Verify exercise set field value    Chin Ups    ${SET_WEIGHT}   1    20
-    Verify exercise set field value    Chin Ups    ${SET_REST}   1    60
-    Verify exercise set field value    Chin Ups    ${SET_GROUP}   1    Chin Ups
-    Verify exercise set field value    Chin Ups    ${SET_NOTES}   1    Machine Settings: 2/4 pins
+    Verify Complete Exercise Set    Chin Ups    1
+    ...    ${SET_REPS}=10
+    ...    ${SET_WEIGHT}=20
+    ...    ${SET_REST}=60
+    ...    ${SET_GROUP}=Chin Ups
+    ...    ${SET_NOTES}=Machine Settings: 2/4 pins
     Element Should Have Class    (${SET_COMPLETE})[4]    bg-gray-200
 
-    Verify exercise set field value    Chin Ups    ${SET_REPS}   2    10
-    Verify exercise set field value    Chin Ups    ${SET_WEIGHT}   2    20
-    Verify exercise set field value    Chin Ups    ${SET_REST}   2    0
-    Verify exercise set field value    Chin Ups    ${SET_GROUP}   2    Chin Ups
-    Verify exercise set field value    Chin Ups    ${SET_NOTES}   2    Click to add notes...
+    Verify Complete Exercise Set    Chin Ups    2
+    ...    ${SET_REPS}=10
+    ...    ${SET_WEIGHT}=20
+    ...    ${SET_REST}=0
+    ...    ${SET_GROUP}=Chin Ups
+    ...    ${SET_NOTES}=Click to add notes...
     Element Should Have Class    (${SET_COMPLETE})[5]    bg-gray-300
 
     Verify exercise set field value    Chin Ups    ${EXERCISE_NOTES_TEXTAREA}    1   ${EMPTY}

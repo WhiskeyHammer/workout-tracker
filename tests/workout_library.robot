@@ -39,11 +39,11 @@ Test 3 - Click Dark Mode Toggle Button
     [Documentation]    Test clicking the dark mode toggle button
     ${initial_bg}=    Get Element Attribute    //div[contains(@class, 'min-h-screen')]    class
     Click Element    ${DARKMODE_BTN}
-    Sleep    1s
+    Sleep    0.5s
     ${new_bg}=    Get Element Attribute    //div[contains(@class, 'min-h-screen')]    class
     Should Not Be Equal    ${initial_bg}    ${new_bg}
     Click Element    ${DARKMODE_BTN}
-    Sleep    1s
+    Sleep    0.5s
     # Approved
 
 # ============================================

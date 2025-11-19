@@ -198,18 +198,17 @@ Open New Workout Modal
 Close New Workout Modal
     [Documentation]    Cancel and close the new workout modal
     Click Element    ${NEW_MODAL_CANCEL}
-    Sleep    1s
+    Wait For Modal To Disappear    ${NEW_MODAL}
 
 Enter Edit Mode
     [Documentation]    Click edit workouts button to enter edit mode
     Click Element    ${EDIT_WORKOUTS_BTN}
-    Sleep    1s
     Wait Until Page Contains Element    ${DELETE_BUTTON}    5s
 
 Exit Edit Mode
     [Documentation]    Click done editing button to exit edit mode
     Click Element    ${EDIT_WORKOUTS_BTN}
-    Sleep    1s
+    Wait Until Page Does Not Contain Element    ${DELETE_BUTTON}    5s
 
 Open Delete Modal For First Workout
     [Documentation]    Enter edit mode and open delete modal for first workout
@@ -222,7 +221,6 @@ Open Edit Name Mode For First Workout
     Enter Edit Mode
     ${workout_names}=    Get WebElements    //h3[contains(@class, 'font-bold')]
     Click Element    ${workout_names}[0]
-    Sleep    1s
     Wait Until Page Contains Element    ${EDIT_NAME_INPUT}    5s
 
 Delete All Workouts
@@ -245,10 +243,9 @@ Delete All Workouts
         FOR    ${delete_modal_confirm_btn}    IN    @{delete_modal_confirm_btns}
             Run Keyword And Ignore Error    Click Element    ${delete_modal_confirm_btn}
         END
-        Sleep    1s
         
         # Wait for modal to close
-        Wait Until Page Does Not Contain Element    ${DELETE_MODAL}    5s
+        Wait For Modal To Disappear    ${DELETE_MODAL}
     END
     IF     ${close_browser}
         Close Browser
@@ -268,3 +265,46 @@ Verify exercise set field value
     [Arguments]    ${exercise}    ${field}    ${n}    ${expected_value}
     ${target_field} =    Get nth set elem of exercise    ${exercise}    ${field}   ${n}
     Element Text Should Be    ${target_field}    ${expected_value}
+
+Verify Complete Exercise Set
+    [Documentation]    Verify all fields of an exercise set with a single keyword call
+    ...                Accepts a dictionary of field:value pairs to verify
+    [Arguments]    ${exercise}    ${set_number}    &{expected_values}
+    FOR    ${field}    ${value}    IN    &{expected_values}
+        ${target_field} =    Get nth set elem of exercise    ${exercise}    ${field}    ${set_number}
+        Element Text Should Be    ${target_field}    ${value}
+    END
+
+Wait For Modal To Disappear
+    [Documentation]    Wait for a modal to disappear with configurable timeout
+    [Arguments]    ${modal_locator}    ${timeout}=5s
+    Wait Until Page Does Not Contain Element    ${modal_locator}    ${timeout}
+
+Wait For Element And Click
+    [Documentation]    Wait for element to be visible and clickable, then click it
+    [Arguments]    ${locator}    ${timeout}=5s
+    Wait Until Element Is Visible    ${locator}    ${timeout}
+    Wait Until Element Is Enabled    ${locator}    ${timeout}
+    Click Element    ${locator}
+
+Edit Complete Exercise Set
+    [Documentation]    Edit multiple fields of an exercise set with a single keyword call
+    ...                Accepts named parameters for each field to edit
+    ...                Example: Edit Complete Exercise Set    Pullups    1
+    ...                ...    SET_REPS=10    SET_WEIGHT=30    SET_REST=60    SET_GROUP=Pullups    SET_NOTES=Some note
+    [Arguments]    ${exercise}    ${set_number}    &{field_values}
+    FOR    ${field}    ${value}    IN    &{field_values}
+        IF    '${field}' == 'SET_NOTES'
+            ${set_note} =    Get nth set elem of exercise    ${exercise}    ${SET_NOTES}    ${set_number}
+            Click Element    ${set_note}
+            Input Text    ${SET_NOTES_INPUT}    ${value}
+            Click Element    ${SAVE_WORKOUT_EDIT}
+        ELSE
+            ${field_variable} =    Set Variable    ${${field}}
+            ${target} =    Get nth set elem of exercise    ${exercise}    ${field_variable}    ${set_number}
+            Click Element    ${target}
+            Wait Until Element Is Visible    ${SAVE_WORKOUT_EDIT}
+            Input Text    ${INPUT_EDIT_WORKOUT}    ${value}
+            Click Element    ${SAVE_WORKOUT_EDIT}
+        END
+    END
