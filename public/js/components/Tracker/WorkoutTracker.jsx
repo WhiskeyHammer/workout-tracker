@@ -73,17 +73,12 @@ function WorkoutTracker({
       setExercisesWithWeightSet(propExercisesWithWeightSet);
   }, [propExercisesWithWeightSet]);
 
-  // Request Wake Lock and Notification permissions when exercises are loaded
+  // Request Wake Lock when exercises are loaded
   useEffect(() => {
     if (exercises.length > 0) {
       // Request wake lock to keep screen on during workout
       if (window.wakeLockManager) {
         window.wakeLockManager.request();
-      }
-      
-      // Request notification permission for timer alerts
-      if (window.notificationManager) {
-        window.notificationManager.requestPermission();
       }
     }
     
@@ -631,14 +626,6 @@ function WorkoutTracker({
                   t.start(e.currentTime),
                   t.stop(e.currentTime + 0.5));
               }, 200));
-            
-            // Show notification
-            if (window.notificationManager) {
-              window.notificationManager.show('Rest Timer Complete', {
-                body: 'Time to start your next set!',
-                requireInteraction: true
-              });
-            }
             
             setActiveTimer(null);
           }
