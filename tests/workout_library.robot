@@ -184,4 +184,171 @@ Click Start Button On First Workout
     Should Be True    ${count} > 0
     Click Element    xpath=(${START_BTN})[1]
     Sleep    2s
+    Delete All Workouts    ${False}
     # This needs work, could piggy back off the the import behaviors
+
+# =============================================================================
+# WORKOUT REORDER TESTS
+# =============================================================================
+
+Verify Reorder Buttons Appear In Edit Mode
+    [Documentation]    Verify up/down arrow buttons appear for all workouts in edit mode
+    [Setup]    Create Three Workouts
+    Click Element    ${EDIT_WORKOUTS_BTN}
+    ${workout_cards}=    Get WebElements    ${WORKOUT_CARDS}
+    ${card_count}=    Get Length    ${workout_cards}
+    ${up_buttons}=    Get WebElements    ${REORDER_UP_BTN}
+    ${down_buttons}=    Get WebElements    ${REORDER_DOWN_BTN}
+    ${up_count}=    Get Length    ${up_buttons}
+    ${down_count}=    Get Length    ${down_buttons}
+    Should Be Equal    ${card_count}    ${up_count}
+    Should Be Equal    ${card_count}    ${down_count}
+    Exit Edit Mode
+
+Verify Reorder Buttons Hidden When Not In Edit Mode
+    [Documentation]    Verify reorder buttons are not visible when not in edit mode
+    [Setup]    Create Three Workouts
+    Page Should Not Contain Element    ${REORDER_UP_BTN}
+    Page Should Not Contain Element    ${REORDER_DOWN_BTN}
+
+Move Workout Down Successfully
+    [Documentation]    Test moving a workout down in the list
+    [Setup]    Create Three Workouts
+    # Verify initial order (most recently created is first)
+    ${workout_names}=    Get WebElements    //h3[contains(@class, 'font-bold')]
+    ${first_name}=    Get Text    ${workout_names}[0]
+    ${second_name}=    Get Text    ${workout_names}[1]
+    ${third_name}=    Get Text    ${workout_names}[2]
+    Should Be Equal    ${first_name}    Prime workout
+    Should Be Equal    ${second_name}    Alpha workout
+    Should Be Equal    ${third_name}    First workout
+    
+    # Enter edit mode and move first workout down
+    Click Element    ${EDIT_WORKOUTS_BTN}
+    ${down_buttons}=    Get WebElements    ${REORDER_DOWN_BTN}
+    Click Element    ${down_buttons}[0]
+    Sleep    1s
+    
+    # Verify order changed
+    ${workout_names_after}=    Get WebElements    //h3[contains(@class, 'font-bold')]
+    ${first_name_after}=    Get Text    ${workout_names_after}[0]
+    ${second_name_after}=    Get Text    ${workout_names_after}[1]
+    ${third_name_after}=    Get Text    ${workout_names_after}[2]
+    Should Be Equal    ${first_name_after}    Alpha workout
+    Should Be Equal    ${second_name_after}    Prime workout
+    Should Be Equal    ${third_name_after}    First workout
+    Exit Edit Mode
+
+Move Workout Up Successfully
+    [Documentation]    Test moving a workout up in the list
+    Click Element    ${EDIT_WORKOUTS_BTN}
+    
+    # Move second workout up
+    ${up_buttons}=    Get WebElements    ${REORDER_UP_BTN}
+    Click Element    ${up_buttons}[1]
+    Sleep    1s
+    
+    # Verify order changed back to original
+    ${workout_names}=    Get WebElements    //h3[contains(@class, 'font-bold')]
+    ${first_name}=    Get Text    ${workout_names}[0]
+    ${second_name}=    Get Text    ${workout_names}[1]
+    ${third_name}=    Get Text    ${workout_names}[2]
+    Should Be Equal    ${first_name}    Prime workout
+    Should Be Equal    ${second_name}    Alpha workout
+    Should Be Equal    ${third_name}    First workout
+    Exit Edit Mode
+
+Verify Top Workout Cannot Move Up
+    [Documentation]    Test that the top workout's up button is disabled
+    Click Element    ${EDIT_WORKOUTS_BTN}
+    ${up_buttons}=    Get WebElements    ${REORDER_UP_BTN}
+    ${first_up_button}=    Set Variable    ${up_buttons}[0]
+    ${disabled}=    Get Element Attribute    ${first_up_button}    disabled
+    Should Be Equal    ${disabled}    true
+    Click Element    ${EDIT_WORKOUTS_BTN}
+
+Verify Bottom Workout Cannot Move Down
+    [Documentation]    Test that the bottom workout's down button is disabled
+    Click Element    ${EDIT_WORKOUTS_BTN}
+    ${down_buttons}=    Get WebElements    ${REORDER_DOWN_BTN}
+    ${workout_count}=    Get Length    ${down_buttons}
+    ${last_index}=    Evaluate    ${workout_count} - 1
+    ${last_down_button}=    Set Variable    ${down_buttons}[${last_index}]
+    ${disabled}=    Get Element Attribute    ${last_down_button}    disabled
+    Should Be Equal    ${disabled}    true
+    Click Element    ${EDIT_WORKOUTS_BTN}
+
+Verify Workout Order Persists After Page Reload
+    [Documentation]    Test that workout order persists across page reloads
+    # Get current order
+    ${workout_names_before}=    Get WebElements    //h3[contains(@class, 'font-bold')]
+    ${first_name_before}=    Get Text    ${workout_names_before}[0]
+    ${second_name_before}=    Get Text    ${workout_names_before}[1]
+    
+    # Reload page
+    Go To Library Page
+    
+    # Verify order is the same
+    ${workout_names_after}=    Get WebElements    //h3[contains(@class, 'font-bold')]
+    ${first_name_after}=    Get Text    ${workout_names_after}[0]
+    ${second_name_after}=    Get Text    ${workout_names_after}[1]
+    Should Be Equal    ${first_name_before}    ${first_name_after}
+    Should Be Equal    ${second_name_before}    ${second_name_after}
+
+Verify Workout Order Persists After Logout And Login
+    [Documentation]    Test that workout order persists across logout/login
+    # Get current order
+    ${workout_names_before}=    Get WebElements    //h3[contains(@class, 'font-bold')]
+    ${first_name_before}=    Get Text    ${workout_names_before}[0]
+    ${second_name_before}=    Get Text    ${workout_names_before}[1]
+    
+    # Logout
+    Click Element    ${LOGOUT_BTN}
+    Click Element    ${LOGOUT_BTN_CONFIRM}
+    Wait Until Page Contains Element    //input[@placeholder='you@example.com']    10s
+    
+    # Login again
+    Input Text    //input[@placeholder='you@example.com']    ${USERNAME}
+    Input Text    //input[@type='password']    ${PASSWORD}
+    Click Button    //button[@type='submit']
+    Wait Until Page Contains Element    ${CREATE_NEW_BTN}    10s
+    
+    # Verify order is still the same
+    ${workout_names_after}=    Get WebElements    //h3[contains(@class, 'font-bold')]
+    ${first_name_after}=    Get Text    ${workout_names_after}[0]
+    ${second_name_after}=    Get Text    ${workout_names_after}[1]
+    Should Be Equal    ${first_name_before}    ${first_name_after}
+    Should Be Equal    ${second_name_before}    ${second_name_after}
+
+Multiple Reorders In Sequence
+    [Documentation]    Test performing multiple reorders in sequence
+    [Setup]    Create Three Workouts
+    
+    # Verify initial order
+    ${workout_names}=    Get WebElements    //h3[contains(@class, 'font-bold')]
+    ${first_name}=    Get Text    ${workout_names}[0]
+    ${second_name}=    Get Text    ${workout_names}[1]
+    ${third_name}=    Get Text    ${workout_names}[2]
+    Should Be Equal    ${first_name}    Prime workout
+    Should Be Equal    ${second_name}    Alpha workout
+    Should Be Equal    ${third_name}    First workout
+    
+    Enter Edit Mode
+    
+    # Move first workout down twice
+    ${down_buttons}=    Get WebElements    ${REORDER_DOWN_BTN}
+    Click Element    ${down_buttons}[0]
+    Sleep    1s
+    ${down_buttons}=    Get WebElements    ${REORDER_DOWN_BTN}
+    Click Element    ${down_buttons}[1]
+    Sleep    1s
+    
+    # Verify final order (Prime moved to bottom)
+    ${workout_names_after}=    Get WebElements    //h3[contains(@class, 'font-bold')]
+    ${first_name_after}=    Get Text    ${workout_names_after}[0]
+    ${second_name_after}=    Get Text    ${workout_names_after}[1]
+    ${third_name_after}=    Get Text    ${workout_names_after}[2]
+    Should Be Equal    ${first_name_after}    Alpha workout
+    Should Be Equal    ${second_name_after}    First workout
+    Should Be Equal    ${third_name_after}    Prime workout
+    Exit Edit Mode

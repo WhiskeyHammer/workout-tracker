@@ -20,6 +20,7 @@ ${OPERATION_INTERSTITIAL}    0.25s
 # =============================================================================
 ${DARKMODE_BTN}             //button[contains(@class, 'p-2') and contains(@class, 'rounded-lg')]
 ${LOGOUT_BTN}               //button[contains(@title, 'Logout')]
+${LOGOUT_BTN_CONFIRM}       //button[contains(text(),'Logout')]
 ${BACK_BUTTON}              //button[@title="Back to library"]
 ${WORKOUT_TITLE}            //h1
 ${SYNC_SUCCESS_TOAST}       //span[contains(@class,'zz_sync_success')]
@@ -34,6 +35,8 @@ ${EDIT_WORKOUTS_BTN}        //button[text()='Edit Workouts' or text()='Done Edit
 ${WORKOUT_CARDS}            //div[contains(@class, 'rounded-xl') and .//h3[contains(@class, 'font-bold')]]
 ${START_BTN}                //button[contains(text(), 'Start')]
 ${DELETE_BTN}               //button[contains(text(), 'Delete')]
+${REORDER_UP_BTN}           //button[@title='Move up']
+${REORDER_DOWN_BTN}         //button[@title='Move down']
 
 # New Workout Modal XPaths
 ${NEW_MODAL}                //div[contains(@class, 'fixed') and .//h2[text()='Create New Workout']]
@@ -193,7 +196,36 @@ Go To A Workout, raw code
         Element Text Should Be    ${WORKOUT_TITLE}    ${workout_name}
         Create Manual Exercise    Pullups    2
     END
+
+Create Three Workouts
+    [Documentation]    Create three test workouts, deleting Test Workout if it exists
+    # Delete Test Workout if it exists
+    Reload Page
+    Wait Until Element Is Visible    ${CREATE_NEW_BTN}    5s
+    ${test_workout_exists}=    Run Keyword And Return Status    Page Should Contain Element    //h3[text()='Test Workout']
+    IF    ${test_workout_exists}
+        Enter Edit Mode
+        ${workout_names}=    Get WebElements    //h3[contains(@class, 'font-bold')]
+        ${delete_buttons}=    Get WebElements    ${DELETE_BTN}
+        FOR    ${index}    IN RANGE    ${workout_names.__len__()}
+            ${name}=    Get Text    ${workout_names}[${index}]
+            IF    '${name}' == 'Test Workout'
+                Click Element    ${delete_buttons}[${index}]
+                Wait Until Page Contains Element    ${DELETE_MODAL}    5s
+                Click Element    ${DELETE_MODAL_DELETE}
+                Wait For Modal To Disappear    ${DELETE_MODAL}
+                BREAK
+            END
+        END
+        Exit Edit Mode
+    END
     
+    # Create the three test workouts
+    Create A Workout    First workout
+    Create A Workout    Alpha workout
+    Create A Workout    Prime workout
+    Reload Page
+    Wait Until Element Is Visible    ${EDIT_WORKOUTS_BTN}
 
 # =============================================================================
 # WORKOUT LIBRARY PAGE KEYWORDS
@@ -230,6 +262,26 @@ Open Edit Name Mode For First Workout
     ${workout_names}=    Get WebElements    //h3[contains(@class, 'font-bold')]
     Click Element    ${workout_names}[0]
     Wait Until Page Contains Element    ${EDIT_NAME_INPUT}    5s
+
+Create A Workout
+    [Documentation]    Create a workout with the given name if it doesn't already exist
+    [Arguments]    ${workout_name}
+    # First reload and check if on library page
+    Reload Page
+    Wait Until Element Is Visible    ${CREATE_NEW_BTN}    5s
+    
+    # Check if workout already exists
+    ${workout_exists}=    Run Keyword And Return Status    Page Should Contain Element    //h3[text()='${workout_name}']
+    
+    # Only create if it doesn't exist
+    IF    not ${workout_exists}
+        Open New Workout Modal
+        Input Text    ${NEW_MODAL_INPUT}    ${workout_name}
+        Click Element    ${NEW_MODAL_CONTINUE}
+        Wait Until Page Contains Element    ${WORKOUT_TITLE}    5s
+        Click Element    ${BACK_BUTTON}
+        Wait Until Page Contains Element    ${CREATE_NEW_BTN}    5s
+    END
 
 Delete All Workouts
     [Documentation]    Delete all workouts from the library page
