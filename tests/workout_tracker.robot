@@ -10,6 +10,9 @@ Test Teardown    Delete All Workouts    ${False}
 
 
 *** Test Cases ***
+# =============================================================================
+# DATA PERSISTENCE TESTS
+# =============================================================================
 Edits persists
     [Setup]    Setup for workout tests    Manual Test Workout 1
     # Set Normal Modal Fields
@@ -26,8 +29,8 @@ Edits persists
     # Edit name to verify that anything tied to the exercise name is proprely accounted for
     Make edit to field that uses single input modal    Pullups    1    ${EXERCISE_TITLE}    PULLUPS
     # Create New Exercise
-    Click Element    ${ADD_EXERCISE_BUTTON}
-    Populate new exercise info    Chin Ups    2
+    Click Element    ${ADD_EXERCISE_BTN}
+    Populate New Exercise Info    Chin Ups    2
 
     # Slight pause for the save process
     Wait Until Element Is Visible    ${SYNC_SUCCESS_TOAST}
@@ -35,7 +38,7 @@ Edits persists
 
     # VERIFICATION OF THE ABOVE
     Reload Page
-    Go to a workout    Manual Test Workout 1
+    Go To A Workout    Manual Test Workout 1
     Click Element    ${EDIT_WORKOUT_BTN}
     # Verification of the original exercise
     Element Text Should Be    ${EXERCISE_TITLE}    PULLUPS
@@ -74,7 +77,7 @@ Delete function and guards
 
     # Verification that we don't delete the set because we're stupid and ignore the cancel button
     Reload Page
-    Go to a workout    Manual Test Workout 2
+    Go To A Workout    Manual Test Workout 2
     Click Element    ${EDIT_WORKOUT_BTN}
     Verify Complete Exercise Set    Pullups    1
     ...    ${SET_REPS}=99
@@ -89,7 +92,7 @@ Delete function and guards
 
     # Verification that we did actually delete it
     Reload Page
-    Go to a workout    Manual Test Workout 2
+    Go To A Workout    Manual Test Workout 2
     Click Element    ${EDIT_WORKOUT_BTN}
     Verify Complete Exercise Set    Pullups    1
     ...    ${SET_REPS}=0
@@ -117,7 +120,7 @@ Uncomplete function and guards
 
     # Verification that we don't delete the set because we're stupid and ignore the cancel button
     Reload Page
-    Go to a workout    Manual Test Workout 3
+    Go To A Workout    Manual Test Workout 3
     Click Element    ${EDIT_WORKOUT_BTN}
     Verify Complete Exercise Set    Pullups    1
     ...    ${SET_REPS}=99
@@ -133,7 +136,7 @@ Uncomplete function and guards
 
     # Verification that we did actually delete it
     Reload Page
-    Go to a workout    Manual Test Workout 3
+    Go To A Workout    Manual Test Workout 3
     Click Element    ${EDIT_WORKOUT_BTN}
     Verify Complete Exercise Set    Pullups    1
     ...    ${SET_REPS}=99
@@ -141,6 +144,9 @@ Uncomplete function and guards
     ...    ${SET_REST}=97
     Element Should Have Class    ${SET_COMPLETE}    bg-gray-300
 
+# =============================================================================
+# EXERCISE COMPLETION WORKFLOW TESTS
+# =============================================================================
 Final exercise completions
     [Documentation]    User sees the Set Weights for Next Lift when appropraite
     [Setup]    Setup for workout tests    Manual Test Workout 4
@@ -160,7 +166,7 @@ Final exercise completions
     Element Should Have Class    ${set_2_compelte_btn}    bg-green-500   # Stil complete after hitting cancel
     Sleep    1s    
     Reload Page
-    Go to a workout    Manual Test Workout 4
+    Go To A Workout    Manual Test Workout 4
     Element Should Have Class    ${set_2_compelte_btn}    bg-green-500   # Stil complete after hitting cancel and relaoding
 
     # Verification that the user can uncomplete a set
@@ -170,7 +176,7 @@ Final exercise completions
     Element Should Have Class    ${set_2_compelte_btn}    bg-gray-300   # Stil uncomplete after hitting cancel
     Sleep    1s    
     Reload Page
-    Go to a workout    Manual Test Workout 4
+    Go To A Workout    Manual Test Workout 4
     Element Should Have Class    ${set_2_compelte_btn}    bg-gray-300   # Stil uncomplete after hitting cancel and relaoding
     Element Should Not Be Visible    ${NEXT_WEIGHT_BTN}
 
@@ -206,7 +212,7 @@ Next weight settings, single weight group
     # When we reload and come back the next weight setting is retained
     Sleep    1s    
     Reload Page
-    Go to a workout    Manual Test Workout 5
+    Go To A Workout    Manual Test Workout 5
     Click Element    ${NEXT_WEIGHT_BTN_DONE}
     Element Attribute Value Should Be    ${NEXT_WEIGHT_INPUT}    value    50
 
@@ -266,7 +272,7 @@ Next weight settings, multi weight group
     # When we reload and come back the next weight setting is retained
     Sleep    1s    
     Reload Page
-    Go to a workout    Manual Test Workout 6
+    Go To A Workout    Manual Test Workout 6
     Click Element    ${NEXT_WEIGHT_BTN_DONE}
     Element Attribute Value Should Be    ${NEXT_WEIGHT_INPUT}    value    50
     Element Attribute Value Should Be    ${input_2}    value    51
@@ -284,6 +290,9 @@ Next weight settings, multi weight group
     Element Attribute Value Should Be    ${NEXT_WEIGHT_INPUT}    value    75
     Element Attribute Value Should Be    ${input_2}    value    74
 
+# =============================================================================
+# SET MANAGEMENT TESTS
+# =============================================================================
 User can create a new set
     [Setup]    Setup for workout tests    Manual Test Workout 7
     ${set_delete_2} =    Set Variable    (${SET_DELETE})[2]
@@ -317,7 +326,7 @@ User can create a new set
 
     # Verify that they've been cleared out
     Reload Page
-    Go to a workout    Manual Test Workout 7
+    Go To A Workout    Manual Test Workout 7
     Click Element    ${EDIT_WORKOUT_BTN}
     Element Should Not Be Visible    ${set_delete_2}
 
@@ -346,11 +355,14 @@ Lifts must be completed and uncompleted in order
     Toggle complete set field    Pullups    1
     Element Should Have Class    ${SET_COMPLETE}    bg-green-800   # Still complete bc the toggle failed
 
+# =============================================================================
+# UI STATE & VALIDATION TESTS
+# =============================================================================
 You are warned before trying to complete a workout
     [Setup]    Setup for workout tests    Manual Test Workout 9
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
     Sleep    0.5s
-    Click Element    ${COMPLETE_WORKOUT_BUTTON}
+    Click Element    ${COMPLETE_WORKOUT_BTN}
     Element Should Be Visible    ${COMPLETE_WORKOUT_CONFIRM}
 
 Pre-edit toggle visibility and edit rules
@@ -362,10 +374,10 @@ Pre-edit toggle visibility and edit rules
     Validate that edit modal opens on click and cancel works   ${SET_REPS}    0
     Validate that edit modal opens on click and cancel works   ${SET_WEIGHT}    0
 
-    Element Should Be Visible    ${COMPLETE_WORKOUT_BUTTON}
-    Click Element    ${COMPLETE_WORKOUT_BUTTON}
+    Element Should Be Visible    ${COMPLETE_WORKOUT_BTN}
+    Click Element    ${COMPLETE_WORKOUT_BTN}
     Wait Until Keyword Succeeds    3x    1s    Click Element    ${COMPLETE_WORKOUT_CANCEL}
-    Element Should Be Visible    ${COMPLETE_WORKOUT_BUTTON}
+    Element Should Be Visible    ${COMPLETE_WORKOUT_BTN}
     
     # Confirm that the below are visible and editable without toggle engaged
     Element Should Be Visible   ${EXERCISE_NOTES_TEXTAREA}
@@ -440,8 +452,8 @@ When a workout is completed it rolls over as expected
 
     # Create New Exercise
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
-    Click Element    ${ADD_EXERCISE_BUTTON}
-    Populate new exercise info    Chin Ups    1
+    Click Element    ${ADD_EXERCISE_BTN}
+    Populate New Exercise Info    Chin Ups    1
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
 
     # Set simple lift fields
@@ -472,7 +484,7 @@ When a workout is completed it rolls over as expected
 
     # VERIFICATION OF THE ABOVE
     Reload Page
-    Go to a workout    Manual Test Workout 13
+    Go To A Workout    Manual Test Workout 13
     Click Element    ${EDIT_WORKOUT_BTN}
 
     # Verify the first exercise group
@@ -534,10 +546,10 @@ When a workout is completed it rolls over as expected
     Click Element    ${NEXT_WEIGHT_CANCEL}
 
     # ROLL OVER TESTING STARTS
-    Click Element    ${COMPLETE_WORKOUT_BUTTON}
+    Click Element    ${COMPLETE_WORKOUT_BTN}
     Click Element    ${COMPLETE_WORKOUT_CONFIRM}
     Sleep    1s
-    Go to a workout    Manual Test Workout 13
+    Go To A Workout    Manual Test Workout 13
     Click Element    ${EDIT_WORKOUT_BTN}
 
     # Verify the first exercise group
@@ -635,7 +647,7 @@ Type Text Slowly
 
 Setup for workout tests
     [Arguments]    ${workout_name}
-    Go to a workout    ${workout_name}
+    Go To A Workout    ${workout_name}
     ${edit_btn_value} =    Get Text    ${EDIT_WORKOUT_BTN}
     IF    $edit_btn_value != 'Done'
         Click Element    ${EDIT_WORKOUT_BTN}
@@ -643,8 +655,8 @@ Setup for workout tests
     END
 
 Make edit to field that uses single input modal
-    [Arguments]    ${exerxise}    ${n_set}    ${elem}    ${value}
-    ${target} =    Get nth set elem of exercise    ${exerxise}    ${elem}    ${n_set}
+    [Arguments]    ${exercise}    ${n_set}    ${elem}    ${value}
+    ${target} =    Get nth set elem of exercise    ${exercise}    ${elem}    ${n_set}
     Click Element    ${target}
     Wait Until Element Is Visible    ${SAVE_WORKOUT_EDIT}
     Input Text    ${INPUT_EDIT_WORKOUT}    ${value}
@@ -659,8 +671,8 @@ Edit set note field
 
 Toggle complete set field
     [Arguments]    ${exercise}   ${n_set}
-    ${target_compelte} =    Get nth set elem of exercise    ${exercise}    ${SET_COMPLETE}    ${n_set}
-    Click Element  ${target_compelte}
+    ${target_complete} =    Get nth set elem of exercise    ${exercise}    ${SET_COMPLETE}    ${n_set}
+    Click Element  ${target_complete}
     ${is_visible}=    Run Keyword And Return Status    Wait Until Element Is Visible    ${SKIP_WAIT}    timeout=2s
     IF    ${is_visible}
         Click Element    ${SKIP_WAIT}

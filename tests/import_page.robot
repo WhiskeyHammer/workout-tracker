@@ -2,10 +2,13 @@
 Resource          resources.resource
 Suite Setup       Open Browser And Login
 Suite Teardown    Delete All Workouts
-Test Setup        Go to import page
+Test Setup        Go To Import Page
 Test Teardown     Delete All Workouts    ${False}
 
 *** Test Cases ***
+# =============================================================================
+# FILE IMPORT TESTS
+# =============================================================================
 Create a workout using csv
     ${file_input} =    Set Variable    //input[@type='file']
     Choose File    ${file_input}    ${CURDIR}/data/test.csv
@@ -163,6 +166,9 @@ Create a workout using json
     
     Verify exercise set field value    Incline DB Press    ${EXERCISE_NOTES_TEXTAREA}    1    ${EMPTY}
 
+# =============================================================================
+# MANUAL WORKOUT CREATION TESTS
+# =============================================================================
 Create a manual workout
     Create Manual Exercise    Pullups    2
     ${sets} =    Get WebElements    ${SET_ROWS}
@@ -199,7 +205,10 @@ Cancel the creation of a manual import
     Wait Until Element Is Visible    ${MANUAL_IMPORT_BTN}
     # Approved
 
-The back button takes you back to the library page  
+# =============================================================================
+# NAVIGATION TESTS
+# =============================================================================
+The back button takes you back to the library page
     Click Element    ${BACK_BUTTON}
     Wait Until Element Is Not Visible    ${MANUAL_IMPORT_BTN}
     # Approved

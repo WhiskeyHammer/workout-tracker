@@ -32,8 +32,8 @@ ${EDIT_WORKOUTS_BTN}        //button[text()='Edit Workouts' or text()='Done Edit
 
 # Workout Card XPaths
 ${WORKOUT_CARDS}            //div[contains(@class, 'rounded-xl') and .//h3[contains(@class, 'font-bold')]]
-${START_BUTTON}             //button[contains(text(), 'Start')]
-${DELETE_BUTTON}            //button[contains(text(), 'Delete')]
+${START_BTN}                //button[contains(text(), 'Start')]
+${DELETE_BTN}               //button[contains(text(), 'Delete')]
 
 # New Workout Modal XPaths
 ${NEW_MODAL}                //div[contains(@class, 'fixed') and .//h2[text()='Create New Workout']]
@@ -100,17 +100,21 @@ ${SET_COMPLETE}             //button[contains(@class, "zz_btn_toggle_set_complet
 ${SET_COMPLETE_CONFIRM}     //button[contains(@class, "zz_btn_confirm_uncomplete")]
 ${SET_COMPLETE_CANCEL}      //button[contains(@class, "zz_btn_cancel_uncomplete")]
 ${SET_NOTES_INPUT}          //textarea[contains(@class, "zz_input_edit_notes")]
-${ADD_SET_BUTTON}           //button[contains(@class, "zz_btn_add_set")]
+${ADD_SET_BTN}              //button[contains(@class, "zz_btn_add_set")]
 ${EXERCISE_NOTES_TEXTAREA}  //textarea[contains(@class, "zz_textarea_exercise_notes")]
 
-${ADD_EXERCISE_BUTTON}       //button[contains(@class, "zz_btn_add_exercise_between") or contains(@class, "zz_btn_add_exercise_end")]
-${COMPLETE_WORKOUT_BUTTON}   //button[contains(@class, "zz_btn_complete_workout")]
+${ADD_EXERCISE_BTN}         //button[contains(@class, "zz_btn_add_exercise_between") or contains(@class, "zz_btn_add_exercise_end")]
+${COMPLETE_WORKOUT_BTN}     //button[contains(@class, "zz_btn_complete_workout")]
 ${COMPLETE_WORKOUT_CONFIRM}  //button[contains(@class, "zz_btn_confirm_complete_workout")]
 ${COMPLETE_WORKOUT_CANCEL}   //button[contains(@class, "zz_btn_cancel_complete_workout")]
 
 # Bottom Bar
-${THEME_TOGGLE_BUTTON}      //div[contains(@class, "fixed") and contains(@class, "bottom-0")]//button[contains(@class, "inline-flex") and .//circle[@cx="12"]]
 ${EDIT_WORKOUT_BTN}         //button[contains(@class,'zz_btn_edit_mode')]
+
+# =============================================================================
+# RESERVED FOR FUTURE TESTS (Currently Unused)
+# =============================================================================
+${THEME_TOGGLE_BUTTON}      //div[contains(@class, "fixed") and contains(@class, "bottom-0")]//button[contains(@class, "inline-flex") and .//circle[@cx="12"]]
 ${DONE_BUTTON}              //div[contains(@class, "fixed") and contains(@class, "bottom-0")]//button[.//span[text()="Done"]]
 ${PROGRESS_TEXT}            //span[contains(@class, "text-blue-600") and contains(text(), "completed")]
 ${PROGRESS_BAR_CONTAINER}   //div[contains(@class, "w-full") and contains(@class, "bg-gray-200") and contains(@class, "rounded-full") and contains(@class, "h-2")]
@@ -136,7 +140,7 @@ Go To Library Page
     Reload Page
     Wait Until Element Is Visible    ${CREATE_NEW_BTN}
 
-Go to import page
+Go To Import Page
     ${exists} =     Run Keyword And Return Status    Element should be visible    ${CREATE_NEW_BTN}
     IF    ${exists}
         Click Element    ${CREATE_NEW_BTN}
@@ -151,9 +155,9 @@ Create Manual Exercise
     [Documentation]    Create a manual exercise with specified name and number of sets
     [Arguments]    ${exercise_name}    ${num_sets}
     Click Element    ${MANUAL_IMPORT_BTN}
-    Populate new exercise info    ${exercise_name}    ${num_sets}
+    Populate New Exercise Info    ${exercise_name}    ${num_sets}
 
-Populate new exercise info
+Populate New Exercise Info
     [Arguments]    ${exercise_name}    ${sets}
     Wait Until Element Is Visible    ${EXERCISE_NAME_INPUT}
     Input Text    ${EXERCISE_NAME_INPUT}    ${exercise_name}
@@ -161,9 +165,9 @@ Populate new exercise info
     Click Element    ${SAVE_BTN}
     Wait Until Element Is Visible    //h2[contains(@class, "text-xl") and text()="${exercise_name}"]
 
-Go to a workout
+Go To A Workout
     [Arguments]    ${workout_name}
-    ${on_workout_page} =     Run Keyword And Return Status    Element should be visible    ${COMPLETE_WORKOUT_BUTTON}
+    ${on_workout_page} =     Run Keyword And Return Status    Element should be visible    ${COMPLETE_WORKOUT_BTN}
     IF    ${on_workout_page}
         ${title} =    Get Text    ${WORKOUT_TITLE}
         IF    $title != $workout_name
@@ -203,17 +207,17 @@ Close New Workout Modal
 Enter Edit Mode
     [Documentation]    Click edit workouts button to enter edit mode
     Click Element    ${EDIT_WORKOUTS_BTN}
-    Wait Until Page Contains Element    ${DELETE_BUTTON}    5s
+    Wait Until Page Contains Element    ${DELETE_BTN}    5s
 
 Exit Edit Mode
     [Documentation]    Click done editing button to exit edit mode
     Click Element    ${EDIT_WORKOUTS_BTN}
-    Wait Until Page Does Not Contain Element    ${DELETE_BUTTON}    5s
+    Wait Until Page Does Not Contain Element    ${DELETE_BTN}    5s
 
 Open Delete Modal For First Workout
     [Documentation]    Enter edit mode and open delete modal for first workout
     Enter Edit Mode
-    Click Element    xpath=(${DELETE_BUTTON})[1]
+    Click Element    xpath=(${DELETE_BTN})[1]
     Wait Until Page Contains Element    ${DELETE_MODAL}    5s
 
 Open Edit Name Mode For First Workout
@@ -235,7 +239,7 @@ Delete All Workouts
         Exit For Loop If    ${workout_count} == 0
         
         # Click the first delete button
-        Click Element    xpath=(${DELETE_BUTTON})[1]
+        Click Element    xpath=(${DELETE_BTN})[1]
         Wait Until Page Contains Element    ${DELETE_MODAL}    5s
         
         # Confirm deletion

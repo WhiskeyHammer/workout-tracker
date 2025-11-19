@@ -5,11 +5,11 @@ Suite Teardown    Delete All Workouts
 Test Setup        Go to library page
 
 *** Test Cases ***
-# ============================================
+# =============================================================================
 # PAGE LOADING & VERIFICATION TESTS
-# ============================================
+# =============================================================================
 
-Test 1 - Verify Page Loads With All Main Buttons
+Verify Page Loads With All Main Buttons
     [Documentation]    Verify that the workout library page loads with all main buttons visible
     Open New Workout Modal
     Input Text    ${NEW_MODAL_INPUT}    Test Workout
@@ -22,20 +22,20 @@ Test 1 - Verify Page Loads With All Main Buttons
     Page Should Contain Element    ${WORKOUT_CARDS}
     # Are these all the buttons?
 
-Test 2 - Verify All Workout Cards Have Start Buttons
+Verify All Workout Cards Have Start Buttons
     [Documentation]    Verify each workout card has a Start button
     ${workout_cards}=    Get WebElements    ${WORKOUT_CARDS}
-    ${start_buttons}=    Get WebElements    ${START_BUTTON}
+    ${start_buttons}=    Get WebElements    ${START_BTN}
     ${card_count}=    Get Length    ${workout_cards}
     ${button_count}=    Get Length    ${start_buttons}
     Should Be Equal    ${card_count}    ${button_count}
     # Approved
 
-# ============================================
+# =============================================================================
 # UI CONTROLS TESTS
-# ============================================
+# =============================================================================
 
-Test 3 - Click Dark Mode Toggle Button
+Click Dark Mode Toggle Button
     [Documentation]    Test clicking the dark mode toggle button
     ${initial_bg}=    Get Element Attribute    //div[contains(@class, 'min-h-screen')]    class
     Click Element    ${DARKMODE_BTN}
@@ -46,11 +46,11 @@ Test 3 - Click Dark Mode Toggle Button
     Sleep    0.5s
     # Approved
 
-# ============================================
+# =============================================================================
 # NEW WORKOUT MODAL TESTS
-# ============================================
+# =============================================================================
 
-Test 4 - Click Create New Workout Button Opens Modal
+Click Create New Workout Button Opens Modal
     [Documentation]    Test that clicking Create New Workout opens the modal
     Open New Workout Modal
     Page Should Contain Element    ${NEW_MODAL_INPUT}
@@ -58,14 +58,14 @@ Test 4 - Click Create New Workout Button Opens Modal
     Page Should Contain Element    ${NEW_MODAL_CONTINUE}
     # Approved
 
-Test 5 - New Workout Modal Cancel Button
+New Workout Modal Cancel Button
     [Documentation]    Test the Cancel button in the new workout modal
     Open New Workout Modal
     Close New Workout Modal
     Page Should Not Contain Element    ${NEW_MODAL}
     # Approved
 
-Test 6 - New Workout Modal Continue Button Disabled When Empty
+New Workout Modal Continue Button Disabled When Empty
     [Documentation]    Test that Continue button is disabled when input is empty
     Open New Workout Modal
     ${disabled}=    Get Element Attribute    ${NEW_MODAL_CONTINUE}    disabled
@@ -73,7 +73,7 @@ Test 6 - New Workout Modal Continue Button Disabled When Empty
     Close New Workout Modal
     # Approved
 
-Test 7 - New Workout Modal Continue Button Enabled With Input
+New Workout Modal Continue Button Enabled With Input
     [Documentation]    Test that Continue button is enabled when input has text
     Open New Workout Modal
     Input Text    ${NEW_MODAL_INPUT}    Test Workout
@@ -82,53 +82,53 @@ Test 7 - New Workout Modal Continue Button Enabled With Input
     Close New Workout Modal
     # Approved
 
-Test 8 - Create a new workout
+Create a new workout
     Open New Workout Modal
     Input Text    ${NEW_MODAL_INPUT}    Test Workout
     Click Element    ${NEW_MODAL_CONTINUE}
     Click Element    ${BACK_BUTTON}
     
-# ============================================
+# =============================================================================
 # EDIT MODE TESTS
-# ============================================
+# =============================================================================
 
-Test 9 - Click Edit Workouts Button
+Click Edit Workouts Button
     [Documentation]    Test clicking the Edit Workouts button to enter edit mode
     Enter Edit Mode
     Element Text Should Be    ${EDIT_WORKOUTS_BTN}    Done Editing
     # Approved
 
-Test 10 - Click Done Editing Button
+Click Done Editing Button
     [Documentation]    Test clicking Done Editing to exit edit mode
     Enter Edit Mode
     Exit Edit Mode
-    Page Should Not Contain Element    ${DELETE_BUTTON}
+    Page Should Not Contain Element    ${DELETE_BTN}
     Element Text Should Be    ${EDIT_WORKOUTS_BTN}    Edit Workouts
     # Approved
 
-Test 11 - Verify Delete Buttons Appear In Edit Mode
+Verify Delete Buttons Appear In Edit Mode
     [Documentation]    Verify delete buttons appear for all workouts in edit mode
-    ${start_buttons_before}=    Get WebElements    ${START_BUTTON}
+    ${start_buttons_before}=    Get WebElements    ${START_BTN}
     ${count_before}=    Get Length    ${start_buttons_before}
     Enter Edit Mode
-    ${delete_buttons}=    Get WebElements    ${DELETE_BUTTON}
+    ${delete_buttons}=    Get WebElements    ${DELETE_BTN}
     ${delete_count}=    Get Length    ${delete_buttons}
     Should Be Equal    ${count_before}    ${delete_count}
     Exit Edit Mode
     # Approved
 
-# ============================================
+# =============================================================================
 # DELETE WORKOUT TESTS
-# ============================================
+# =============================================================================
 
-Test 12 - Click Delete Button Opens Confirmation Modal
+Click Delete Button Opens Confirmation Modal
     [Documentation]    Test that clicking Delete button opens confirmation modal
     Open Delete Modal For First Workout
     Page Should Contain Element    ${DELETE_MODAL_CANCEL}
     Page Should Contain Element    ${DELETE_MODAL_DELETE}
     # Approved
 
-Test 13 - Delete Modal Cancel Button
+Delete Modal Cancel Button
     [Documentation]    Test the Cancel button in delete confirmation modal
     Open Delete Modal For First Workout
     Click Element    ${DELETE_MODAL_CANCEL}
@@ -137,18 +137,18 @@ Test 13 - Delete Modal Cancel Button
     Exit Edit Mode
     # Approved
 
-# ============================================
+# =============================================================================
 # EDIT WORKOUT NAME TESTS
-# ============================================
+# =============================================================================
 
-Test 14 - Click Workout Name To Edit In Edit Mode
+Click Workout Name To Edit In Edit Mode
     [Documentation]    Test clicking workout name in edit mode opens inline editor
     Open Edit Name Mode For First Workout
     Page Should Contain Element    ${EDIT_NAME_SAVE}
     Page Should Contain Element    ${EDIT_NAME_CANCEL}
     # Approved
 
-Test 15 - Edit Name Cancel Button
+Edit Name Cancel Button
     [Documentation]    Test the Cancel button in edit name mode
     Open Edit Name Mode For First Workout
     Click Element    ${EDIT_NAME_CANCEL}
@@ -157,7 +157,7 @@ Test 15 - Edit Name Cancel Button
     Exit Edit Mode
     # Approved
 
-Test 16 - Edit Name Save Button
+Edit Name Save Button
     [Documentation]    Test the Save button in edit name mode
     Enter Edit Mode
     ${workout_names}=    Get WebElements    //h3[contains(@class, 'font-bold')]
@@ -173,15 +173,15 @@ Test 16 - Edit Name Save Button
     Exit Edit Mode
     # Needs to be modified to use a test data import and manipulate that name to something useful AFTER a refresh
 
-# ============================================
+# =============================================================================
 # WORKOUT ACTIONS TESTS
-# ============================================
+# =============================================================================
 
-Test 17 - Click Start Button On First Workout
+Click Start Button On First Workout
     [Documentation]    Test clicking the Start button on the first workout card
-    ${start_buttons}=    Get WebElements    ${START_BUTTON}
+    ${start_buttons}=    Get WebElements    ${START_BTN}
     ${count}=    Get Length    ${start_buttons}
     Should Be True    ${count} > 0
-    Click Element    xpath=(${START_BUTTON})[1]
+    Click Element    xpath=(${START_BTN})[1]
     Sleep    2s
     # This needs work, could piggy back off the the import behaviors
