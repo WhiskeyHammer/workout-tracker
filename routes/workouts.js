@@ -17,6 +17,20 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get workout names only (for library view) - MUST come before /:id route
+router.get('/library', async (req, res) => {
+  try {
+    const workouts = await Workout.find({ userId: req.user.userId })
+      .select('name updatedAt createdAt')
+      .sort({ order: 1, updatedAt: -1 });
+    
+    res.json(workouts);
+  } catch (error) {
+    console.error('Get library error:', error);
+    res.status(500).json({ error: 'Error fetching workout library' });
+  }
+});
+
 // Get single workout by ID
 router.get('/:id', async (req, res) => {
   try {
@@ -107,21 +121,7 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// Get workout names only (for library view)
-router.get('/library', async (req, res) => {
-  try {
-    const workouts = await Workout.find({ userId: req.user.userId })
-      .select('name updatedAt createdAt')
-      .sort({ order: 1, updatedAt: -1 });
-    
-    res.json(workouts);
-  } catch (error) {
-    console.error('Get library error:', error);
-    res.status(500).json({ error: 'Error fetching workout library' });
-  }
-});
-
-// Reorder workout (move up or down)
+// Reorder workout (move up or down) - MUST come before /:id route
 router.post('/:id/reorder', async (req, res) => {
   try {
     const { direction } = req.body; // 'up' or 'down'
