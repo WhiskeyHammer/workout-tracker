@@ -10,9 +10,10 @@ router.use(authMiddleware);
 router.get('/', async (req, res) => {
   try {
     const workouts = await Workout.find({ userId: req.user.userId })
-      .sort({ order: 1, updatedAt: -1 });
+      .sort({ order: 1, createdAt: -1 });
     res.json(workouts);
   } catch (error) {
+    console.error('Error fetching workouts:', error);
     res.status(500).json({ error: 'Error fetching workouts' });
   }
 });
@@ -22,7 +23,7 @@ router.get('/library', async (req, res) => {
   try {
     const workouts = await Workout.find({ userId: req.user.userId })
       .select('name updatedAt createdAt')
-      .sort({ order: 1, updatedAt: -1 });
+      .sort({ order: 1, createdAt: -1 });
     
     res.json(workouts);
   } catch (error) {
@@ -129,7 +130,7 @@ router.post('/:id/reorder', async (req, res) => {
 
     // Get all user's workouts sorted by current order
     const workouts = await Workout.find({ userId: req.user.userId })
-      .sort({ order: 1, updatedAt: -1 });
+      .sort({ order: 1, createdAt: -1 });
 
     // Find the index of the workout to move
     const currentIndex = workouts.findIndex(w => w._id.toString() === workoutId);
@@ -163,7 +164,7 @@ router.post('/:id/reorder', async (req, res) => {
 
     // Fetch updated workouts
     const updatedWorkouts = await Workout.find({ userId: req.user.userId })
-      .sort({ order: 1, updatedAt: -1 });
+      .sort({ order: 1, createdAt: -1 });
 
     res.json({ message: 'Workout reordered', workouts: updatedWorkouts });
   } catch (error) {
