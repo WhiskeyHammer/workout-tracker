@@ -297,6 +297,13 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
                         </div>
                     </>
                 )}
+                
+                {/* Cache version display */}
+                <div className="text-center mt-8 pb-4">
+                    <p className={`text-xs transition-colors ${darkMode ? 'text-gray-600' : 'text-gray-400'}`}>
+                        v3
+                    </p>
+                </div>
             </div>
 
             {showDeleteConfirmModal && (

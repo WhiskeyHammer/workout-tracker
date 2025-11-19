@@ -73,6 +73,28 @@ function WorkoutTracker({
       setExercisesWithWeightSet(propExercisesWithWeightSet);
   }, [propExercisesWithWeightSet]);
 
+  // Request Wake Lock and Notification permissions when exercises are loaded
+  useEffect(() => {
+    if (exercises.length > 0) {
+      // Request wake lock to keep screen on during workout
+      if (window.wakeLockManager) {
+        window.wakeLockManager.request();
+      }
+      
+      // Request notification permission for timer alerts
+      if (window.notificationManager) {
+        window.notificationManager.requestPermission();
+      }
+    }
+    
+    // Release wake lock when component unmounts (user leaves workout)
+    return () => {
+      if (window.wakeLockManager) {
+        window.wakeLockManager.release();
+      }
+    };
+  }, [exercises.length > 0]);
+
   // Sync local state changes back to parent if setter functions provided
   useEffect(() => {
     if (propSetExercises) propSetExercises(exercises);
@@ -582,6 +604,7 @@ function WorkoutTracker({
       const e = setInterval(() => {
         setTimeRemaining((e) => {
           if (e <= 1) {
+            // Play audio alert
             const e = new (window.AudioContext || window.webkitAudioContext)(),
               t = e.createOscillator(),
               r = e.createGain();
@@ -607,8 +630,17 @@ function WorkoutTracker({
                   ),
                   t.start(e.currentTime),
                   t.stop(e.currentTime + 0.5));
-              }, 200),
-              setActiveTimer(null));
+              }, 200));
+            
+            // Show notification
+            if (window.notificationManager) {
+              window.notificationManager.show('Rest Timer Complete', {
+                body: 'Time to start your next set!',
+                requireInteraction: true
+              });
+            }
+            
+            setActiveTimer(null);
           }
           return e <= 1 ? 0 : e - 1;
         });

@@ -1,5 +1,5 @@
 // Service Worker for Workout Tracker PWA
-const CACHE_NAME = 'workout-tracker-v2';
+const CACHE_NAME = 'workout-tracker-v3';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -7,6 +7,7 @@ const urlsToCache = [
   '/js/App.jsx',
   '/js/config/api.js',
   '/js/utils/workoutHelpers.js',
+  '/js/utils/wakeLock.js',
   '/js/components/icons/AuthIcons.jsx',
   '/js/components/icons/TrackerIcons.jsx',
   '/js/components/Auth/AuthScreen.jsx',

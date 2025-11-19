@@ -21,6 +21,9 @@
     
     <!-- PWA Description -->
     <meta name="description" content="Track your workouts and manage your fitness library">
+    
+    <!-- Prevent screen from sleeping during workouts -->
+    <meta name="mobile-web-app-capable" content="yes">
     <!-- Using jsDelivr CDN (doesn't rely on Cloudflare) as alternative to unpkg -->
     <script crossorigin src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -47,6 +50,7 @@
     <!-- 1. Configuration & Utilities -->
     <script type="text/babel" src="./js/config/api.js"></script>
     <script type="text/babel" src="./js/utils/workoutHelpers.js"></script>
+    <script src="./js/utils/wakeLock.js"></script>
     
     <!-- 2. Icon Components -->
     <script type="text/babel" src="./js/components/icons/AuthIcons.jsx"></script>
