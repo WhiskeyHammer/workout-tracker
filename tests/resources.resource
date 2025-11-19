@@ -8,10 +8,10 @@ Library          OperatingSystem
 # =============================================================================
 # GLOBAL CONFIGURATION
 # =============================================================================
-${URL}                       http://localhost:3000
+${URL}                       https://workout-tracker-hxg5.onrender.com/
 ${BROWSER}                   Chrome
-${USERNAME}                  whiskeyhammer@outlook.com
-${PASSWORD}                  workouttrackerpassy
+${USERNAME}                  test@test.com
+${PASSWORD}                  testpassword5
 ${OUTPUT_DIR}                tests/test_logs
 ${OPERATION_INTERSTITIAL}    0.25s
 
@@ -130,7 +130,7 @@ Open Browser And Login
     Open Browser    ${URL}    ${BROWSER}
     Maximize Browser Window
     Set Selenium Speed    ${OPERATION_INTERSTITIAL}
-    Wait Until Page Contains Element    //input[@placeholder='you@example.com']    10s
+    Wait Until Page Contains Element    //input[@placeholder='you@example.com']    30s
     Input Text    //input[@placeholder='you@example.com']    ${USERNAME}
     Input Text    //input[@type='password']    ${PASSWORD}
     Click Button    //button[@type='submit']
@@ -167,6 +167,10 @@ Populate New Exercise Info
 
 Go To A Workout
     [Arguments]    ${workout_name}
+    Wait Until Keyword Succeeds    3x    1s    Go To A Workout, raw code    ${workout_name}
+
+Go To A Workout, raw code
+    [Arguments]    ${workout_name}
     ${on_workout_page} =     Run Keyword And Return Status    Element should be visible    ${COMPLETE_WORKOUT_BTN}
     IF    ${on_workout_page}
         ${title} =    Get Text    ${WORKOUT_TITLE}
@@ -177,7 +181,7 @@ Go To A Workout
         END
     END
     ${workout_elem} =    Set Variable    //h3[text()='${workout_name}']
-    ${on_library_page} =     Run Keyword And Return Status    Element should be visible    ${workout_elem}
+    ${on_library_page} =     Run Keyword And Return Status    Wait until Element Is Visible    ${workout_elem}    5s
     IF    ${on_library_page}
         Click Element    ${workout_elem}
         Wait Until Element Is Visible    ${SET_COMPLETE}

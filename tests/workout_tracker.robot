@@ -445,6 +445,7 @@ When a workout is completed it rolls over as expected
 
     # Set next lift info
     Click Element    ${NEXT_WEIGHT_BTN}
+    Clear Element Text    (${NEXT_WEIGHT_INPUT})[1]
     Input Text    (${NEXT_WEIGHT_INPUT})[1]    30+2.5
     Input Text    (${NEXT_WEIGHT_INPUT})[2]    15
     Click Element    ${NEXT_WEIGHT_CONFIRM}

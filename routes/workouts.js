@@ -1,5 +1,6 @@
 const express = require('express');
 const Workout = require('../models/Workout');
+const WorkoutSession = require('../models/WorkoutSession');
 const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
@@ -90,6 +91,14 @@ router.delete('/:id', async (req, res) => {
 
     if (!workout) {
       return res.status(404).json({ error: 'Workout not found' });
+    }
+
+    // If workout title contains "Test Workout", delete all matching workout sessions
+    if (workout.name && workout.name.includes('Test Workout')) {
+      await WorkoutSession.deleteMany({
+        userId: req.user.userId,
+        workoutName: workout.name
+      });
     }
 
     res.json({ message: 'Workout deleted' });
