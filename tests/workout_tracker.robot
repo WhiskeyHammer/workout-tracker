@@ -206,25 +206,26 @@ Next weight settings, single weight group
     # We can set a next weight
     Input Text    ${NEXT_WEIGHT_INPUT}    50
     Click Element    ${NEXT_WEIGHT_CONFIRM}
-    Click Element    ${NEXT_WEIGHT_BTN_DONE}
+    Click Next Weight Done Button
     Element Attribute Value Should Be    ${NEXT_WEIGHT_INPUT}    value    50
 
     # When we reload and come back the next weight setting is retained
     Sleep    1s    
     Reload Page
     Go To A Workout    Manual Test Workout 5
-    Click Element    ${NEXT_WEIGHT_BTN_DONE}
+    Click Next Weight Done Button
     Element Attribute Value Should Be    ${NEXT_WEIGHT_INPUT}    value    50
 
     # When we uncomplete and recomplete the new weight settings is respected, this also is a revisit test to make sure that the value is still editable
     Input Text    ${NEXT_WEIGHT_INPUT}    75
     Click Element    ${NEXT_WEIGHT_CONFIRM}
+    Click Element    ${COLLAPSE_EXERCISE_BTN}
     Toggle complete set field    Pullups    2 
     Element Should Be Visible    ${SET_COMPLETE_CONFIRM}
     Click Element    ${SET_COMPLETE_CONFIRM}
     Element Should Have Class    ${set_2_compelte_btn}    bg-gray-300
     Toggle complete set field    Pullups    2 
-    Click Element    ${NEXT_WEIGHT_BTN_DONE}
+    Click Next Weight Done Button
     Element Attribute Value Should Be    ${NEXT_WEIGHT_INPUT}    value    75    
 
 Next weight settings, multi weight group
@@ -264,6 +265,7 @@ Next weight settings, multi weight group
     Input Text    ${NEXT_WEIGHT_INPUT}    50
     Input Text    ${input_2}    51
     Click Element    ${NEXT_WEIGHT_CONFIRM}
+    Click Element    ${COLLAPSE_EXERCISE_BTN}
     Element Should Be Visible    ${NEXT_WEIGHT_BTN_DONE}
     Click Element    ${NEXT_WEIGHT_BTN_DONE}
     Element Attribute Value Should Be    ${NEXT_WEIGHT_INPUT}    value    50
@@ -281,6 +283,7 @@ Next weight settings, multi weight group
     Input Text    ${NEXT_WEIGHT_INPUT}    75
     Input Text    ${input_2}    74
     Click Element    ${NEXT_WEIGHT_CONFIRM}
+    Click Element    ${COLLAPSE_EXERCISE_BTN}
     Toggle complete set field    Pullups    2 
     Element Should Be Visible    ${SET_COMPLETE_CONFIRM}
     Click Element    ${SET_COMPLETE_CONFIRM}
@@ -392,7 +395,6 @@ Pre-edit toggle visibility and edit rules
     Page Should Contain    Pullups
     Page should Contain    Rest:
     Page Should Contain    More test text
-    Element Should Not Be Visible    ${EXERCISE_TITLE}
     Element Should Not Be Visible    ${SET_REST}
 
 Other cancel edit buttons
@@ -480,6 +482,7 @@ When a workout is completed it rolls over as expected
     Input Text    (${NEXT_WEIGHT_INPUT})[1]    30+2.5
     Input Text    (${NEXT_WEIGHT_INPUT})[2]    15
     Click Element    ${NEXT_WEIGHT_CONFIRM}
+    Click Element    ${COLLAPSE_EXERCISE_BTN}
     Wait Until Element Is Visible    ${NEXT_WEIGHT_BTN_DONE}
 
     # Create New Exercise
@@ -509,6 +512,7 @@ When a workout is completed it rolls over as expected
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
     Click Element    ${NEXT_WEIGHT_BTN}
     Click Element    ${NEXT_WEIGHT_CONFIRM}
+    Click Element    (${COLLAPSE_EXERCISE_BTN})[2]
     Wait Until Element Is Visible    ${NEXT_WEIGHT_BTN_DONE}
 
     # Slight pause for the save process
@@ -547,7 +551,7 @@ When a workout is completed it rolls over as expected
     Element Should Have Class    (${SET_COMPLETE})[3]    bg-green-500
 
     Verify exercise set field value    PULLUPS    ${EXERCISE_NOTES_TEXTAREA}    1   9/10 on last dropset. Keeping weight. Form focus.
-    Click Element    ${NEXT_WEIGHT_BTN_DONE}
+    Click Next Weight Done Button
     Element Attribute Value Should Be    ${NEXT_WEIGHT_INPUT}    value    30+2.5
     Element Attribute Value Should Be    (${NEXT_WEIGHT_INPUT})[2]    value    15
     Click Element    ${NEXT_WEIGHT_CANCEL}
@@ -573,7 +577,7 @@ When a workout is completed it rolls over as expected
 
     Verify exercise set field value    Chin Ups    ${EXERCISE_NOTES_TEXTAREA}    1   8/10 on last set  
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
-    Click Element    (${NEXT_WEIGHT_BTN_DONE})[2]
+    Click Next Weight Done Button    (${NEXT_WEIGHT_BTN_DONE})[2]
     Element Attribute Value Should Be    ${NEXT_WEIGHT_INPUT}    value    20
     Click Element    ${NEXT_WEIGHT_CANCEL}
 
@@ -663,6 +667,167 @@ When a workout is completed it rolls over as expected
     Click Element    (${NEXT_WEIGHT_BTN})[2]
     Element Attribute Value Should Be    ${NEXT_WEIGHT_INPUT}    value    20
     Click Element    ${NEXT_WEIGHT_CANCEL}
+
+# =============================================================================
+# EXERCISE COLLAPSE TESTS
+# =============================================================================
+Exercise can be manually collapsed and expanded
+    [Documentation]    User can manually collapse and expand exercises using the caret button
+    [Setup]    Setup for workout tests    Manual Test Workout 14
+    
+    # Verify exercise content is visible initially
+    Element Should Be Visible    ${SET_REPS}
+    Element Should Be Visible    ${SET_WEIGHT}
+    Element Should Be Visible    ${EXERCISE_NOTES_TEXTAREA}
+    
+    # Click collapse button
+    Click Element    ${COLLAPSE_EXERCISE_BTN}
+    Sleep    0.5s
+    
+    # Verify exercise content is hidden
+    Element Should Not Be Visible    ${SET_REPS}
+    Element Should Not Be Visible    ${SET_WEIGHT}
+    Element Should Not Be Visible    ${EXERCISE_NOTES_TEXTAREA}
+    
+    # Verify exercise title is still visible
+    Element Should Be Visible    ${EXERCISE_TITLE}
+    
+    # Click expand button
+    Click Element    ${COLLAPSE_EXERCISE_BTN}
+    Sleep    0.5s
+    
+    # Verify exercise content is visible again
+    Element Should Be Visible    ${SET_REPS}
+    Element Should Be Visible    ${SET_WEIGHT}
+    Element Should Be Visible    ${EXERCISE_NOTES_TEXTAREA}
+    
+    # Verify collapse state persists after page reload
+    Click Element    ${COLLAPSE_EXERCISE_BTN}
+    Sleep    1s
+    Reload Page
+    Go To A Workout    Manual Test Workout 14
+    
+    # Content should still be hidden after reload
+    Element Should Not Be Visible    ${SET_REPS}
+    Element Should Be Visible    ${EXERCISE_TITLE}
+
+Exercise auto-collapses when setting next weights
+    [Documentation]    Exercise automatically collapses after user sets weights for next lift
+    [Setup]    Setup for workout tests    Manual Test Workout 15
+    
+    # Setup and complete sets
+    Make edit to field that uses single input modal    Pullups    1    ${SET_WEIGHT}    100
+    Toggle complete set field    Pullups    1
+    Toggle complete set field    Pullups    2
+    
+    # Verify exercise is expanded and next weight button is visible
+    Element Should Be Visible    ${SET_REPS}
+    Element Should Be Visible    ${SET_WEIGHT}
+    Element Should Be Visible    ${NEXT_WEIGHT_BTN}
+    
+    # Open and set next weights
+    Click Element    ${NEXT_WEIGHT_BTN}
+    Wait Until Element Is Visible    ${NEXT_WEIGHT_INPUT}
+    Input Text    ${NEXT_WEIGHT_INPUT}    105
+    Click Element    ${NEXT_WEIGHT_CONFIRM}
+    Sleep    0.5s
+    
+    # Verify exercise auto-collapsed
+    Element Should Not Be Visible    ${SET_REPS}
+    Element Should Not Be Visible    ${SET_WEIGHT}
+    Element Should Not Be Visible    ${EXERCISE_NOTES_TEXTAREA}
+    
+    # Verify exercise title is still visible
+    Element Should Be Visible    ${EXERCISE_TITLE}
+    
+    # Verify collapse persists after reload
+    Sleep    1s
+    Reload Page
+    Go To A Workout    Manual Test Workout 15
+    Element Should Not Be Visible    ${SET_REPS}
+    Element Should Be Visible    ${EXERCISE_TITLE}
+
+Completion indicator shows on collapsed completed exercises
+    [Documentation]    Green checkmark appears next to exercise name when collapsed and weights are set
+    [Setup]    Setup for workout tests    Manual Test Workout 16
+    
+    # Setup and complete sets
+    Make edit to field that uses single input modal    Pullups    1    ${SET_WEIGHT}    100
+    Toggle complete set field    Pullups    1
+    Toggle complete set field    Pullups    2
+    
+    # Verify no checkmark when expanded
+    Element Should Not Be Visible    ${EXERCISE_COMPLETE_INDICATOR}
+    
+    # Set next weights (this will auto-collapse)
+    Click Element    ${NEXT_WEIGHT_BTN}
+    Wait Until Element Is Visible    ${NEXT_WEIGHT_INPUT}
+    Input Text    ${NEXT_WEIGHT_INPUT}    105
+    Click Element    ${NEXT_WEIGHT_CONFIRM}
+    Sleep    0.5s
+    
+    # Verify exercise is collapsed and checkmark is visible
+    Element Should Not Be Visible    ${SET_REPS}
+    Element Should Be Visible    ${EXERCISE_COMPLETE_INDICATOR}
+    
+    # Expand exercise - checkmark should disappear
+    Click Element    ${COLLAPSE_EXERCISE_BTN}
+    Sleep    0.5s
+    Element Should Be Visible    ${SET_REPS}
+    Element Should Not Be Visible    ${EXERCISE_COMPLETE_INDICATOR}
+    
+    # Collapse again - checkmark should reappear
+    Click Element    ${COLLAPSE_EXERCISE_BTN}
+    Sleep    0.5s
+    Element Should Not Be Visible    ${SET_REPS}
+    Element Should Be Visible    ${EXERCISE_COMPLETE_INDICATOR}
+    
+    # Verify state persists after reload
+    Sleep    1s
+    Reload Page
+    Go To A Workout    Manual Test Workout 16
+    Element Should Not Be Visible    ${SET_REPS}
+    Element Should Be Visible    ${EXERCISE_COMPLETE_INDICATOR}
+
+Collapse works with multiple exercises
+    [Documentation]    Multiple exercises can be collapsed independently
+    [Setup]    Setup for workout tests    Manual Test Workout 17
+    
+    # Add second exercise
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
+    Click Element    ${ADD_EXERCISE_BTN}
+    Populate New Exercise Info    Chin Ups    2
+    Sleep    1s
+    
+    # Collapse first exercise
+    Execute JavaScript    window.scrollTo(0, 0)
+    Click Element    ${COLLAPSE_EXERCISE_BTN}
+    Sleep    0.5s
+    
+    # Verify first is collapsed, second is expanded
+    ${first_set_reps} =    Get nth set elem of exercise    Pullups    ${SET_REPS}    1
+    ${second_set_reps} =    Get nth set elem of exercise    Chin Ups    ${SET_REPS}    1
+    Element Should Not Be Visible    ${first_set_reps}
+    Element Should Be Visible    ${second_set_reps}
+    
+    # Collapse second exercise
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
+    ${second_collapse_btn} =    Set Variable    (${COLLAPSE_EXERCISE_BTN})[2]
+    Click Element    ${second_collapse_btn}
+    Sleep    0.5s
+    
+    # Verify both are collapsed
+    Element Should Not Be Visible    ${first_set_reps}
+    Element Should Not Be Visible    ${second_set_reps}
+    
+    # Expand first only
+    Execute JavaScript    window.scrollTo(0, 0)
+    Click Element    ${COLLAPSE_EXERCISE_BTN}
+    Sleep    0.5s
+    
+    # Verify first is expanded, second still collapsed
+    Element Should Be Visible    ${first_set_reps}
+    Element Should Not Be Visible    ${second_set_reps}
 
 *** Keywords ***
 Type Text Slowly

@@ -51,6 +51,7 @@ function WorkoutTracker({
     propNextWeightValues || {},
   );
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
+  const [collapsedExercises, setCollapsedExercises] = useState(new Set());
   const exerciseRefs = useRef({});
 
   // Use external darkMode if provided, otherwise use internal state
@@ -501,8 +502,57 @@ function WorkoutTracker({
       ...nextWeightValues,
       ...weightGroupValues,
     });
+    
+    // Collapse the exercise after saving weights
+    setCollapsedExercises(prev => {
+      const newCollapsed = new Set(prev);
+      newCollapsed.add(currentExerciseForWeightGroup);
+      return newCollapsed;
+    });
+    
     closeWeightGroupModal();
   };
+  const toggleExerciseCollapse = (exerciseName) => {
+    setCollapsedExercises(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(exerciseName)) {
+        newSet.delete(exerciseName);
+      } else {
+        newSet.add(exerciseName);
+      }
+      return newSet;
+    });
+  };
+  
+  // Load collapsed exercises from localStorage on mount or when exercises change
+  useEffect(() => {
+    if (exercises.length > 0) {
+      try {
+        const exerciseNames = Object.keys(groupedExercises).join('|');
+        const storageKey = `collapsedExercises_${exerciseNames}`;
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          setCollapsedExercises(new Set(JSON.parse(saved)));
+        }
+      } catch (err) {
+        console.error('Failed to load collapsed exercises:', err);
+      }
+    }
+  }, [exercises.length]); // Only run when exercises are first loaded
+  
+  // Save collapsed exercises to localStorage whenever they change
+  useEffect(() => {
+    if (exercises.length > 0) {
+      try {
+        const exerciseNames = Object.keys(groupedExercises).join('|');
+        const storageKey = `collapsedExercises_${exerciseNames}`;
+        localStorage.setItem(storageKey, JSON.stringify(Array.from(collapsedExercises)));
+      } catch (err) {
+        console.error('Failed to save collapsed exercises:', err);
+      }
+    }
+  }, [collapsedExercises, exercises.length]);
+  
   const processImportData = (data) => {
     const importedNotes = {};
     let n = [];
@@ -717,29 +767,43 @@ function WorkoutTracker({
               <div
                 className={`rounded-xl shadow-md border p-6 space-y-3 transition-colors ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}
               >
-                <h2
-                  onClick={
-                    editMode ? () => openEditExerciseName(exerciseName, exerciseName) : undefined
-                  }
-                  style={{
-                    cursor: editMode ? "pointer" : "default",
-                    userSelect: "none",
-                  }}
-                  className={
-                    editMode
-                      ? `zz_editable_exercise_name text-xl font-bold mb-3 pl-1 hover:text-blue-600 transition-colors ${darkMode ? "text-gray-100" : "text-gray-800"}`
-                      : `text-xl font-bold mb-3 pl-1 transition-colors ${darkMode ? "text-gray-100" : "text-gray-800"}`
-                  }
-                >
-                  {exerciseName}
-                </h2>
-                {importedExerciseNotes[exerciseName] && (
-                  <div
-                    className={`mb-3 px-3 py-2 rounded-lg border-l-4 ${darkMode ? "bg-gray-750 border-blue-600 text-gray-400" : "bg-blue-50 border-blue-400 text-gray-600"}`}
-                  >
-                    <p className="zz_last_lift_notes text-sm italic">{importedExerciseNotes[exerciseName]}</p>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <h2
+                      onClick={
+                        editMode ? () => openEditExerciseName(exerciseName, exerciseName) : undefined
+                      }
+                      style={{
+                        cursor: editMode ? "pointer" : "default",
+                        userSelect: "none",
+                      }}
+                      className={`zz_editable_exercise_name text-xl font-bold pl-1 transition-colors ${editMode ? "hover:text-blue-600" : ""} ${darkMode ? "text-gray-100" : "text-gray-800"}`}
+                    >
+                      {exerciseName}
+                    </h2>
+                    {collapsedExercises.has(exerciseName) && exercisesWithWeightSet.has(exerciseName) && (
+                      <div className="flex items-center">
+                        <Check className={`w-5 h-5 ${darkMode ? "text-green-400" : "text-green-600"}`} />
+                      </div>
+                    )}
                   </div>
-                )}
+                  <button
+                    onClick={() => toggleExerciseCollapse(exerciseName)}
+                    className={`zz_btn_toggle_collapse p-2 rounded-lg transition-all ${darkMode ? "hover:bg-gray-700 text-gray-400" : "hover:bg-gray-100 text-gray-500"}`}
+                    aria-label={collapsedExercises.has(exerciseName) ? "Expand exercise" : "Collapse exercise"}
+                  >
+                    <ChevronDown className={`w-5 h-5 transition-transform duration-200 ${collapsedExercises.has(exerciseName) ? "-rotate-90" : ""}`} />
+                  </button>
+                </div>
+                {!collapsedExercises.has(exerciseName) && (
+                  <>
+                    {importedExerciseNotes[exerciseName] && (
+                      <div
+                        className={`mb-3 px-3 py-2 rounded-lg border-l-4 ${darkMode ? "bg-gray-750 border-blue-600 text-gray-400" : "bg-blue-50 border-blue-400 text-gray-600"}`}
+                      >
+                        <p className="zz_last_lift_notes text-sm italic">{importedExerciseNotes[exerciseName]}</p>
+                      </div>
+                    )}
                 {t.map((e, r) => {
                   const n = 0 === r || t[r - 1].completed,
                     s = !e.completed && !n,
@@ -959,6 +1023,8 @@ function WorkoutTracker({
                       Set Weight For Next Lift
                     </button>
                   ))}
+                  </>
+                )}
               </div>
               {r < Object.entries(groupedExercises).length - 1 && editMode && (
                 <button

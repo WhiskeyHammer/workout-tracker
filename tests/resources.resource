@@ -107,6 +107,8 @@ ${SET_COMPLETE_CANCEL}      //button[contains(@class, "zz_btn_cancel_uncomplete"
 ${SET_NOTES_INPUT}          //textarea[contains(@class, "zz_input_edit_notes")]
 ${ADD_SET_BTN}              //button[contains(@class, "zz_btn_add_set")]
 ${EXERCISE_NOTES_TEXTAREA}  //textarea[contains(@class, "zz_textarea_exercise_notes")]
+${COLLAPSE_EXERCISE_BTN}    //button[contains(@class, "zz_btn_toggle_collapse")]
+${EXERCISE_COMPLETE_INDICATOR}  //div/*[local-name()='svg' and contains(@class, 'w-5') and contains(@class, 'h-5')]
 
 ${ADD_EXERCISE_BTN}         //button[contains(@class, "zz_btn_add_exercise_between") or contains(@class, "zz_btn_add_exercise_end")]
 ${COMPLETE_WORKOUT_BTN}     //button[contains(@class, "zz_btn_complete_workout")]
@@ -320,7 +322,7 @@ Element Should Have Class
 
 Get nth set elem of exercise
     [Arguments]    ${exercise}    ${elem}    ${n}
-    RETURN    (//div[./h2[contains(text(),'${exercise}')]]${elem})[${n}]
+    RETURN    (//div[./div/div/h2[contains(text(),'${exercise}')]]${elem})[${n}]
 
 Verify exercise set field value
     [Documentation]    Verify that a specific field of an exercise set has the expected value
@@ -370,3 +372,13 @@ Edit Complete Exercise Set
             Click Element    ${SAVE_WORKOUT_EDIT}
         END
     END
+
+Click Next Weight Done Button
+    [Documentation]    Click the "Done" button for next weight setting, expanding collapsed exercise if needed
+    [Arguments]    ${button_locator}=${NEXT_WEIGHT_BTN_DONE}
+    ${is_visible}=    Run Keyword And Return Status    Element Should Be Visible    ${button_locator}
+    IF    not ${is_visible}
+        Click Element    ${COLLAPSE_EXERCISE_BTN}
+        Sleep    0.5s
+    END
+    Click Element    ${button_locator}
