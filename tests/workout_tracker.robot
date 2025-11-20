@@ -404,12 +404,43 @@ Other cancel edit buttons
     Click Element    ${CANCEL_BTN}
     Element Text Should Be    ${SET_NOTES}    Click to add notes...
 
-The timer works as expectd
+The timer works as expected
     [Setup]    Setup for workout tests    Manual Test Workout 12
-    Make edit to field that uses single input modal    Pullups    1    ${SET_REST}    5
+    Make edit to field that uses single input modal    Pullups    1    ${SET_REST}    0:10
+    Make edit to field that uses single input modal    Pullups    2    ${SET_REST}    0:03
+    
+    # Complete first set and verify timer starts
+    ${set_2_complete_btn} =    Get nth set elem of exercise    Pullups    ${SET_COMPLETE}    2
     Click Element    ${SET_COMPLETE}
+    
+    # Verify timer is visible and set completion buttons are disabled during countdown
     Element Should Be Visible    ${SKIP_WAIT}
-    Wait Until Element Is Visible    ${SKIP_WAIT}    5s
+    Element Should Be Disabled    ${set_2_complete_btn}
+    
+    # Test skip rest dialog - cancel functionality
+    Click Element    ${SKIP_WAIT}
+    Wait Until Element Is Visible    ${CANCEL_SKIP_WAIT}
+    Click Element    ${CANCEL_SKIP_WAIT}
+    
+    # Timer should still be running after cancel
+    Element Should Be Visible    ${SKIP_WAIT}
+    Element Should Be Disabled    ${set_2_complete_btn}
+    
+    # Test skip rest dialog - confirm functionality  
+    Click Element    ${SKIP_WAIT}
+    Wait Until Element Is Visible    ${CONFIRM_SKIP_WAIT}
+    Click Element    ${CONFIRM_SKIP_WAIT}
+    
+    # Timer should be gone and buttons re-enabled
+    Wait Until Element Is Not Visible    ${SKIP_WAIT}    timeout=2s
+    Element Should Be Enabled    ${set_2_complete_btn}
+    
+    # Complete second set and verify shorter timer
+    Click Element    ${set_2_complete_btn}
+    Element Should Be Visible    ${SKIP_WAIT}
+    
+    # Let this timer expire naturally to verify audio alert
+    Wait Until Element Is Not Visible    ${SKIP_WAIT}    timeout=5s
     
 When a workout is completed it rolls over as expected
     [Setup]    Setup for workout tests    Manual Test Workout 13

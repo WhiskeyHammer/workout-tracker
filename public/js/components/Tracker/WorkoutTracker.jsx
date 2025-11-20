@@ -21,7 +21,9 @@ function WorkoutTracker({
   const [fileName, setFileName] = useState("");
   const [activeTimer, setActiveTimer] = useState(null);
   const [timeRemaining, setTimeRemaining] = useState(0);
+  const [timeRemainingMs, setTimeRemainingMs] = useState(0);
   const [timerEndTime, setTimerEndTime] = useState(null);
+  const [timerJustStarted, setTimerJustStarted] = useState(false);
   const [showUncompleteDialog, setShowUncompleteDialog] = useState(false);
   const [exerciseToUncomplete, setExerciseToUncomplete] = useState(null);
   const [showSkipRestDialog, setShowSkipRestDialog] = useState(false);
@@ -234,8 +236,10 @@ function WorkoutTracker({
       ) {
         const r = parseRestTime(t.rest);
         if (r > 0) {
+          setTimerJustStarted(true);
           setActiveTimer(e);
           setTimeRemaining(r);
+          setTimeRemainingMs(r * 1000);  // Initialize with full time in milliseconds
           setTimerEndTime(Date.now() + (r * 1000));
         }
       }
@@ -599,16 +603,30 @@ function WorkoutTracker({
       }
     }
   }, [autoImportData]);
+  // Reset timerJustStarted flag after initial fill
+  useEffect(() => {
+    if (timerJustStarted) {
+      // Use setTimeout to allow the instant fill to happen first
+      const timeoutId = setTimeout(() => {
+        setTimerJustStarted(false);
+      }, 50); // Reset after initial render
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [timerJustStarted]);
+
   useEffect(() => {
     if (null !== activeTimer && timerEndTime !== null) {
       // Use timestamp-based timer for accuracy even when app is backgrounded
       const intervalId = setInterval(() => {
         const now = Date.now();
-        const remaining = Math.max(0, Math.ceil((timerEndTime - now) / 1000));
+        const remainingMs = Math.max(0, timerEndTime - now);
+        const remainingSeconds = Math.ceil(remainingMs / 1000);
         
-        setTimeRemaining(remaining);
+        setTimeRemaining(remainingSeconds);
+        setTimeRemainingMs(remainingMs);
         
-        if (remaining === 0) {
+        if (remainingMs === 0) {
           // Play audio alert
           const audioContext = new (window.AudioContext || window.webkitAudioContext)();
           const oscillator = audioContext.createOscillator();
@@ -876,8 +894,8 @@ function WorkoutTracker({
                           )}
                           <button
                             onClick={() => toggleComplete(e.id)}
-                            disabled={s}
-                            className={`zz_btn_toggle_set_complete flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center transition-colors ${e.completed ? (o ? "bg-green-800 text-white cursor-not-allowed" : "bg-green-500 text-white") : s ? "bg-gray-300 text-gray-400 cursor-not-allowed" : "bg-gray-200 text-gray-400 hover:bg-gray-300"}`}
+                            disabled={s || (activeTimer !== null && timeRemaining > 0)}
+                            className={`zz_btn_toggle_set_complete flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center transition-colors ${e.completed ? (o ? "bg-green-800 text-white cursor-not-allowed" : "bg-green-500 text-white") : (s || (activeTimer !== null && timeRemaining > 0)) ? "bg-gray-300 text-gray-400 cursor-not-allowed" : "bg-gray-200 text-gray-400 hover:bg-gray-300"}`}
                           >
                             <Check className="w-8 h-8" />
                           </button>
@@ -964,58 +982,32 @@ function WorkoutTracker({
           )}
           <button
             onClick={() => setShowCompleteDialog(true)}
-            className={`zz_btn_complete_workout w-full mt-6 py-3 rounded-lg font-medium transition-colors ${darkMode ? "bg-green-700 text-white hover:bg-green-600" : "bg-green-600 text-white hover:bg-green-700"}`}
+            className={`zz_btn_complete_workout w-full mt-6 py-3 rounded-lg font-medium transition-colors ${
+              (() => {
+                // Get all exercise names that have weight groups and all sets complete
+                const exercisesNeedingWeightSet = Object.entries(groupedExercises)
+                  .filter(([name, sets]) => 
+                    sets.some(s => s["weight group"]) && 
+                    sets.every(s => s.completed)
+                  )
+                  .map(([name]) => name);
+                
+                // Check if all those exercises have weights set
+                const allWeightsSet = exercisesNeedingWeightSet.length === 0 || 
+                  exercisesNeedingWeightSet.every(name => exercisesWithWeightSet.has(name));
+                
+                return allWeightsSet
+                  ? darkMode 
+                    ? "bg-green-700 text-white hover:bg-green-600" 
+                    : "bg-green-600 text-white hover:bg-green-700"
+                  : darkMode
+                    ? "bg-gray-700 text-gray-300 hover:bg-gray-650"
+                    : "bg-gray-300 text-gray-600 hover:bg-gray-400";
+              })()
+            }`}
           >
             Complete Workout
           </button>
-        </div>
-      )}
-      {null !== activeTimer && timeRemaining > 0 && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20 p-4">
-          <div className={`rounded-2xl p-8 max-w-sm w-full shadow-2xl transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-            <div className="text-center">
-              <Clock className={`w-12 h-12 mx-auto mb-4 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
-              <h2 className={`text-xl font-bold mb-2 transition-colors ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                Rest Time
-              </h2>
-              <div className="relative w-48 h-48 mx-auto mb-6">
-                <svg className="transform -rotate-90 w-48 h-48">
-                  <circle
-                    cx="96"
-                    cy="96"
-                    r="88"
-                    stroke="#e5e7eb"
-                    strokeWidth="12"
-                    fill="none"
-                  />
-                  <circle
-                    cx="96"
-                    cy="96"
-                    r="88"
-                    stroke="#2563eb"
-                    strokeWidth="12"
-                    fill="none"
-                    strokeDasharray={`${2 * Math.PI * 88}`}
-                    strokeDashoffset={`${2 * Math.PI * 88 * (1 - timeRemaining / (exercises.find((e) => e.id === activeTimer)?.rest ? parseRestTime(exercises.find((e) => e.id === activeTimer).rest) : timeRemaining))}`}
-                    strokeLinecap="round"
-                    className="transition-all duration-1000 ease-linear"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className={`text-5xl font-bold transition-colors ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                    {Math.floor(timeRemaining / 60)}:
-                    {(timeRemaining % 60).toString().padStart(2, "0")}
-                  </span>
-                </div>
-              </div>
-              <button
-                onClick={handleSkipRestClick}
-                className="zz_btn_skip_rest w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-              >
-                Skip Rest
-              </button>
-            </div>
-          </div>
         </div>
       )}
       {showUncompleteDialog && (
@@ -1321,20 +1313,33 @@ function WorkoutTracker({
       )}
       {exercises.length > 0 && (
         <div
-          className={`fixed bottom-0 left-0 right-0 border-t p-4 shadow-lg transition-colors ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}
+          className={`fixed bottom-0 left-0 right-0 border-t shadow-lg transition-colors ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}
         >
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setDarkMode(!darkMode)}
-                className={`inline-flex items-center justify-center gap-2 px-4 h-10 rounded-lg font-medium transition-colors ${darkMode ? "bg-gray-700 text-gray-200 hover:bg-gray-600" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}
-              >
-                {darkMode ? (
-                  <Sun className="w-5 h-5" />
+          <div className="px-4 py-3">
+            <div className="flex items-center justify-between">
+              {/* Left: Empty space for symmetry */}
+              <div className="w-[100px]"></div>
+              
+              {/* Center: Timer or Progress */}
+              <div className="flex-1 flex justify-center">
+                {activeTimer !== null && timeRemaining > 0 ? (
+                  <button
+                    onClick={handleSkipRestClick}
+                    className={`zz_btn_skip_rest inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
+                  >
+                    <Clock className={`w-5 h-5 ${darkMode ? "text-blue-400" : "text-blue-600"}`} />
+                    <span className={`text-lg font-bold ${darkMode ? "text-gray-100" : "text-gray-900"}`}>
+                      {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, "0")}
+                    </span>
+                  </button>
                 ) : (
-                  <Moon className="w-5 h-5" />
+                  <span className="text-sm font-bold text-blue-600">
+                    {exercises.filter((e) => e.completed).length} / {exercises.length} completed
+                  </span>
                 )}
-              </button>
+              </div>
+              
+              {/* Right: Edit button */}
               <button
                 onClick={() => setEditMode(!editMode)}
                 className={`zz_btn_edit_mode inline-flex items-center justify-center gap-2 px-4 h-10 rounded-lg font-medium transition-colors ${darkMode ? "bg-gray-700 text-gray-200 hover:bg-gray-600" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}
@@ -1343,20 +1348,29 @@ function WorkoutTracker({
                 <span>{editMode ? "Done" : "Edit"}</span>
               </button>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm font-bold text-blue-600">
-                {exercises.filter((e) => e.completed).length} /{" "}
-                {exercises.length} completed
-              </span>
-            </div>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-              style={{
-                width: `${(exercises.filter((e) => e.completed).length / exercises.length) * 100}%`,
-              }}
-            />
+            
+            {/* Progress bar */}
+            {activeTimer !== null && timeRemaining > 0 ? (
+              // Linear timer progress bar
+              <div className="w-full bg-gray-200 rounded-full h-2 mt-2 overflow-hidden">
+                <div
+                  className={`bg-sky-500 h-2 rounded-full ${timerJustStarted ? '' : 'transition-all duration-50 ease-linear'}`}
+                  style={{
+                    width: `${(timeRemainingMs / ((exercises.find((e) => e.id === activeTimer)?.rest ? parseRestTime(exercises.find((e) => e.id === activeTimer).rest) : timeRemaining) * 1000)) * 100}%`,
+                  }}
+                />
+              </div>
+            ) : (
+              // Exercise completion progress bar
+              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                <div
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  style={{
+                    width: `${(exercises.filter((e) => e.completed).length / exercises.length) * 100}%`,
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
       )}

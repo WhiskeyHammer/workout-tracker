@@ -8,7 +8,8 @@ Library          OperatingSystem
 # =============================================================================
 # GLOBAL CONFIGURATION
 # =============================================================================
-${URL}                       https://workout-tracker-hxg5.onrender.com/
+#${URL}                       https://workout-tracker-hxg5.onrender.com/
+${URL}                       http://localhost:3000/
 ${BROWSER}                   Chrome
 ${USERNAME}                  test@test.com
 ${PASSWORD}                  testpassword5
@@ -82,6 +83,7 @@ ${INPUT_EDIT_WORKOUT}       //input[contains(@class,'zz_input')]
 
 ${SKIP_WAIT}                //button[contains(@class,'zz_btn_skip_rest')]
 ${CONFIRM_SKIP_WAIT}        //button[contains(@class,'zz_btn_confirm_skip_rest')]
+${CANCEL_SKIP_WAIT}         //button[contains(@class,'zz_btn_cancel_skip_rest')]
 
 ${NEXT_WEIGHT_BTN}     //button[contains(@class,'zz_btn_set_next_weight')]
 ${NEXT_WEIGHT_BTN_DONE}     //button[contains(@class,'zz_btn_exercise_complete')]

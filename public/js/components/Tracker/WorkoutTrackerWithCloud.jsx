@@ -307,6 +307,18 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
                     {saveStatus === 'error' && (
                         <span className="text-sm text-red-600 flex-shrink-0">Error</span>
                     )}
+                    
+                    <button
+                        onClick={() => setDarkMode(!darkMode)}
+                        className={`p-2 rounded-lg transition-colors flex-shrink-0 ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                        title="Toggle dark mode"
+                    >
+                        {darkMode ? (
+                            <Sun className="w-6 h-6 text-gray-200" />
+                        ) : (
+                            <Moon className="w-6 h-6 text-gray-900" />
+                        )}
+                    </button>
                 </div>
             </div>
             
