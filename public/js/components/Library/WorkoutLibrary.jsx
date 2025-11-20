@@ -11,12 +11,68 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
     const [newWorkoutName, setNewWorkoutName] = useState('');
     const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
     const [workoutToDelete, setWorkoutToDelete] = useState(null);
+    const [updateAvailable, setUpdateAvailable] = useState(false);
+    const [checkingUpdate, setCheckingUpdate] = useState(false);
     
     const userEmail = localStorage.getItem('userEmail');
     
     useEffect(() => {
         loadWorkouts();
+        
+        // Listen for service worker updates
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(registration => {
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            setUpdateAvailable(true);
+                        }
+                    });
+                });
+            });
+        }
     }, []);
+    
+    const checkForUpdates = async () => {
+        if (!('serviceWorker' in navigator)) {
+            alert('Service Worker not supported');
+            return;
+        }
+        
+        setCheckingUpdate(true);
+        try {
+            const registration = await navigator.serviceWorker.ready;
+            await registration.update();
+            
+            // If no update is found after checking, show feedback
+            setTimeout(() => {
+                if (!updateAvailable) {
+                    alert('You are running the latest version');
+                }
+                setCheckingUpdate(false);
+            }, 1000);
+        } catch (error) {
+            console.error('Error checking for updates:', error);
+            alert('Failed to check for updates');
+            setCheckingUpdate(false);
+        }
+    };
+    
+    const installUpdate = () => {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(registration => {
+                if (registration.waiting) {
+                    registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                    registration.waiting.addEventListener('statechange', e => {
+                        if (e.target.state === 'activated') {
+                            window.location.reload();
+                        }
+                    });
+                }
+            });
+        }
+    };
     
     const loadWorkouts = async () => {
         setLoading(true);
@@ -298,8 +354,29 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
                     </>
                 )}
                 
-                {/* Cache version display */}
+                {/* Update check button and version display */}
                 <div className="text-center mt-8 pb-4">
+                    {updateAvailable ? (
+                        <button
+                            onClick={installUpdate}
+                            className="mb-3 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm shadow-lg"
+                        >
+                            🔄 Update Available - Click to Install
+                        </button>
+                    ) : (
+                        <button
+                            onClick={checkForUpdates}
+                            disabled={checkingUpdate}
+                            className={`mb-3 px-3 py-1.5 rounded-lg transition-colors text-xs ${
+                                darkMode 
+                                    ? 'bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-gray-300' 
+                                    : 'bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-600'
+                            } ${checkingUpdate ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            title="Check for app updates"
+                        >
+                            {checkingUpdate ? '⏳ Checking...' : '🔍 Check for Updates'}
+                        </button>
+                    )}
                     <p className={`text-xs transition-colors ${darkMode ? 'text-gray-600' : 'text-gray-400'}`}>
                         v5
                     </p>

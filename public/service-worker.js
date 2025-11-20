@@ -99,3 +99,10 @@ self.addEventListener('activate', (event) => {
   // Claim clients to ensure service worker takes control immediately
   return self.clients.claim();
 });
+
+// Handle skip waiting message from client
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
