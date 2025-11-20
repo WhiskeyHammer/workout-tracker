@@ -1,5 +1,5 @@
 // Service Worker for Workout Tracker PWA
-const CACHE_NAME = 'workout-tracker-v4';
+const CACHE_NAME = 'workout-tracker-v5';
 const urlsToCache = [
   '/',
   '/index.html',

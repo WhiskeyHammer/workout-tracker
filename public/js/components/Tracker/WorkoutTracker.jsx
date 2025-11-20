@@ -21,6 +21,7 @@ function WorkoutTracker({
   const [fileName, setFileName] = useState("");
   const [activeTimer, setActiveTimer] = useState(null);
   const [timeRemaining, setTimeRemaining] = useState(0);
+  const [timerEndTime, setTimerEndTime] = useState(null);
   const [showUncompleteDialog, setShowUncompleteDialog] = useState(false);
   const [exerciseToUncomplete, setExerciseToUncomplete] = useState(null);
   const [showSkipRestDialog, setShowSkipRestDialog] = useState(false);
@@ -232,7 +233,11 @@ function WorkoutTracker({
         t.rest)
       ) {
         const r = parseRestTime(t.rest);
-        r > 0 && (setActiveTimer(e), setTimeRemaining(r));
+        if (r > 0) {
+          setActiveTimer(e);
+          setTimeRemaining(r);
+          setTimerEndTime(Date.now() + (r * 1000));
+        }
       }
       setExercises(
         exercises.map((t) =>
@@ -249,7 +254,7 @@ function WorkoutTracker({
   const confirmUncomplete = () => {
     (null !== exerciseToUncomplete &&
       (activeTimer === exerciseToUncomplete &&
-        (setActiveTimer(null), setTimeRemaining(0)),
+        (setActiveTimer(null), setTimeRemaining(0), setTimerEndTime(null)),
       setExercises(
         exercises.map((e) =>
           e.id === exerciseToUncomplete
@@ -270,7 +275,7 @@ function WorkoutTracker({
     setShowSkipRestDialog(!0);
   };
   const confirmSkipRest = () => {
-    (setActiveTimer(null), setTimeRemaining(0), setShowSkipRestDialog(!1));
+    (setActiveTimer(null), setTimeRemaining(0), setTimerEndTime(null), setShowSkipRestDialog(!1));
   };
   const cancelSkipRest = () => {
     setShowSkipRestDialog(!1);
@@ -311,7 +316,7 @@ function WorkoutTracker({
   const confirmDelete = () => {
     (null !== exerciseToDelete &&
       (activeTimer === exerciseToDelete &&
-        (setActiveTimer(null), setTimeRemaining(0)),
+        (setActiveTimer(null), setTimeRemaining(0), setTimerEndTime(null)),
       setExercises(exercises.filter((e) => e.id !== exerciseToDelete))),
       setShowDeleteDialog(!1),
       setExerciseToDelete(null));
@@ -595,46 +600,51 @@ function WorkoutTracker({
     }
   }, [autoImportData]);
   useEffect(() => {
-    if (null !== activeTimer && timeRemaining > 0) {
-      const e = setInterval(() => {
-        setTimeRemaining((e) => {
-          if (e <= 1) {
-            // Play audio alert
-            const e = new (window.AudioContext || window.webkitAudioContext)(),
-              t = e.createOscillator(),
-              r = e.createGain();
-            (t.connect(r),
-              r.connect(e.destination),
-              (t.frequency.value = 800),
-              (t.type = "sine"),
-              r.gain.setValueAtTime(0.3, e.currentTime),
-              r.gain.exponentialRampToValueAtTime(0.01, e.currentTime + 0.5),
-              t.start(e.currentTime),
-              t.stop(e.currentTime + 0.5),
-              setTimeout(() => {
-                const t = e.createOscillator(),
-                  r = e.createGain();
-                (t.connect(r),
-                  r.connect(e.destination),
-                  (t.frequency.value = 800),
-                  (t.type = "sine"),
-                  r.gain.setValueAtTime(0.3, e.currentTime),
-                  r.gain.exponentialRampToValueAtTime(
-                    0.01,
-                    e.currentTime + 0.5,
-                  ),
-                  t.start(e.currentTime),
-                  t.stop(e.currentTime + 0.5));
-              }, 200));
-            
-            setActiveTimer(null);
-          }
-          return e <= 1 ? 0 : e - 1;
-        });
-      }, 1e3);
-      return () => clearInterval(e);
+    if (null !== activeTimer && timerEndTime !== null) {
+      // Use timestamp-based timer for accuracy even when app is backgrounded
+      const intervalId = setInterval(() => {
+        const now = Date.now();
+        const remaining = Math.max(0, Math.ceil((timerEndTime - now) / 1000));
+        
+        setTimeRemaining(remaining);
+        
+        if (remaining === 0) {
+          // Play audio alert
+          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          oscillator.frequency.value = 800;
+          oscillator.type = "sine";
+          gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+          oscillator.start(audioContext.currentTime);
+          oscillator.stop(audioContext.currentTime + 0.5);
+          
+          // Second beep
+          setTimeout(() => {
+            const oscillator2 = audioContext.createOscillator();
+            const gainNode2 = audioContext.createGain();
+            oscillator2.connect(gainNode2);
+            gainNode2.connect(audioContext.destination);
+            oscillator2.frequency.value = 800;
+            oscillator2.type = "sine";
+            gainNode2.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            oscillator2.start(audioContext.currentTime);
+            oscillator2.stop(audioContext.currentTime + 0.5);
+          }, 200);
+          
+          setActiveTimer(null);
+          setTimerEndTime(null);
+        }
+      }, 100); // Check every 100ms for better accuracy
+      
+      return () => clearInterval(intervalId);
     }
-  }, [activeTimer, timeRemaining]);
+  }, [activeTimer, timerEndTime]);
   return (
     <div
       className={`min-h-screen pb-20 transition-colors overflow-x-hidden ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}
