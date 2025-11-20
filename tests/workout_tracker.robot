@@ -49,7 +49,7 @@ Edits persists
     ...    ${SET_GROUP}=96
     ...    ${SET_NOTES}=95
     Element Should Have Class    ${SET_COMPLETE}    bg-green-500
-    Element Text Should Be    ${EXERCISE_NOTES_TEXTAREA}    94
+    Element Text Should Be    ${EXERCISE_NOTES}    94
     # Verification of the new exercise
     Verify exercise set field value    Chin Ups    ${EXERCISE_TITLE}   1    Chin Ups
     Verify Complete Exercise Set    Chin Ups    1
@@ -58,7 +58,7 @@ Edits persists
     ...    ${SET_REST}=0
     ...    ${SET_GROUP}=Chin Ups
     ...    ${SET_NOTES}=Click to add notes...
-    Verify exercise set field value    Chin Ups    ${EXERCISE_NOTES_TEXTAREA}    1   ${EMPTY}
+    Verify exercise set field value    Chin Ups    ${EXERCISE_NOTES}    1   Click to add notes about this exercise...
     ${new_exercise_complete} =    Get nth set elem of exercise    Chin Ups     ${SET_COMPLETE}   1
     Element Should Have Class    ${new_exercise_complete}    bg-gray-300
 
@@ -383,9 +383,12 @@ Pre-edit toggle visibility and edit rules
     Element Should Be Visible    ${COMPLETE_WORKOUT_BTN}
     
     # Confirm that the below are visible and editable without toggle engaged
-    Element Should Be Visible   ${EXERCISE_NOTES_TEXTAREA}
-    Type Text Slowly   ${EXERCISE_NOTES_TEXTAREA}    Test text
-    Element Text Should Be   ${EXERCISE_NOTES_TEXTAREA}    Test text
+    Element Should Be Visible   ${EXERCISE_NOTES}
+    Click Element    ${EXERCISE_NOTES}
+    Wait Until Element Is Visible    ${EXERCISE_NOTES_INPUT}
+    Input Text    ${EXERCISE_NOTES_INPUT}    Test text
+    Click Element    ${EXERCISE_NOTES_SAVE}
+    Element Text Should Be   ${EXERCISE_NOTES}    Test text
     
     Element Should Be Visible    ${SET_COMPLETE}
     Click Element    ${SET_COMPLETE}
@@ -550,7 +553,7 @@ When a workout is completed it rolls over as expected
     ...    ${SET_NOTES}=DROPSET!
     Element Should Have Class    (${SET_COMPLETE})[3]    bg-green-500
 
-    Verify exercise set field value    PULLUPS    ${EXERCISE_NOTES_TEXTAREA}    1   9/10 on last dropset. Keeping weight. Form focus.
+    Verify exercise set field value    PULLUPS    ${EXERCISE_NOTES}    1   9/10 on last dropset. Keeping weight. Form focus.
     Click Next Weight Done Button
     Element Attribute Value Should Be    ${NEXT_WEIGHT_INPUT}    value    30+2.5
     Element Attribute Value Should Be    (${NEXT_WEIGHT_INPUT})[2]    value    15
@@ -575,7 +578,7 @@ When a workout is completed it rolls over as expected
     ...    ${SET_NOTES}=Click to add notes...
     Element Should Have Class    (${SET_COMPLETE})[5]    bg-green-500
 
-    Verify exercise set field value    Chin Ups    ${EXERCISE_NOTES_TEXTAREA}    1   8/10 on last set  
+    Verify exercise set field value    Chin Ups    ${EXERCISE_NOTES}    1   8/10 on last set  
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
     Click Next Weight Done Button    (${NEXT_WEIGHT_BTN_DONE})[2]
     Element Attribute Value Should Be    ${NEXT_WEIGHT_INPUT}    value    20
@@ -616,7 +619,7 @@ When a workout is completed it rolls over as expected
     ...    ${SET_NOTES}=DROPSET!
     Element Should Have Class    (${SET_COMPLETE})[3]    bg-gray-300
 
-    Verify exercise set field value    PULLUPS    ${EXERCISE_NOTES_TEXTAREA}    1   ${EMPTY}
+    Verify exercise set field value    PULLUPS    ${EXERCISE_NOTES}    1   Click to add notes about this exercise...
     Element Should Be Visible    //button[contains(@class,'zz_btn_copy_previous_notes')]
 
     # Verify the second exercise group
@@ -639,15 +642,15 @@ When a workout is completed it rolls over as expected
     ...    ${SET_NOTES}=Click to add notes...
     Element Should Have Class    (${SET_COMPLETE})[5]    bg-gray-300
 
-    Verify exercise set field value    Chin Ups    ${EXERCISE_NOTES_TEXTAREA}    1   ${EMPTY}
+    Verify exercise set field value    Chin Ups    ${EXERCISE_NOTES}    1   Click to add notes about this exercise...
     Element Should Be Visible    (//button[contains(@class,'zz_btn_copy_previous_notes')])[2]
 
     # Copy button works
     Click Element    //button[contains(@class,'zz_btn_copy_previous_notes')]
-    Verify exercise set field value    PULLUPS    ${EXERCISE_NOTES_TEXTAREA}    1   9/10 on last dropset. Keeping weight. Form focus.
+    Verify exercise set field value    PULLUPS    ${EXERCISE_NOTES}    1   9/10 on last dropset. Keeping weight. Form focus.
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
     Click Element    (//button[contains(@class,'zz_btn_copy_previous_notes')])[2]
-    Verify exercise set field value    Chin Ups    ${EXERCISE_NOTES_TEXTAREA}    1   8/10 on last set  
+    Verify exercise set field value    Chin Ups    ${EXERCISE_NOTES}    1   8/10 on last set  
 
     # Nothing weird in the next notes section
     Toggle complete set field    PULLUPS    1
@@ -678,7 +681,7 @@ Exercise can be manually collapsed and expanded
     # Verify exercise content is visible initially
     Element Should Be Visible    ${SET_REPS}
     Element Should Be Visible    ${SET_WEIGHT}
-    Element Should Be Visible    ${EXERCISE_NOTES_TEXTAREA}
+    Element Should Be Visible    ${EXERCISE_NOTES}
     
     # Click collapse button
     Click Element    ${COLLAPSE_EXERCISE_BTN}
@@ -687,7 +690,7 @@ Exercise can be manually collapsed and expanded
     # Verify exercise content is hidden
     Element Should Not Be Visible    ${SET_REPS}
     Element Should Not Be Visible    ${SET_WEIGHT}
-    Element Should Not Be Visible    ${EXERCISE_NOTES_TEXTAREA}
+    Element Should Not Be Visible    ${EXERCISE_NOTES}
     
     # Verify exercise title is still visible
     Element Should Be Visible    ${EXERCISE_TITLE}
@@ -699,7 +702,7 @@ Exercise can be manually collapsed and expanded
     # Verify exercise content is visible again
     Element Should Be Visible    ${SET_REPS}
     Element Should Be Visible    ${SET_WEIGHT}
-    Element Should Be Visible    ${EXERCISE_NOTES_TEXTAREA}
+    Element Should Be Visible    ${EXERCISE_NOTES}
     
     # Verify collapse state persists after page reload
     Click Element    ${COLLAPSE_EXERCISE_BTN}
@@ -735,7 +738,7 @@ Exercise auto-collapses when setting next weights
     # Verify exercise auto-collapsed
     Element Should Not Be Visible    ${SET_REPS}
     Element Should Not Be Visible    ${SET_WEIGHT}
-    Element Should Not Be Visible    ${EXERCISE_NOTES_TEXTAREA}
+    Element Should Not Be Visible    ${EXERCISE_NOTES}
     
     # Verify exercise title is still visible
     Element Should Be Visible    ${EXERCISE_TITLE}
@@ -878,8 +881,11 @@ Toggle complete set field
 
 Set exercise level notes
     [Arguments]     ${exercise}    ${text}
-    ${target_exercise_notes} =     Get nth set elem of exercise    ${exercise}     ${EXERCISE_NOTES_TEXTAREA}    1
-    Type Text Slowly     ${target_exercise_notes}    ${text}
+    ${target_exercise_notes} =     Get nth set elem of exercise    ${exercise}     ${EXERCISE_NOTES}    1
+    Click Element    ${target_exercise_notes}
+    Wait Until Element Is Visible    ${EXERCISE_NOTES_INPUT}
+    Input Text    ${EXERCISE_NOTES_INPUT}    ${text}
+    Click Element    ${EXERCISE_NOTES_SAVE}
 
 Validate that edit modal opens on click and cancel works
     [Arguments]    ${elem}    ${expected_value}

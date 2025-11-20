@@ -53,6 +53,9 @@ function WorkoutTracker({
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const [collapsedExercises, setCollapsedExercises] = useState(new Set());
   const exerciseRefs = useRef({});
+  const [editingExerciseNotes, setEditingExerciseNotes] = useState(null);
+  const [editExerciseNotesValue, setEditExerciseNotesValue] = useState("");
+  const exerciseNotesTextareaRef = useRef(null);
 
   // Use external darkMode if provided, otherwise use internal state
   const darkMode = propDarkMode !== undefined ? propDarkMode : internalDarkMode;
@@ -314,6 +317,20 @@ function WorkoutTracker({
       ...prevNotes,
       [e]: t,
     }));
+  };
+  const openEditExerciseNotesDialog = (exerciseName, currentValue) => {
+    setEditingExerciseNotes(exerciseName);
+    setEditExerciseNotesValue(currentValue || "");
+  };
+  const closeEditExerciseNotesDialog = () => {
+    setEditingExerciseNotes(null);
+    setEditExerciseNotesValue("");
+  };
+  const saveExerciseNotes = () => {
+    if (editingExerciseNotes) {
+      updateExerciseNote(editingExerciseNotes, editExerciseNotesValue);
+    }
+    closeEditExerciseNotesDialog();
   };
   const openDeleteDialog = (e) => {
     (setExerciseToDelete(e), setShowDeleteDialog(!0));
@@ -653,6 +670,16 @@ function WorkoutTracker({
       }
     }
   }, [autoImportData]);
+  
+  // Position cursor at end of text when exercise notes modal opens
+  useEffect(() => {
+    if (editingExerciseNotes && exerciseNotesTextareaRef.current) {
+      const textarea = exerciseNotesTextareaRef.current;
+      const length = textarea.value.length;
+      textarea.setSelectionRange(length, length);
+      textarea.focus();
+    }
+  }, [editingExerciseNotes]);
   // Reset timerJustStarted flag after initial fill
   useEffect(() => {
     if (timerJustStarted) {
@@ -998,13 +1025,20 @@ function WorkoutTracker({
                       </button>
                     )}
                   </div>
-                  <textarea
-                    value={exerciseNotes[exerciseName] || ""}
-                    onChange={(t) => updateExerciseNote(exerciseName, t.target.value)}
-                    placeholder="Add notes about this exercise..."
-                    className={`zz_textarea_exercise_notes w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-colors ${darkMode ? "bg-gray-600 border-gray-500 text-gray-100 placeholder-gray-400" : "bg-white border-gray-300 text-gray-900"}`}
-                    rows="3"
-                  />
+                  <p
+                    onClick={() => openEditExerciseNotesDialog(exerciseName, exerciseNotes[exerciseName])}
+                    style={{
+                      cursor: "pointer",
+                      userSelect: "none",
+                    }}
+                    className={`zz_editable_exercise_notes w-full px-3 py-2 border rounded-lg text-sm hover:text-blue-500 hover:border-blue-400 transition-colors min-h-[60px] ${darkMode ? "bg-gray-600 border-gray-500 text-gray-100" : "bg-white border-gray-300 text-gray-900"}`}
+                  >
+                    {exerciseNotes[exerciseName] || (
+                      <span className={`italic ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                        Click to add notes about this exercise...
+                      </span>
+                    )}
+                  </p>
                 </div>
                 {t.some((e) => e["weight group"]) &&
                   t.every((e) => e.completed) &&
@@ -1339,6 +1373,37 @@ function WorkoutTracker({
               <button
                 onClick={saveWeightGroups}
                 className="zz_btn_save_next_weight flex-1 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {editingExerciseNotes && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-30 p-4">
+          <div className={`rounded-2xl p-6 max-w-sm w-full shadow-2xl transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <h2 className={`text-xl font-bold mb-4 transition-colors ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+              Edit Exercise Notes
+            </h2>
+            <textarea
+              ref={exerciseNotesTextareaRef}
+              value={editExerciseNotesValue}
+              onChange={(e) => setEditExerciseNotesValue(e.target.value)}
+              className={`zz_input_edit_exercise_notes w-full px-4 py-3 border-2 rounded-lg text-lg focus:outline-none mb-6 resize-none transition-colors ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 placeholder-gray-400' : 'border-gray-300 text-gray-900 focus:border-blue-500'}`}
+              placeholder="Add notes about this exercise..."
+              rows="4"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={closeEditExerciseNotesDialog}
+                className={`zz_btn_cancel_edit_exercise_notes flex-1 py-3 rounded-lg font-medium transition-colors ${darkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveExerciseNotes}
+                className="zz_btn_save_exercise_notes flex-1 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
               >
                 Save
               </button>

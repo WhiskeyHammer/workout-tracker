@@ -49,7 +49,7 @@ Create a workout using csv
     ...    ${SET_GROUP}=Underhand Pullups Dropset
     ...    ${SET_NOTES}=Dropset
     
-    Verify exercise set field value    Underhand Pullups    ${EXERCISE_NOTES_TEXTAREA}    1    ${EMPTY}
+    Verify exercise set field value    Underhand Pullups    ${EXERCISE_NOTES}    1    ${EMPTY}
     
     # Verify Incline DB Press exercise (3 sets)
     Verify Complete Exercise Set    Incline DB Press    1
@@ -73,7 +73,7 @@ Create a workout using csv
     ...    ${SET_GROUP}=Incline DB Press
     ...    ${SET_NOTES}=Click to add notes...
     
-    Verify exercise set field value    Incline DB Press    ${EXERCISE_NOTES_TEXTAREA}    1    ${EMPTY}
+    Verify exercise set field value    Incline DB Press    ${EXERCISE_NOTES}    1    ${EMPTY}
 
 Create a workout using json
     ${file_input} =    Set Variable    //input[@type='file']
@@ -116,7 +116,7 @@ Create a workout using json
     ...    ${SET_GROUP}=Underhand Pullups - Dropset
     ...    ${SET_NOTES}=drop set but it's okay to flame out
     
-    Verify exercise set field value    Underhand Pullups    ${EXERCISE_NOTES_TEXTAREA}    1    ${EMPTY}
+    Verify exercise set field value    Underhand Pullups    ${EXERCISE_NOTES}    1    ${EMPTY}
         
     # Verify Dumbbell Curls exercise (3 sets)
     Verify Complete Exercise Set    Dumbbell Curls    1
@@ -140,7 +140,7 @@ Create a workout using json
     ...    ${SET_GROUP}=Dumbbell Curls
     ...    ${SET_NOTES}=Click to add notes...
     
-    Verify exercise set field value    Dumbbell Curls    ${EXERCISE_NOTES_TEXTAREA}    1    New notes
+    Verify exercise set field value    Dumbbell Curls    ${EXERCISE_NOTES}    1    New notes
     
     # Verify Incline DB Press exercise (3 sets)
     Verify Complete Exercise Set    Incline DB Press    1
@@ -164,7 +164,7 @@ Create a workout using json
     ...    ${SET_GROUP}=Incline DB Press
     ...    ${SET_NOTES}=Click to add notes...
     
-    Verify exercise set field value    Incline DB Press    ${EXERCISE_NOTES_TEXTAREA}    1    ${EMPTY}
+    Verify exercise set field value    Incline DB Press    ${EXERCISE_NOTES}    1    ${EMPTY}
 
 # =============================================================================
 # MANUAL WORKOUT CREATION TESTS
@@ -191,7 +191,7 @@ Create a manual workout
     ...    ${SET_GROUP}=Pullups
     ...    ${SET_NOTES}=Click to add notes...
     
-    Verify exercise set field value    Pullups    ${EXERCISE_NOTES_TEXTAREA}    1   ${EMPTY}
+    Verify exercise set field value    Pullups    ${EXERCISE_NOTES}    1   ${EMPTY}
     [Teardown]   Click Element   ${BACK_BUTTON}
     # Approved
 
