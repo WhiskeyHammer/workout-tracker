@@ -355,11 +355,11 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
                 )}
                 
                 {/* Update check button and version display */}
-                <div className="text-center mt-8 pb-4">
+                <div className="flex flex-col items-center justify-end mt-auto pt-12 pb-6">
                     {updateAvailable ? (
                         <button
                             onClick={installUpdate}
-                            className="mb-3 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm shadow-lg"
+                            className="mb-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm shadow-lg"
                         >
                             🔄 Update Available - Click to Install
                         </button>
@@ -367,17 +367,18 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
                         <button
                             onClick={checkForUpdates}
                             disabled={checkingUpdate}
-                            className={`mb-3 px-3 py-1.5 rounded-lg transition-colors text-xs ${
+                            className={`mb-2 transition-all ${
                                 darkMode 
-                                    ? 'bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-gray-300' 
-                                    : 'bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-600'
-                            } ${checkingUpdate ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    ? 'text-gray-700 hover:text-gray-500' 
+                                    : 'text-gray-300 hover:text-gray-400'
+                            } ${checkingUpdate ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                            style={{ fontSize: '10px' }}
                             title="Check for app updates"
                         >
-                            {checkingUpdate ? '⏳ Checking...' : '🔍 Check for Updates'}
+                            {checkingUpdate ? 'checking...' : 'check for updates'}
                         </button>
                     )}
-                    <p className={`text-xs transition-colors ${darkMode ? 'text-gray-600' : 'text-gray-400'}`}>
+                    <p className={`text-xs transition-colors ${darkMode ? 'text-gray-700' : 'text-gray-300'}`}>
                         v5
                     </p>
                 </div>
