@@ -354,6 +354,18 @@ Wait For Element And Click
     Wait Until Element Is Enabled    ${locator}    ${timeout}
     Click Element    ${locator}
 
+
+Clear And Verify Input Field
+    [Arguments]    ${locator}
+    Wait Until Keyword Succeeds    3x    1s    Clear And Verify Input Field, raw    ${locator}
+
+Clear And Verify Input Field, raw
+    [Documentation]    Explicitly clear an input field and verify it's empty before entering new text
+    [Arguments]    ${locator}
+    Clear Element Text    ${locator}
+    ${value}=    Get Value    ${locator}
+    Should Be Empty    ${value}    Input field was not cleared properly
+
 Edit Complete Exercise Set
     [Documentation]    Edit multiple fields of an exercise set with a single keyword call
     ...                Accepts named parameters for each field to edit
@@ -364,6 +376,7 @@ Edit Complete Exercise Set
         IF    '${field}' == 'SET_NOTES'
             ${set_note} =    Get nth set elem of exercise    ${exercise}    ${SET_NOTES}    ${set_number}
             Click Element    ${set_note}
+            Clear And Verify Input Field    ${SET_NOTES_INPUT}
             Input Text    ${SET_NOTES_INPUT}    ${value}
             Click Element    ${SAVE_WORKOUT_EDIT}
         ELSE
@@ -371,6 +384,8 @@ Edit Complete Exercise Set
             ${target} =    Get nth set elem of exercise    ${exercise}    ${field_variable}    ${set_number}
             Click Element    ${target}
             Wait Until Element Is Visible    ${SAVE_WORKOUT_EDIT}
+            Clear And Verify Input Field    ${INPUT_EDIT_WORKOUT}
+            Sleep    1s
             Input Text    ${INPUT_EDIT_WORKOUT}    ${value}
             Click Element    ${SAVE_WORKOUT_EDIT}
         END

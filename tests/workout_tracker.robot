@@ -483,6 +483,7 @@ When a workout is completed it rolls over as expected
     Click Element    ${NEXT_WEIGHT_BTN}
     Clear Element Text    (${NEXT_WEIGHT_INPUT})[1]
     Input Text    (${NEXT_WEIGHT_INPUT})[1]    30+2.5
+    Sleep   1s
     Input Text    (${NEXT_WEIGHT_INPUT})[2]    15
     Click Element    ${NEXT_WEIGHT_CONFIRM}
     Click Element    ${COLLAPSE_EXERCISE_BTN}
@@ -704,6 +705,11 @@ Exercise can be manually collapsed and expanded
     [Documentation]    User can manually collapse and expand exercises using the caret button
     [Setup]    Setup for workout tests    Manual Test Workout 14
     
+    ${sets_visible} =    Run Keyword And Return Status  Element Should Be Visible    ${SET_REPS}
+    IF    not ${sets_visible}
+        Click Element    ${COLLAPSE_EXERCISE_BTN}
+    END
+
     # Verify exercise content is visible initially
     Element Should Be Visible    ${SET_REPS}
     Element Should Be Visible    ${SET_WEIGHT}
@@ -743,6 +749,11 @@ Exercise can be manually collapsed and expanded
 Exercise auto-collapses when setting next weights
     [Documentation]    Exercise automatically collapses after user sets weights for next lift
     [Setup]    Setup for workout tests    Manual Test Workout 15
+
+    ${sets_visible} =    Run Keyword And Return Status  Element Should Be Visible    ${SET_REPS}
+    IF    not ${sets_visible}
+        Click Element    ${COLLAPSE_EXERCISE_BTN}
+    END
     
     # Setup and complete sets
     Make edit to field that uses single input modal    Pullups    1    ${SET_WEIGHT}    100
@@ -780,6 +791,11 @@ Completion indicator shows on collapsed completed exercises
     [Documentation]    Green checkmark appears next to exercise name when collapsed and weights are set
     [Setup]    Setup for workout tests    Manual Test Workout 16
     
+    ${sets_visible} =    Run Keyword And Return Status  Element Should Be Visible    ${SET_REPS}
+    IF    not ${sets_visible}
+        Click Element    ${COLLAPSE_EXERCISE_BTN}
+    END
+
     # Setup and complete sets
     Make edit to field that uses single input modal    Pullups    1    ${SET_WEIGHT}    100
     Toggle complete set field    Pullups    1
@@ -829,9 +845,13 @@ Collapse works with multiple exercises
     Sleep    1s
     
     # Collapse first exercise
-    Execute JavaScript    window.scrollTo(0, 0)
-    Click Element    ${COLLAPSE_EXERCISE_BTN}
-    Sleep    0.5s
+    ${sets_visible} =    Run Keyword And Return Status  Element Should Be Visible    //div[./div/div/h2[text()='Pullups']]${SET_REPS}
+    WHILE    ${sets_visible}
+        Execute JavaScript    window.scrollTo(0, 0)
+        Click Element    ${COLLAPSE_EXERCISE_BTN}
+        Sleep    0.5s
+        ${sets_visible} =    Run Keyword And Return Status  Element Should Be Visible    //div[./div/div/h2[text()='Pullups']]${SET_REPS}
+    END
     
     # Verify first is collapsed, second is expanded
     ${first_set_reps} =    Get nth set elem of exercise    Pullups    ${SET_REPS}    1

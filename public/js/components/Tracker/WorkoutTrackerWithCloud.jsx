@@ -10,6 +10,7 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
     const [exercisesWithWeightSet, setExercisesWithWeightSet] = useState(new Set());
     const [darkMode, setDarkMode] = useState(true);
     const [autoImportData, setAutoImportData] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
     const isInitialLoadRef = useRef(true);
     
     useEffect(() => {
@@ -31,6 +32,7 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
     }, [exercises, exerciseNotes, nextWeightValues, exercisesWithWeightSet]);
     
     const loadWorkout = async (id) => {
+        setIsLoading(true);
         try {
             // First, get the workout template
             const workoutResponse = await api.call(`/workouts/${id}`);
@@ -72,6 +74,8 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
         } catch (err) {
             alert('Failed to load workout');
         } finally {
+            // Loading complete - allow WorkoutTracker to render
+            setIsLoading(false);
             // Mark initial load as complete to enable auto-save
             // Use setTimeout to ensure this happens after React processes the state updates
             setTimeout(() => {
@@ -322,21 +326,30 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
                 </div>
             </div>
             
-            <WorkoutTracker
-                exercises={exercises}
-                setExercises={setExercises}
-                exerciseNotes={exerciseNotes}
-                setExerciseNotes={setExerciseNotes}
-                nextWeightValues={nextWeightValues}
-                setNextWeightValues={setNextWeightValues}
-                exercisesWithWeightSet={exercisesWithWeightSet}
-                setExercisesWithWeightSet={setExercisesWithWeightSet}
-                darkMode={darkMode}
-                setDarkMode={setDarkMode}
-                hideFileUpload={true}
-                onComplete={handleComplete}
-                autoImportData={autoImportData}
-            />
+            {isLoading ? (
+                <div className={`flex items-center justify-center min-h-screen transition-colors ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+                    <div className="text-center">
+                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-solid border-blue-600 border-r-transparent mb-4"></div>
+                        <p className={`text-lg ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Loading workout...</p>
+                    </div>
+                </div>
+            ) : (
+                <WorkoutTracker
+                    exercises={exercises}
+                    setExercises={setExercises}
+                    exerciseNotes={exerciseNotes}
+                    setExerciseNotes={setExerciseNotes}
+                    nextWeightValues={nextWeightValues}
+                    setNextWeightValues={setNextWeightValues}
+                    exercisesWithWeightSet={exercisesWithWeightSet}
+                    setExercisesWithWeightSet={setExercisesWithWeightSet}
+                    darkMode={darkMode}
+                    setDarkMode={setDarkMode}
+                    hideFileUpload={true}
+                    onComplete={handleComplete}
+                    autoImportData={autoImportData}
+                />
+            )}
         </div>
     );
 }
