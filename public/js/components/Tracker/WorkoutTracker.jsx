@@ -794,7 +794,7 @@ function WorkoutTracker({
               <div
                 className={`rounded-xl shadow-md border p-6 space-y-3 transition-colors ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}
               >
-                <div className="flex items-center justify-between mb-3">
+                <div className={`flex items-center justify-between ${!collapsedExercises.has(exerciseName) ? 'mb-3' : ''}`}>
                   <div className="flex items-center gap-2">
                     <h2
                       onClick={
