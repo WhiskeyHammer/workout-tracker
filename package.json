@@ -4,8 +4,9 @@
   "description": "Workout tracker with MongoDB",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "npm run generate-version && node server.js",
+    "dev": "npm run generate-version && nodemon server.js",
+    "generate-version": "node scripts/generate-version.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

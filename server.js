@@ -36,6 +36,32 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Version endpoint
+app.get('/api/version', (req, res) => {
+  try {
+    const versionPath = path.join(__dirname, 'public', 'version.json');
+    const fs = require('fs');
+    
+    if (fs.existsSync(versionPath)) {
+      const versionData = JSON.parse(fs.readFileSync(versionPath, 'utf8'));
+      res.json(versionData);
+    } else {
+      // Return fallback version if file doesn't exist
+      res.json({
+        commitHash: 'unknown',
+        shortHash: 'dev',
+        commitDate: new Date().toISOString(),
+        branch: 'unknown',
+        buildDate: new Date().toISOString(),
+        repository: 'https://github.com/WhiskeyHammer/workout-tracker'
+      });
+    }
+  } catch (error) {
+    console.error('Error reading version:', error);
+    res.status(500).json({ error: 'Failed to read version information' });
+  }
+});
+
 // Serve frontend
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

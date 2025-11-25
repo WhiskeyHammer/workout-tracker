@@ -1,5 +1,17 @@
 // Service Worker for Workout Tracker PWA
-const CACHE_NAME = 'workout-tracker-v5';
+// Cache name will be updated dynamically from version.json
+let CACHE_NAME = 'workout-tracker-dev';
+
+// Try to load version info and update cache name
+fetch('/version.json')
+  .then(response => response.json())
+  .then(versionData => {
+    CACHE_NAME = `workout-tracker-${versionData.shortHash}`;
+  })
+  .catch(() => {
+    console.log('Using default cache name');
+  });
+
 const urlsToCache = [
   '/',
   '/index.html',

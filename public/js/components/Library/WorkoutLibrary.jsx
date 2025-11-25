@@ -13,11 +13,14 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
     const [workoutToDelete, setWorkoutToDelete] = useState(null);
     const [updateAvailable, setUpdateAvailable] = useState(false);
     const [checkingUpdate, setCheckingUpdate] = useState(false);
+    const [currentVersion, setCurrentVersion] = useState(null);
+    const [latestVersion, setLatestVersion] = useState(null);
     
     const userEmail = localStorage.getItem('userEmail');
     
     useEffect(() => {
         loadWorkouts();
+        loadCurrentVersion();
         
         // Listen for service worker updates
         if ('serviceWorker' in navigator) {
@@ -34,27 +37,61 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
         }
     }, []);
     
-    const checkForUpdates = async () => {
-        if (!('serviceWorker' in navigator)) {
-            alert('Service Worker not supported');
-            return;
+    const loadCurrentVersion = async () => {
+        try {
+            const response = await fetch('/api/version');
+            if (response.ok) {
+                const versionData = await response.json();
+                setCurrentVersion(versionData);
+            }
+        } catch (error) {
+            console.error('Error loading version:', error);
         }
-        
+    };
+    
+    const checkForUpdates = async () => {
         setCheckingUpdate(true);
         try {
-            const registration = await navigator.serviceWorker.ready;
-            await registration.update();
+            // Fetch latest commit from GitHub
+            const githubResponse = await fetch('https://api.github.com/repos/WhiskeyHammer/workout-tracker/commits/main');
             
-            // If no update is found after checking, show feedback
-            setTimeout(() => {
-                if (!updateAvailable) {
-                    alert('You are running the latest version');
+            if (!githubResponse.ok) {
+                throw new Error('Failed to fetch GitHub commits');
+            }
+            
+            const githubData = await githubResponse.json();
+            const latestCommitHash = githubData.sha;
+            const latestCommitShort = latestCommitHash.substring(0, 7);
+            
+            setLatestVersion({
+                commitHash: latestCommitHash,
+                shortHash: latestCommitShort,
+                commitDate: githubData.commit.committer.date,
+                message: githubData.commit.message
+            });
+            
+            // Compare with current version
+            if (currentVersion && currentVersion.commitHash !== 'unknown') {
+                if (currentVersion.commitHash !== latestCommitHash) {
+                    setUpdateAvailable(true);
+                } else {
+                    alert('You are running the latest version (' + currentVersion.shortHash + ')');
                 }
-                setCheckingUpdate(false);
-            }, 1000);
+            } else {
+                // If we don't have current version info, just show the latest
+                alert('Latest version: ' + latestCommitShort + '\nCurrent version: unknown\n\nConsider redeploying to get version tracking.');
+            }
+            
+            // Also trigger service worker update check
+            if ('serviceWorker' in navigator) {
+                const registration = await navigator.serviceWorker.ready;
+                await registration.update();
+            }
+            
         } catch (error) {
             console.error('Error checking for updates:', error);
-            alert('Failed to check for updates');
+            alert('Failed to check for updates. Please try again later.');
+        } finally {
             setCheckingUpdate(false);
         }
     };
@@ -379,7 +416,7 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
                         </button>
                     )}
                     <p className={`text-xs transition-colors ${darkMode ? 'text-gray-700' : 'text-gray-300'}`}>
-                        v5
+                        {currentVersion ? currentVersion.shortHash : 'loading...'}
                     </p>
                 </div>
             </div>
