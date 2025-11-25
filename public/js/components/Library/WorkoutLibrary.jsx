@@ -39,21 +39,35 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
     
     const loadCurrentVersion = async () => {
         try {
+            console.log('🔍 Loading current version...');
             // Add timestamp to prevent caching
-            const response = await fetch('/api/version?t=' + Date.now());
+            const url = '/api/version?t=' + Date.now();
+            console.log('   Fetching from:', url);
+            const response = await fetch(url);
+            console.log('   Response status:', response.status, response.statusText);
+            
             if (response.ok) {
                 const versionData = await response.json();
+                console.log('   Version data received:', versionData);
+                console.log('   Commit hash:', versionData.commitHash);
+                console.log('   Short hash:', versionData.shortHash);
                 setCurrentVersion(versionData);
+            } else {
+                console.error('   ❌ Response not OK:', response.status);
             }
         } catch (error) {
-            console.error('Error loading version:', error);
+            console.error('❌ Error loading version:', error);
         }
     };
     
     const checkForUpdates = async () => {
         setCheckingUpdate(true);
+        console.log('🔄 Checking for updates...');
+        console.log('   Current version:', currentVersion);
+        
         try {
             if (!currentVersion || currentVersion.commitHash === 'unknown') {
+                console.error('   ❌ No valid version information available');
                 alert('Cannot check for updates: version information not available.\n\nMake sure the app was built with Git information.');
                 setCheckingUpdate(false);
                 return;

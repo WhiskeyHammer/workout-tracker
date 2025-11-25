@@ -47,22 +47,29 @@ app.get('/api/version', (req, res) => {
     const versionPath = path.join(__dirname, 'public', 'version.json');
     const fs = require('fs');
     
+    console.log('📋 Version endpoint called');
+    console.log('   Version file path:', versionPath);
+    console.log('   File exists:', fs.existsSync(versionPath));
+    
     if (fs.existsSync(versionPath)) {
       const versionData = JSON.parse(fs.readFileSync(versionPath, 'utf8'));
+      console.log('   Version data:', JSON.stringify(versionData, null, 2));
       res.json(versionData);
     } else {
+      console.log('   ⚠️  Version file not found, using fallback');
       // Return fallback version if file doesn't exist
-      res.json({
+      const fallback = {
         commitHash: 'unknown',
         shortHash: 'dev',
         commitDate: new Date().toISOString(),
         branch: 'unknown',
         buildDate: new Date().toISOString(),
         repository: 'https://github.com/WhiskeyHammer/workout-tracker'
-      });
+      };
+      res.json(fallback);
     }
   } catch (error) {
-    console.error('Error reading version:', error);
+    console.error('❌ Error reading version:', error);
     res.status(500).json({ error: 'Failed to read version information' });
   }
 });
