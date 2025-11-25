@@ -44,11 +44,21 @@ The version file is automatically regenerated with the latest Git information.
 
 ### Production Deployment
 
-When deploying to production:
+#### Render (or similar platforms)
+
+The script automatically detects Render environment variables:
+- `RENDER_GIT_COMMIT`: Full commit SHA provided by Render
+- `RENDER_GIT_BRANCH`: Branch name (defaults to 'main' if not set)
+
+When deployed to Render, the `npm start` command runs `npm run generate-version` which will use these environment variables to create the version file, even though Git isn't available at runtime.
+
+#### Other Platforms
+
+When deploying to other platforms:
 ```bash
 npm start
 ```
-The version file is generated before the server starts, capturing the deployed commit.
+The version file is generated before the server starts. If Git is available, it will use Git commands. Otherwise, it falls back to 'unknown'.
 
 ### Manual Version Generation
 
@@ -84,9 +94,11 @@ npm run generate-version
 
 ### Git Not Available
 
-If Git isn't available during build, the script creates a fallback version file with:
+If Git isn't available during build AND no platform environment variables are detected, the script creates a fallback version file with:
 - commitHash: "unknown"
 - shortHash: "dev"
+
+**Note:** On Render and similar platforms, the script automatically uses platform-provided environment variables, so you should always get valid version information.
 
 ### Private Repositories
 
