@@ -15,6 +15,8 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
     const [checkingUpdate, setCheckingUpdate] = useState(false);
     const [currentVersion, setCurrentVersion] = useState(null);
     const [latestVersion, setLatestVersion] = useState(null);
+    const [showInfoModal, setShowInfoModal] = useState(false);
+    const [infoModalContent, setInfoModalContent] = useState({ title: '', message: '' });
     
     const userEmail = localStorage.getItem('userEmail');
     
@@ -68,7 +70,11 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
         try {
             if (!currentVersion || currentVersion.commitHash === 'unknown') {
                 console.error('   ❌ No valid version information available');
-                alert('Cannot check for updates: version information not available.\n\nMake sure the app was built with Git information.');
+                setInfoModalContent({
+                    title: 'Cannot Check for Updates',
+                    message: 'Version information not available.\n\nMake sure the app was built with Git information.'
+                });
+                setShowInfoModal(true);
                 setCheckingUpdate(false);
                 return;
             }
@@ -83,7 +89,11 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
             if (!githubResponse.ok) {
                 if (githubResponse.status === 404) {
                     // Repository might be private or doesn't exist
-                    alert('Unable to check for updates.\n\nThis may be because:\n• The repository is private (GitHub API requires authentication)\n• Network connection issue\n\nCurrent version: ' + currentVersion.shortHash);
+                    setInfoModalContent({
+                        title: 'Unable to Check for Updates',
+                        message: 'This may be because:\n• The repository is private (GitHub API requires authentication)\n• Network connection issue\n\nCurrent version: ' + currentVersion.shortHash
+                    });
+                    setShowInfoModal(true);
                 } else {
                     throw new Error(`GitHub API returned ${githubResponse.status}`);
                 }
@@ -106,7 +116,11 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
             if (currentVersion.commitHash !== latestCommitHash) {
                 setUpdateAvailable(true);
             } else {
-                alert('You are running the latest version (' + currentVersion.shortHash + ')');
+                setInfoModalContent({
+                    title: 'Up to Date',
+                    message: 'You are running the latest version (' + currentVersion.shortHash + ')'
+                });
+                setShowInfoModal(true);
             }
             
             // Also trigger service worker update check
@@ -117,7 +131,11 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
             
         } catch (error) {
             console.error('Error checking for updates:', error);
-            alert('Failed to check for updates.\n\nError: ' + error.message + '\n\nCurrent version: ' + (currentVersion ? currentVersion.shortHash : 'unknown'));
+            setInfoModalContent({
+                title: 'Failed to Check for Updates',
+                message: 'Error: ' + error.message + '\n\nCurrent version: ' + (currentVersion ? currentVersion.shortHash : 'unknown')
+            });
+            setShowInfoModal(true);
         } finally {
             setCheckingUpdate(false);
         }
@@ -166,10 +184,18 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
                 const data = await response.json();
                 setWorkouts(data.workouts);
             } else {
-                alert('Failed to reorder workout');
+                setInfoModalContent({
+                    title: 'Error',
+                    message: 'Failed to reorder workout'
+                });
+                setShowInfoModal(true);
             }
         } catch (err) {
-            alert('Error reordering workout');
+            setInfoModalContent({
+                title: 'Error',
+                message: 'Error reordering workout'
+            });
+            setShowInfoModal(true);
         }
     };
     
@@ -189,10 +215,18 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
             if (response.ok) {
                 setWorkouts(workouts.filter(w => w._id !== workoutToDelete.id));
             } else {
-                alert('Failed to delete workout');
+                setInfoModalContent({
+                    title: 'Error',
+                    message: 'Failed to delete workout'
+                });
+                setShowInfoModal(true);
             }
         } catch (err) {
-            alert('Error deleting workout');
+            setInfoModalContent({
+                title: 'Error',
+                message: 'Error deleting workout'
+            });
+            setShowInfoModal(true);
         } finally {
             setShowDeleteConfirmModal(false);
             setWorkoutToDelete(null);
@@ -216,7 +250,11 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
 
     const saveWorkoutName = async (id) => {
         if (!editName.trim()) {
-            alert('Workout name cannot be empty');
+            setInfoModalContent({
+                title: 'Invalid Name',
+                message: 'Workout name cannot be empty'
+            });
+            setShowInfoModal(true);
             return;
         }
 
@@ -236,12 +274,60 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
                 ));
                 cancelEditingName();
             } else {
-                alert('Failed to update workout name');
+                setInfoModalContent({
+                    title: 'Error',
+                    message: 'Failed to update workout name'
+                });
+                setShowInfoModal(true);
             }
         } catch (err) {
-            alert('Error updating workout name');
+            setInfoModalContent({
+                title: 'Error',
+                message: 'Error updating workout name'
+            });
+            setShowInfoModal(true);
         }
     };
+
+    async function handleCreateNewWorkout() {
+        if (!newWorkoutName.trim()) return;
+        
+        try {
+            // Create the workout with the name
+            const response = await api.call('/workouts', {
+                method: 'POST',
+                body: JSON.stringify({
+                    name: newWorkoutName.trim(),
+                    data: {
+                        exercises: [],
+                        nextWeights: {},
+                        weightsSet: []
+                    },
+                    exerciseNotes: {}
+                })
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                setShowNewWorkoutModal(false);
+                setNewWorkoutName('');
+                // Navigate to the new workout
+                onCreateNew(result.workout._id);
+            } else {
+                setInfoModalContent({
+                    title: 'Error',
+                    message: 'Failed to create workout'
+                });
+                setShowInfoModal(true);
+            }
+        } catch (err) {
+            setInfoModalContent({
+                title: 'Error',
+                message: 'Error creating workout'
+            });
+            setShowInfoModal(true);
+        }
+    }
     
     return (
         <div className={`min-h-screen p-4 transition-colors ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
@@ -448,8 +534,27 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
                 </div>
             </div>
 
+            {showInfoModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-4 pt-[15vh]">
+                    <div className={`rounded-2xl p-6 max-w-md w-full shadow-2xl transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                        <h2 className={`text-xl font-bold mb-4 transition-colors ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                            {infoModalContent.title}
+                        </h2>
+                        <p className={`mb-6 whitespace-pre-line transition-colors ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            {infoModalContent.message}
+                        </p>
+                        <button
+                            onClick={() => setShowInfoModal(false)}
+                            className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {showDeleteConfirmModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-4 pt-[15vh]">
                     <div className={`rounded-2xl p-6 max-w-md w-full shadow-2xl transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
                         <h2 className={`text-xl font-bold mb-4 transition-colors ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
                             Delete Workout?
@@ -479,7 +584,7 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
             )}
 
             {showNewWorkoutModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-4 pt-[15vh]">
                     <div className={`rounded-2xl p-6 max-w-md w-full shadow-2xl transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
                         <h2 className={`text-xl font-bold mb-4 transition-colors ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
                             Create New Workout
@@ -527,36 +632,4 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
             )}
         </div>
     );
-
-    async function handleCreateNewWorkout() {
-        if (!newWorkoutName.trim()) return;
-        
-        try {
-            // Create the workout with the name
-            const response = await api.call('/workouts', {
-                method: 'POST',
-                body: JSON.stringify({
-                    name: newWorkoutName.trim(),
-                    data: {
-                        exercises: [],
-                        nextWeights: {},
-                        weightsSet: []
-                    },
-                    exerciseNotes: {}
-                })
-            });
-            
-            if (response.ok) {
-                const result = await response.json();
-                setShowNewWorkoutModal(false);
-                setNewWorkoutName('');
-                // Navigate to the new workout
-                onCreateNew(result.workout._id);
-            } else {
-                alert('Failed to create workout');
-            }
-        } catch (err) {
-            alert('Error creating workout');
-        }
-    }
 }

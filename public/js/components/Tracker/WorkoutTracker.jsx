@@ -57,6 +57,8 @@ function WorkoutTracker({
   const [editExerciseNotesValue, setEditExerciseNotesValue] = useState("");
   const exerciseNotesTextareaRef = useRef(null);
   const isAutoImporting = useRef(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
+  const [infoModalContent, setInfoModalContent] = useState({ title: '', message: '' });
 
   // Use external darkMode if provided, otherwise use internal state
   const darkMode = propDarkMode !== undefined ? propDarkMode : internalDarkMode;
@@ -181,7 +183,11 @@ function WorkoutTracker({
         setImportedExerciseNotes({});
         setNextWeightValues(newNextWeights);
       } catch (err) {
-        alert("Error parsing JSON file: " + err.message);
+        setInfoModalContent({
+          title: 'Error',
+          message: 'Error parsing JSON file: ' + err.message
+        });
+        setShowInfoModal(true);
       }
     } else {
       const n = r.split("\n").filter((e) => e.trim()),
@@ -606,7 +612,11 @@ function WorkoutTracker({
     const t = e.target.files[0];
     if (!t) return;
     if (!t.name.endsWith(".json")) {
-      alert("Please select a JSON file");
+      setInfoModalContent({
+        title: 'Invalid File',
+        message: 'Please select a JSON file'
+      });
+      setShowInfoModal(true);
       return;
     }
     setFileName(t.name);
@@ -614,14 +624,20 @@ function WorkoutTracker({
     try {
       const data = JSON.parse(r);
       if (!data.exercises || !data.nextWeights) {
-        alert(
-          "This file does not contain nextWeights data. Please export a completed workout first.",
-        );
+        setInfoModalContent({
+          title: 'Invalid File Format',
+          message: 'This file does not contain nextWeights data. Please export a completed workout first.'
+        });
+        setShowInfoModal(true);
         return;
       }
       processImportData(data);
     } catch (err) {
-      alert("Error parsing JSON file: " + err.message);
+      setInfoModalContent({
+        title: 'Error',
+        message: 'Error parsing JSON file: ' + err.message
+      });
+      setShowInfoModal(true);
     }
   };
 
@@ -1533,6 +1549,24 @@ function WorkoutTracker({
                 />
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {showInfoModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-4 pt-[15vh]">
+          <div className={`rounded-2xl p-6 max-w-md w-full shadow-2xl transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <h2 className={`text-xl font-bold mb-4 transition-colors ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+              {infoModalContent.title}
+            </h2>
+            <p className={`mb-6 whitespace-pre-line transition-colors ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              {infoModalContent.message}
+            </p>
+            <button
+              onClick={() => setShowInfoModal(false)}
+              className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            >
+              OK
+            </button>
           </div>
         </div>
       )}

@@ -12,6 +12,8 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
     const [autoImportData, setAutoImportData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const isInitialLoadRef = useRef(true);
+    const [showInfoModal, setShowInfoModal] = useState(false);
+    const [infoModalContent, setInfoModalContent] = useState({ title: '', message: '' });
     
     useEffect(() => {
         if (workoutId) {
@@ -72,7 +74,11 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
                 }
             }
         } catch (err) {
-            alert('Failed to load workout');
+            setInfoModalContent({
+                title: 'Error',
+                message: 'Failed to load workout'
+            });
+            setShowInfoModal(true);
         } finally {
             // Loading complete - allow WorkoutTracker to render
             setIsLoading(false);
@@ -103,7 +109,11 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
     
     const saveWorkout = async () => {
         if (!workoutName.trim()) {
-            alert('Please enter a workout name');
+            setInfoModalContent({
+                title: 'Invalid Name',
+                message: 'Please enter a workout name'
+            });
+            setShowInfoModal(true);
             return;
         }
         
@@ -156,13 +166,21 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
 
     const handleComplete = async () => {
         if (!workoutName.trim()) {
-            alert('Please enter a workout name');
+            setInfoModalContent({
+                title: 'Invalid Name',
+                message: 'Please enter a workout name'
+            });
+            setShowInfoModal(true);
             return;
         }
         
         // VALIDATION: Check if exercises exist
         if (!exercises || exercises.length === 0) {
-            alert('Cannot complete workout: No exercises to save. Please add exercises first.');
+            setInfoModalContent({
+                title: 'Cannot Complete Workout',
+                message: 'No exercises to save. Please add exercises first.'
+            });
+            setShowInfoModal(true);
             return;
         }
         
@@ -193,7 +211,11 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
                     workoutIdToUse = result.workout._id;
                     setCurrentWorkoutId(workoutIdToUse);
                 } else {
-                    alert('Failed to create workout template');
+                    setInfoModalContent({
+                        title: 'Error',
+                        message: 'Failed to create workout template'
+                    });
+                    setShowInfoModal(true);
                     setSaveStatus('');
                     return;
                 }
@@ -219,7 +241,11 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
             
             // ADDITIONAL VALIDATION: Verify we have valid exercise data
             if (exercisesArray.length === 0) {
-                alert('Cannot complete workout: No valid exercises to save.');
+                setInfoModalContent({
+                    title: 'Cannot Complete Workout',
+                    message: 'No valid exercises to save.'
+                });
+                setShowInfoModal(true);
                 setSaveStatus('');
                 return;
             }
@@ -349,6 +375,24 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
                     onComplete={handleComplete}
                     autoImportData={autoImportData}
                 />
+            )}
+            {showInfoModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-4 pt-[15vh]">
+                    <div className={`rounded-2xl p-6 max-w-md w-full shadow-2xl transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                        <h2 className={`text-xl font-bold mb-4 transition-colors ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                            {infoModalContent.title}
+                        </h2>
+                        <p className={`mb-6 whitespace-pre-line transition-colors ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            {infoModalContent.message}
+                        </p>
+                        <button
+                            onClick={() => setShowInfoModal(false)}
+                            className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
             )}
         </div>
     );
