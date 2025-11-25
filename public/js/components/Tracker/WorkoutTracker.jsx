@@ -856,8 +856,8 @@ function WorkoutTracker({
                       className={`rounded-lg border transition-all ${e.completed ? (darkMode ? "border-green-600 bg-green-900/30" : "border-green-500 bg-green-50") : s ? (darkMode ? "border-gray-600 bg-gray-900 opacity-60" : "border-gray-300 bg-gray-100 opacity-60") : darkMode ? "border-gray-600 bg-gray-700" : "border-gray-300 bg-gray-50"}`}
                     >
                       <div className="p-4 flex items-center gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-wrap gap-x-4 gap-y-1 mb-2 items-center">
+                        <div className="flex-1 min-w-0 flex flex-col justify-center">
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 items-center">
                             {e.reps && (
                               <div className="flex items-baseline gap-1">
                                 <span
@@ -955,7 +955,7 @@ function WorkoutTracker({
                             )}
                           </div>
                           {(e.notes || editMode) && (
-                            <div className="mt-2 pt-2 border-t border-gray-100">
+                            <div className="mt-2 pt-2 border-t border-gray-200">
                               <p
                                 onClick={
                                   editMode
@@ -1142,7 +1142,7 @@ function WorkoutTracker({
         </div>
       )}
       {showUncompleteDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-20 p-4 pt-[15vh]">
           <div className={`rounded-2xl p-6 max-w-sm w-full shadow-2xl transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
             <h2 className={`text-xl font-bold mb-4 transition-colors ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
               Uncomplete Exercise?
@@ -1168,7 +1168,7 @@ function WorkoutTracker({
         </div>
       )}
       {showSkipRestDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-30 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-30 p-4 pt-[15vh]">
           <div className={`rounded-2xl p-6 max-w-sm w-full shadow-2xl transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
             <h2 className={`text-xl font-bold mb-4 transition-colors ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
               Skip Rest Period?
@@ -1194,7 +1194,7 @@ function WorkoutTracker({
         </div>
       )}
       {editingField && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-30 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-30 p-4 pt-[15vh]">
           <div className={`rounded-2xl p-6 max-w-sm w-full shadow-2xl transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
             <h2 className={`zz_title_edit_field text-xl font-bold mb-4 transition-colors ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
               Edit{" "}
@@ -1254,7 +1254,7 @@ function WorkoutTracker({
         </div>
       )}
       {editingExerciseName && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-30 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-30 p-4 pt-[15vh]">
           <div className={`rounded-2xl p-6 max-w-sm w-full shadow-2xl transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
             <h2 className={`text-xl font-bold mb-4 transition-colors ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
               Edit Exercise Name
@@ -1292,7 +1292,7 @@ function WorkoutTracker({
         </div>
       )}
       {showDeleteDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-30 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-30 p-4 pt-[15vh]">
           <div className={`rounded-2xl p-6 max-w-sm w-full shadow-2xl transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
             <h2 className={`text-xl font-bold mb-4 transition-colors ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
               Delete Exercise?
@@ -1319,7 +1319,7 @@ function WorkoutTracker({
         </div>
       )}
       {showAddExerciseDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-30 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-30 p-4 pt-[15vh]">
           <div className={`rounded-2xl p-6 max-w-sm w-full shadow-2xl transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
             <h2 className={`text-xl font-bold mb-4 transition-colors ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
               Add New Exercise
@@ -1369,7 +1369,7 @@ function WorkoutTracker({
         </div>
       )}
       {showWeightGroupModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-30 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-30 p-4 pt-[15vh]">
           <div className={`rounded-2xl p-6 max-w-md w-full shadow-2xl transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
             <h2 className={`text-xl font-bold mb-4 transition-colors ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
               Set Weight For Next Lift
@@ -1412,7 +1412,7 @@ function WorkoutTracker({
         </div>
       )}
       {editingExerciseNotes && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-30 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-30 p-4 pt-[15vh]">
           <div className={`rounded-2xl p-6 max-w-sm w-full shadow-2xl transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
             <h2 className={`text-xl font-bold mb-4 transition-colors ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
               Edit Exercise Notes
@@ -1443,7 +1443,7 @@ function WorkoutTracker({
         </div>
       )}
       {showCompleteDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-30 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-30 p-4 pt-[15vh]">
           <div className={`rounded-2xl p-6 max-w-sm w-full shadow-2xl transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
             <h2 className={`text-xl font-bold mb-4 transition-colors ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
               Complete Workout?
