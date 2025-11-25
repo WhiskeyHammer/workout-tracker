@@ -56,6 +56,7 @@ function WorkoutTracker({
   const [editingExerciseNotes, setEditingExerciseNotes] = useState(null);
   const [editExerciseNotesValue, setEditExerciseNotesValue] = useState("");
   const exerciseNotesTextareaRef = useRef(null);
+  const isAutoImporting = useRef(false);
 
   // Use external darkMode if provided, otherwise use internal state
   const darkMode = propDarkMode !== undefined ? propDarkMode : internalDarkMode;
@@ -543,7 +544,7 @@ function WorkoutTracker({
   
   // Load collapsed exercises from localStorage on mount or when exercises change
   useEffect(() => {
-    if (exercises.length > 0) {
+    if (exercises.length > 0 && !isAutoImporting.current) {
       try {
         const exerciseNames = Object.keys(groupedExercises).join('|');
         const storageKey = `collapsedExercises_${exerciseNames}`;
@@ -661,12 +662,22 @@ function WorkoutTracker({
   useEffect(() => {
     if (autoImportData) {
       if (autoImportData.exercises && Array.isArray(autoImportData.exercises)) {
+        // Set flag to prevent localStorage from overwriting our cleared state
+        isAutoImporting.current = true;
+        
         // Ensure nextWeights exists, default to empty object if not
         const dataToProcess = {
           ...autoImportData,
           nextWeights: autoImportData.nextWeights || {}
         };
         processImportData(dataToProcess);
+        // Clear collapsed state when auto-importing so exercises start expanded
+        setCollapsedExercises(new Set());
+        
+        // Reset flag after a short delay to allow normal localStorage behavior
+        setTimeout(() => {
+          isAutoImporting.current = false;
+        }, 100);
       }
     }
   }, [autoImportData]);
@@ -1084,7 +1095,19 @@ function WorkoutTracker({
             onClick={() => setShowCompleteDialog(true)}
             className={`zz_btn_complete_workout w-full mt-6 py-3 rounded-lg font-medium transition-colors ${
               (() => {
-                // Get all exercise names that have weight groups and all sets complete
+                // Get all exercise names that have weight groups (regardless of completion)
+                const exercisesWithWeightGroups = Object.entries(groupedExercises)
+                  .filter(([name, sets]) => sets.some(s => s["weight group"]))
+                  .map(([name]) => name);
+                
+                // If no exercises have weight groups, button can be green
+                if (exercisesWithWeightGroups.length === 0) {
+                  return darkMode 
+                    ? "bg-green-700 text-white hover:bg-green-600" 
+                    : "bg-green-600 text-white hover:bg-green-700";
+                }
+                
+                // Get exercise names that have weight groups AND all sets complete
                 const exercisesNeedingWeightSet = Object.entries(groupedExercises)
                   .filter(([name, sets]) => 
                     sets.some(s => s["weight group"]) && 
@@ -1092,9 +1115,17 @@ function WorkoutTracker({
                   )
                   .map(([name]) => name);
                 
-                // Check if all those exercises have weights set
-                const allWeightsSet = exercisesNeedingWeightSet.length === 0 || 
-                  exercisesNeedingWeightSet.every(name => exercisesWithWeightSet.has(name));
+                // If not all weight-group exercises are complete, button should be gray
+                if (exercisesNeedingWeightSet.length < exercisesWithWeightGroups.length) {
+                  return darkMode
+                    ? "bg-gray-700 text-gray-300 hover:bg-gray-650"
+                    : "bg-gray-300 text-gray-600 hover:bg-gray-400";
+                }
+                
+                // Check if all completed weight-group exercises have weights set
+                const allWeightsSet = exercisesNeedingWeightSet.every(name => 
+                  exercisesWithWeightSet.has(name)
+                );
                 
                 return allWeightsSet
                   ? darkMode 

@@ -586,6 +586,8 @@ When a workout is completed it rolls over as expected
     Click Element    ${NEXT_WEIGHT_CANCEL}
 
     # ROLL OVER TESTING STARTS
+    Click Element    ${COLLAPSE_EXERCISE_BTN}
+    Click Element    (${COLLAPSE_EXERCISE_BTN})[2]
     Click Element    ${COMPLETE_WORKOUT_BTN}
     Click Element    ${COMPLETE_WORKOUT_CONFIRM}
     Sleep    1s
@@ -672,14 +674,18 @@ When a workout is completed it rolls over as expected
     Element Attribute Value Should Be    ${NEXT_WEIGHT_INPUT}    value    20
     Click Element    ${NEXT_WEIGHT_CANCEL}
 
-Complete workout button disabled until all next weights are set
+Complete workout button less aggressive until all next weights are set
     [Documentation]    Complete Workout button is disabled until all exercises have next weights set
     [Setup]    Setup for workout tests    Manual Test Workout 18
     
+    Element Should Have Class    ${COMPLETE_WORKOUT_BTN}     bg-gray-700
+
     # Add a weight to first exercise and complete both sets
     Make edit to field that uses single input modal    Pullups    1    ${SET_WEIGHT}    100
     Toggle complete set field    Pullups    1
+    Element Should Have Class    ${COMPLETE_WORKOUT_BTN}     bg-gray-700
     Toggle complete set field    Pullups    2
+    Element Should Have Class    ${COMPLETE_WORKOUT_BTN}     bg-gray-700
     
     # Verify next weight button appears
     Element Should Be Visible    ${NEXT_WEIGHT_BTN}
