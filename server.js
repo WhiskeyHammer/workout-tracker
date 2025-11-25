@@ -38,6 +38,11 @@ app.get('/api/health', (req, res) => {
 
 // Version endpoint
 app.get('/api/version', (req, res) => {
+  // Prevent caching of version information
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  
   try {
     const versionPath = path.join(__dirname, 'public', 'version.json');
     const fs = require('fs');

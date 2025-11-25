@@ -39,7 +39,8 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
     
     const loadCurrentVersion = async () => {
         try {
-            const response = await fetch('/api/version');
+            // Add timestamp to prevent caching
+            const response = await fetch('/api/version?t=' + Date.now());
             if (response.ok) {
                 const versionData = await response.json();
                 setCurrentVersion(versionData);
