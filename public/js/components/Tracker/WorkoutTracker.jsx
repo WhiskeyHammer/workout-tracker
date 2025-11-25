@@ -1489,6 +1489,41 @@ function WorkoutTracker({
           </div>
         </div>
       )}
+      {/* Countdown Timer Bar - appears above footer when active */}
+      {exercises.length > 0 && activeTimer !== null && timeRemaining > 0 && (
+        <div
+          className={`fixed left-0 right-0 border-t shadow-lg transition-colors ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}
+          style={{ bottom: '73px', marginBottom: '8px' }}
+        >
+          <div className="px-4 py-2">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex-1 flex justify-center">
+                <button
+                  onClick={handleSkipRestClick}
+                  className={`zz_btn_skip_rest inline-flex items-center gap-2 px-4 py-1 rounded-lg transition-colors ${darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
+                >
+                  <Clock className={`w-5 h-5 ${darkMode ? "text-blue-400" : "text-blue-600"}`} />
+                  <span className={`text-lg font-bold ${darkMode ? "text-gray-100" : "text-gray-900"}`}>
+                    {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, "0")}
+                  </span>
+                </button>
+              </div>
+            </div>
+            
+            {/* Timer progress bar */}
+            <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+              <div
+                className={`bg-sky-500 h-2 rounded-full ${timerJustStarted ? '' : 'transition-all duration-50 ease-linear'}`}
+                style={{
+                  width: `${(timeRemainingMs / ((exercises.find((e) => e.id === activeTimer)?.rest ? parseRestTime(exercises.find((e) => e.id === activeTimer).rest) : timeRemaining) * 1000)) * 100}%`,
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Footer Bar */}
       {exercises.length > 0 && (
         <div
           className={`fixed bottom-0 left-0 right-0 border-t shadow-lg transition-colors ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}
@@ -1498,23 +1533,11 @@ function WorkoutTracker({
               {/* Left: Empty space for symmetry */}
               <div className="w-[100px]"></div>
               
-              {/* Center: Timer or Progress */}
+              {/* Center: Progress */}
               <div className="flex-1 flex justify-center">
-                {activeTimer !== null && timeRemaining > 0 ? (
-                  <button
-                    onClick={handleSkipRestClick}
-                    className={`zz_btn_skip_rest inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
-                  >
-                    <Clock className={`w-5 h-5 ${darkMode ? "text-blue-400" : "text-blue-600"}`} />
-                    <span className={`text-lg font-bold ${darkMode ? "text-gray-100" : "text-gray-900"}`}>
-                      {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, "0")}
-                    </span>
-                  </button>
-                ) : (
-                  <span className="text-sm font-bold text-blue-600">
-                    {exercises.filter((e) => e.completed).length} / {exercises.length} completed
-                  </span>
-                )}
+                <span className="text-sm font-bold text-blue-600">
+                  {exercises.filter((e) => e.completed).length} / {exercises.length} completed
+                </span>
               </div>
               
               {/* Right: Edit button */}
@@ -1527,28 +1550,15 @@ function WorkoutTracker({
               </button>
             </div>
             
-            {/* Progress bar */}
-            {activeTimer !== null && timeRemaining > 0 ? (
-              // Linear timer progress bar
-              <div className="w-full bg-gray-200 rounded-full h-2 mt-2 overflow-hidden">
-                <div
-                  className={`bg-sky-500 h-2 rounded-full ${timerJustStarted ? '' : 'transition-all duration-50 ease-linear'}`}
-                  style={{
-                    width: `${(timeRemainingMs / ((exercises.find((e) => e.id === activeTimer)?.rest ? parseRestTime(exercises.find((e) => e.id === activeTimer).rest) : timeRemaining) * 1000)) * 100}%`,
-                  }}
-                />
-              </div>
-            ) : (
-              // Exercise completion progress bar
-              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                <div
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{
-                    width: `${(exercises.filter((e) => e.completed).length / exercises.length) * 100}%`,
-                  }}
-                />
-              </div>
-            )}
+            {/* Exercise completion progress bar */}
+            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+              <div
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                style={{
+                  width: `${(exercises.filter((e) => e.completed).length / exercises.length) * 100}%`,
+                }}
+              />
+            </div>
           </div>
         </div>
       )}
