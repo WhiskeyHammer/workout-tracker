@@ -52,11 +52,28 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
     const checkForUpdates = async () => {
         setCheckingUpdate(true);
         try {
+            if (!currentVersion || currentVersion.commitHash === 'unknown') {
+                alert('Cannot check for updates: version information not available.\n\nMake sure the app was built with Git information.');
+                setCheckingUpdate(false);
+                return;
+            }
+            
+            // Use the branch from the current version
+            const branch = currentVersion.branch || 'main';
+            const githubUrl = `https://api.github.com/repos/WhiskeyHammer/workout-tracker/commits/${branch}`;
+            
             // Fetch latest commit from GitHub
-            const githubResponse = await fetch('https://api.github.com/repos/WhiskeyHammer/workout-tracker/commits/main');
+            const githubResponse = await fetch(githubUrl);
             
             if (!githubResponse.ok) {
-                throw new Error('Failed to fetch GitHub commits');
+                if (githubResponse.status === 404) {
+                    // Repository might be private or doesn't exist
+                    alert('Unable to check for updates.\n\nThis may be because:\n• The repository is private (GitHub API requires authentication)\n• Network connection issue\n\nCurrent version: ' + currentVersion.shortHash);
+                } else {
+                    throw new Error(`GitHub API returned ${githubResponse.status}`);
+                }
+                setCheckingUpdate(false);
+                return;
             }
             
             const githubData = await githubResponse.json();
@@ -71,15 +88,10 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
             });
             
             // Compare with current version
-            if (currentVersion && currentVersion.commitHash !== 'unknown') {
-                if (currentVersion.commitHash !== latestCommitHash) {
-                    setUpdateAvailable(true);
-                } else {
-                    alert('You are running the latest version (' + currentVersion.shortHash + ')');
-                }
+            if (currentVersion.commitHash !== latestCommitHash) {
+                setUpdateAvailable(true);
             } else {
-                // If we don't have current version info, just show the latest
-                alert('Latest version: ' + latestCommitShort + '\nCurrent version: unknown\n\nConsider redeploying to get version tracking.');
+                alert('You are running the latest version (' + currentVersion.shortHash + ')');
             }
             
             // Also trigger service worker update check
@@ -90,7 +102,7 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
             
         } catch (error) {
             console.error('Error checking for updates:', error);
-            alert('Failed to check for updates. Please try again later.');
+            alert('Failed to check for updates.\n\nError: ' + error.message + '\n\nCurrent version: ' + (currentVersion ? currentVersion.shortHash : 'unknown'));
         } finally {
             setCheckingUpdate(false);
         }

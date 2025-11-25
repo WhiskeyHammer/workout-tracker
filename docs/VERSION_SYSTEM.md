@@ -88,6 +88,33 @@ If Git isn't available during build, the script creates a fallback version file 
 - commitHash: "unknown"
 - shortHash: "dev"
 
+### Private Repositories
+
+If your repository is private, the GitHub API will return a 404 error for unauthenticated requests. You have several options:
+
+**Option 1: Make Repository Public** (simplest)
+- If your repository can be public, this is the easiest solution
+- No code changes needed
+
+**Option 2: Use GitHub Personal Access Token**
+- Create a read-only personal access token
+- Add it to your environment variables
+- Modify the fetch request to include the token in headers
+- **Security Note**: Never commit tokens to your repository
+
+**Option 3: Server-Side Checking** (recommended for private repos)
+- Move the GitHub API call to the server
+- Store the token securely in environment variables on the server
+- The client calls your server's API which then calls GitHub
+- This keeps the token secure and off the client
+
+**Option 4: Disable GitHub Checking**
+- Remove the GitHub API call
+- Rely only on service worker update detection
+- Show current version but no update checking
+
+For most users with private repositories, **Option 3 or 4** is recommended.
+
 ### GitHub API Rate Limiting
 
 The GitHub API has rate limits for unauthenticated requests (60 per hour). If users check for updates frequently, they might hit this limit. Consider adding authentication tokens for production deployments if needed.
