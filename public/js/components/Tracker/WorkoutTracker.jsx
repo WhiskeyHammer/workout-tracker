@@ -264,6 +264,49 @@ function WorkoutTracker({
             : t,
         ),
       );
+      
+      // Check if this is the last set being completed
+      const isLastSet = s === n.length - 1;
+      const allSetsWillBeComplete = n.every((set, idx) => 
+        idx === s ? true : set.completed
+      );
+      
+      if (isLastSet && allSetsWillBeComplete) {
+        // Check if exercise has weight groups and all weights are "-"
+        const hasWeightGroups = n.some((set) => set["weight group"]);
+        const allWeightsAreDash = n.every((set) => 
+          set.weight === "-" || set.weight === "- "
+        );
+        
+        if (hasWeightGroups && allWeightsAreDash) {
+          // Automatically set next weight values to "-" for all weight groups in this exercise
+          const weightGroups = n
+            .filter((set) => set["weight group"])
+            .map((set) => set["weight group"])
+            .filter((group, idx, arr) => arr.indexOf(group) === idx);
+          
+          const autoWeightValues = {};
+          weightGroups.forEach((group) => {
+            autoWeightValues[group] = "-";
+          });
+          
+          // Update state to mark weights as set
+          const newSet = new Set(exercisesWithWeightSet);
+          newSet.add(r);
+          setExercisesWithWeightSet(newSet);
+          setNextWeightValues({
+            ...nextWeightValues,
+            ...autoWeightValues,
+          });
+          
+          // Collapse the exercise after auto-setting weights
+          setCollapsedExercises(prev => {
+            const newCollapsed = new Set(prev);
+            newCollapsed.add(r);
+            return newCollapsed;
+          });
+        }
+      }
     }
   };
   const confirmUncomplete = () => {
@@ -835,7 +878,7 @@ function WorkoutTracker({
                     >
                       {exerciseName}
                     </h2>
-                    {collapsedExercises.has(exerciseName) && exercisesWithWeightSet.has(exerciseName) && (
+                    {exercisesWithWeightSet.has(exerciseName) && (
                       <div className="flex items-center">
                         <Check className={`w-5 h-5 ${darkMode ? "text-green-400" : "text-green-600"}`} />
                       </div>

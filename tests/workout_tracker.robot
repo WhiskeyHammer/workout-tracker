@@ -704,6 +704,80 @@ Complete workout button less aggressive until all next weights are set
     # Now the button should be a lot more in your face
     Element Should Have Class    ${COMPLETE_WORKOUT_BTN}     bg-green-600
 
+Auto-set next weight to dash when all weights are dash
+    [Documentation]    When all sets have "-" weight, completing the last set should auto-set next weight to "-"
+    [Setup]    Setup for workout tests    Manual Test Workout 19
+    
+    ${sets_visible} =    Run Keyword And Return Status  Element Should Be Visible    ${SET_REPS}
+    IF    not ${sets_visible}
+        Click Element    ${COLLAPSE_EXERCISE_BTN}
+    END
+
+    # Set all weights to "-"
+    Make edit to field that uses single input modal    Pullups    1    ${SET_WEIGHT}    -
+    Make edit to field that uses single input modal    Pullups    2    ${SET_WEIGHT}    -
+    
+    # Verify weights are set to "-"
+    Verify exercise set field value    Pullups    ${SET_WEIGHT}    1    -
+    Verify exercise set field value    Pullups    ${SET_WEIGHT}    2    -
+    
+    # Verify exercise has weight group
+    Verify exercise set field value    Pullups    ${SET_GROUP}    1    Pullups
+    Verify exercise set field value    Pullups    ${SET_GROUP}    2    Pullups
+    
+    # Verify Set Next Weight button is NOT visible yet
+    Element Should Not Be Visible    ${NEXT_WEIGHT_BTN}
+    Element Should Not Be Visible    ${NEXT_WEIGHT_BTN_DONE}
+    
+    # Complete first set - should not auto-set
+    Toggle complete set field    Pullups    1
+    Element Should Not Be Visible    ${NEXT_WEIGHT_BTN}
+    Element Should Not Be Visible    ${NEXT_WEIGHT_BTN_DONE}
+    
+    # Complete last set - should AUTO-SET next weight to "-"
+    Toggle complete set field    Pullups    2
+    Sleep    0.5s
+    
+    # Verify exercise auto-collapsed
+    Element Should Not Be Visible    ${SET_REPS}
+    Element Should Not Be Visible    ${SET_WEIGHT}
+    
+    # Verify completion indicator is visible
+    Element Should Be Visible    ${EXERCISE_COMPLETE_INDICATOR}
+    
+    # Verify "Exercise Complete" button is visible (not "Set Next Weight")
+    Click Element    ${COLLAPSE_EXERCISE_BTN}
+    Sleep    0.5s
+    Element Should Be Visible    ${NEXT_WEIGHT_BTN_DONE}
+    
+    # verify the next weight was auto-set to "-"
+    Click Element    ${NEXT_WEIGHT_BTN_DONE}
+    Wait Until Element Is Visible    ${NEXT_WEIGHT_INPUT}
+    Element Attribute Value Should Be    ${NEXT_WEIGHT_INPUT}    value    -
+    
+    # Close modal
+    Click Element    ${NEXT_WEIGHT_CANCEL}
+    
+    # Verify state persists after reload
+    Sleep    1s
+    Reload Page
+    Go To A Workout    Manual Test Workout 19
+    
+    # Should not be collapsed with completion indicator
+    Element Should Be Visible    ${SET_REPS}
+    Element Should Be Visible    ${EXERCISE_COMPLETE_INDICATOR}
+    
+    # Verify next weight is still "-"
+    Click Element    ${NEXT_WEIGHT_BTN_DONE}
+    Wait Until Element Is Visible    ${NEXT_WEIGHT_INPUT}
+    Element Attribute Value Should Be    ${NEXT_WEIGHT_INPUT}    value    -
+    Click Element    ${NEXT_WEIGHT_CANCEL}
+    
+    # Verify Complete Workout button is enabled (green)
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
+    Sleep    0.5s
+    Element Should Have Class    ${COMPLETE_WORKOUT_BTN}    bg-green-600
+
 # =============================================================================
 # EXERCISE COLLAPSE TESTS
 # =============================================================================
@@ -793,8 +867,8 @@ Exercise auto-collapses when setting next weights
     Element Should Not Be Visible    ${SET_REPS}
     Element Should Be Visible    ${EXERCISE_TITLE}
 
-Completion indicator shows on collapsed completed exercises
-    [Documentation]    Green checkmark appears next to exercise name when collapsed and weights are set
+Completion indicator shows on completed exercises
+    [Documentation]    Green checkmark appears next to exercise name when weights are set, regardless of collapse state
     [Setup]    Setup for workout tests    Manual Test Workout 16
     
     ${sets_visible} =    Run Keyword And Return Status  Element Should Be Visible    ${SET_REPS}
@@ -807,7 +881,7 @@ Completion indicator shows on collapsed completed exercises
     Toggle complete set field    Pullups    1
     Toggle complete set field    Pullups    2
     
-    # Verify no checkmark when expanded
+    # Verify no checkmark before setting weights
     Element Should Not Be Visible    ${EXERCISE_COMPLETE_INDICATOR}
     
     # Set next weights (this will auto-collapse)
@@ -821,13 +895,13 @@ Completion indicator shows on collapsed completed exercises
     Element Should Not Be Visible    ${SET_REPS}
     Element Should Be Visible    ${EXERCISE_COMPLETE_INDICATOR}
     
-    # Expand exercise - checkmark should disappear
+    # Expand exercise - checkmark should STILL be visible
     Click Element    ${COLLAPSE_EXERCISE_BTN}
     Sleep    0.5s
     Element Should Be Visible    ${SET_REPS}
-    Element Should Not Be Visible    ${EXERCISE_COMPLETE_INDICATOR}
+    Element Should Be Visible    ${EXERCISE_COMPLETE_INDICATOR}
     
-    # Collapse again - checkmark should reappear
+    # Collapse again - checkmark should still be visible
     Click Element    ${COLLAPSE_EXERCISE_BTN}
     Sleep    0.5s
     Element Should Not Be Visible    ${SET_REPS}
@@ -838,6 +912,12 @@ Completion indicator shows on collapsed completed exercises
     Reload Page
     Go To A Workout    Manual Test Workout 16
     Element Should Not Be Visible    ${SET_REPS}
+    Element Should Be Visible    ${EXERCISE_COMPLETE_INDICATOR}
+    
+    # Expand and verify checkmark still visible
+    Click Element    ${COLLAPSE_EXERCISE_BTN}
+    Sleep    0.5s
+    Element Should Be Visible    ${SET_REPS}
     Element Should Be Visible    ${EXERCISE_COMPLETE_INDICATOR}
 
 Collapse works with multiple exercises
