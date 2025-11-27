@@ -579,6 +579,33 @@ function WorkoutTracker({
     
     closeWeightGroupModal();
   };
+  const moveExercise = (exerciseName, direction) => {
+    const exerciseNames = Object.keys(groupedExercises);
+    const currentIndex = exerciseNames.indexOf(exerciseName);
+    
+    // Can't move if already at the boundary
+    if ((direction === 'up' && currentIndex === 0) || 
+        (direction === 'down' && currentIndex === exerciseNames.length - 1)) {
+      return;
+    }
+    
+    // Calculate new index
+    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    
+    // Create a new order array
+    const newOrder = [...exerciseNames];
+    [newOrder[currentIndex], newOrder[newIndex]] = [newOrder[newIndex], newOrder[currentIndex]];
+    
+    // Rebuild exercises array in the new order
+    const newExercises = [];
+    newOrder.forEach(name => {
+      const exerciseSets = groupedExercises[name];
+      newExercises.push(...exerciseSets);
+    });
+    
+    setExercises(newExercises);
+  };
+
   const toggleExerciseCollapse = (exerciseName) => {
     setCollapsedExercises(prev => {
       const newSet = new Set(prev);
@@ -865,7 +892,7 @@ function WorkoutTracker({
                 className={`rounded-xl shadow-md border p-6 space-y-3 transition-colors ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}
               >
                 <div className={`flex items-center justify-between ${!collapsedExercises.has(exerciseName) ? 'mb-3' : ''}`}>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-4">
                     <h2
                       onClick={
                         editMode ? () => openEditExerciseName(exerciseName, exerciseName) : undefined
@@ -878,19 +905,53 @@ function WorkoutTracker({
                     >
                       {exerciseName}
                     </h2>
+                    {editMode && (
+                      <div className="flex flex-col gap-1">
+                        <button
+                          onClick={() => moveExercise(exerciseName, 'up')}
+                          disabled={r === 0}
+                          className={`zz_btn_move_exercise_up p-1 rounded transition-colors ${
+                            r === 0
+                              ? 'opacity-30 cursor-not-allowed'
+                              : darkMode
+                                ? 'bg-gray-700 hover:bg-gray-600 text-gray-200'
+                                : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                          }`}
+                          title="Move up"
+                        >
+                          <ChevronUp className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => moveExercise(exerciseName, 'down')}
+                          disabled={r === Object.entries(groupedExercises).length - 1}
+                          className={`zz_btn_move_exercise_down p-1 rounded transition-colors ${
+                            r === Object.entries(groupedExercises).length - 1
+                              ? 'opacity-30 cursor-not-allowed'
+                              : darkMode
+                                ? 'bg-gray-700 hover:bg-gray-600 text-gray-200'
+                                : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                          }`}
+                          title="Move down"
+                        >
+                          <ChevronDown className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
                     {exercisesWithWeightSet.has(exerciseName) && (
                       <div className="flex items-center">
                         <Check className={`w-5 h-5 ${darkMode ? "text-green-400" : "text-green-600"}`} />
                       </div>
                     )}
                   </div>
-                  <button
-                    onClick={() => toggleExerciseCollapse(exerciseName)}
-                    className={`zz_btn_toggle_collapse p-2 rounded-lg transition-all ${darkMode ? "hover:bg-gray-700 text-gray-400" : "hover:bg-gray-100 text-gray-500"}`}
-                    aria-label={collapsedExercises.has(exerciseName) ? "Expand exercise" : "Collapse exercise"}
-                  >
-                    <ChevronDown className={`w-5 h-5 transition-transform duration-200 ${collapsedExercises.has(exerciseName) ? "-rotate-90" : ""}`} />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => toggleExerciseCollapse(exerciseName)}
+                      className={`zz_btn_toggle_collapse p-2 rounded-lg transition-all ${darkMode ? "hover:bg-gray-700 text-gray-400" : "hover:bg-gray-100 text-gray-500"}`}
+                      aria-label={collapsedExercises.has(exerciseName) ? "Expand exercise" : "Collapse exercise"}
+                    >
+                      <ChevronDown className={`w-5 h-5 transition-transform duration-200 ${collapsedExercises.has(exerciseName) ? "-rotate-90" : ""}`} />
+                    </button>
+                  </div>
                 </div>
                 {!collapsedExercises.has(exerciseName) && (
                   <>

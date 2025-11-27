@@ -779,6 +779,227 @@ Auto-set next weight to dash when all weights are dash
     Element Should Have Class    ${COMPLETE_WORKOUT_BTN}    bg-green-600
 
 # =============================================================================
+# EXERCISE REORDERING TESTS
+# =============================================================================
+Reorder buttons appear in edit mode
+    [Documentation]    Up/down arrow buttons appear next to exercises when edit mode is enabled
+    [Setup]    Setup for workout tests    Manual Test Workout 20
+
+    # Add two more exercises so we have three total
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
+    Click Element    ${ADD_EXERCISE_BTN}
+    Populate New Exercise Info    Chin Ups    2
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
+    Click Element    ${ADD_EXERCISE_BTN}
+    Populate New Exercise Info    Dips    2
+    Sleep    1s
+    
+    # Verify reorder buttons are visible in edit mode
+    Execute JavaScript    window.scrollTo(0, 0)
+    Element Should Be Visible    ${EXERCISE_REORDER_UP}
+    Element Should Be Visible    ${EXERCISE_REORDER_DOWN}
+    
+    # Exit edit mode and verify buttons are hidden
+    Click Element    ${EDIT_WORKOUT_BTN}
+    Sleep    0.5s
+    Element Should Not Be Visible    ${EXERCISE_REORDER_UP}
+    Element Should Not Be Visible    ${EXERCISE_REORDER_DOWN}
+    
+    # Re-enter edit mode and verify buttons reappear
+    Click Element    ${EDIT_WORKOUT_BTN}
+    Sleep    0.5s
+    Element Should Be Visible    ${EXERCISE_REORDER_UP}
+    Element Should Be Visible    ${EXERCISE_REORDER_DOWN}
+
+Reorder buttons have correct disabled states
+    [Documentation]    First exercise up arrow and last exercise down arrow are disabled
+    [Setup]    Setup for workout tests    Manual Test Workout 21
+    
+    # Add two more exercises
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
+    Click Element    ${ADD_EXERCISE_BTN}
+    Populate New Exercise Info    Chin Ups    2
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
+    Click Element    ${ADD_EXERCISE_BTN}
+    Populate New Exercise Info    Dips    2
+    Sleep    1s
+    
+    # Check first exercise (Pullups) - up arrow should be disabled
+    Execute JavaScript    window.scrollTo(0, 0)
+    ${first_up_arrow} =    Get nth exercise reorder button    Pullups    up
+    ${first_down_arrow} =    Get nth exercise reorder button    Pullups    down
+    Element Should Have Class    ${first_up_arrow}    opacity-30
+    Element Should Not Have Class    ${first_down_arrow}    opacity-30
+    
+    # Check middle exercise (Dips) - both arrows should be enabled
+    ${middle_up_arrow} =    Get nth exercise reorder button    Dips    up
+    ${middle_down_arrow} =    Get nth exercise reorder button    Dips    down
+    Element Should Not Have Class    ${middle_up_arrow}    opacity-30
+    Element Should Not Have Class    ${middle_down_arrow}    opacity-30
+    
+    # Check last exercise (Chin Ups) - down arrow should be disabled
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
+    ${last_up_arrow} =    Get nth exercise reorder button    Chin Ups    up
+    ${last_down_arrow} =    Get nth exercise reorder button    Chin Ups    down
+    Element Should Not Have Class    ${last_up_arrow}    opacity-30
+    Element Should Have Class    ${last_down_arrow}    opacity-30
+
+Exercise can be moved down
+    [Documentation]    Clicking down arrow moves exercise down in the list
+    [Setup]    Setup for workout tests    Manual Test Workout 22
+    
+    # Add second exercise
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
+    Click Element    ${ADD_EXERCISE_BTN}
+    Populate New Exercise Info    Chin Ups    2
+    Sleep    1s
+    
+    # Verify initial order
+    Execute JavaScript    window.scrollTo(0, 0)
+    Verify Exercise Order    Pullups    Chin Ups
+    
+    # Click down arrow on first exercise
+    ${first_down_arrow} =    Get nth exercise reorder button    Pullups    down
+    Click Element    ${first_down_arrow}
+    Sleep    0.5s
+    
+    # Verify order changed
+    Verify Exercise Order    Chin Ups    Pullups
+
+Exercise can be moved up
+    [Documentation]    Clicking up arrow moves exercise up in the list
+    [Setup]    Setup for workout tests    Manual Test Workout 23
+    
+    # Add second exercise
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
+    Click Element    ${ADD_EXERCISE_BTN}
+    Populate New Exercise Info    Chin Ups    2
+    Sleep    1s
+    
+    # Verify initial order
+    Execute JavaScript    window.scrollTo(0, 0)
+    Verify Exercise Order    Pullups    Chin Ups
+    
+    # Click up arrow on second exercise
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
+    ${second_up_arrow} =    Get nth exercise reorder button    Chin Ups    up
+    Click Element    ${second_up_arrow}
+    Sleep    0.5s
+    
+    # Verify order changed
+    Verify Exercise Order    Chin Ups    Pullups
+
+Multiple exercises can be reordered
+    [Documentation]    Multiple exercises can be reordered to any position
+    [Setup]    Setup for workout tests    Manual Test Workout 24
+    
+    # Add two more exercises
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
+    Click Element    ${ADD_EXERCISE_BTN}
+    Populate New Exercise Info    Chin Ups    2
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
+    Click Element    ${ADD_EXERCISE_BTN}
+    Populate New Exercise Info    Dips    2
+    Sleep    1s
+    
+    # Verify initial order (Pullups, Dips, Chin Ups)
+    Execute JavaScript    window.scrollTo(0, 0)
+    Verify Exercise Order    Pullups    Dips    Chin Ups
+    
+    # Move Dips down to last position
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight / 2)
+    ${dips_down_arrow} =    Get nth exercise reorder button    Dips    down
+    Click Element    ${dips_down_arrow}
+    Sleep    0.5s
+    Verify Exercise Order    Pullups    Chin Ups    Dips
+    
+    # Move Chin Ups up to first position
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight / 2)
+    ${chinups_up_arrow} =    Get nth exercise reorder button    Chin Ups    up
+    Click Element    ${chinups_up_arrow}
+    Sleep    0.5s
+    Verify Exercise Order    Chin Ups    Pullups    Dips
+    
+    # Move Pullups down to last position
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
+    ${pullups_down_arrow} =    Get nth exercise reorder button    Pullups    down
+    Click Element    ${pullups_down_arrow}
+    Sleep    0.5s
+    Verify Exercise Order    Chin Ups    Dips    Pullups
+
+Exercise reorder persists after reload
+    [Documentation]    Reordered exercises maintain their position after page reload
+    [Setup]    Setup for workout tests    Manual Test Workout 25
+    
+    # Add second exercise
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
+    Click Element    ${ADD_EXERCISE_BTN}
+    Populate New Exercise Info    Chin Ups    2
+    Sleep    1s
+    
+    # Reorder exercises
+    Execute JavaScript    window.scrollTo(0, 0)
+    ${first_down_arrow} =    Get nth exercise reorder button    Pullups    down
+    Click Element    ${first_down_arrow}
+    Sleep    1s
+    
+    # Verify new order before reload
+    Verify Exercise Order    Chin Ups    Pullups
+    
+    # Reload and verify order persists
+    Reload Page
+    Go To A Workout    Manual Test Workout 25
+    Click Element    ${EDIT_WORKOUT_BTN}
+    Sleep    0.5s
+    Verify Exercise Order    Chin Ups    Pullups
+
+Exercise data remains intact after reordering
+    [Documentation]    Exercise sets and data are preserved when exercises are reordered
+    [Setup]    Setup for workout tests    Manual Test Workout 26
+    
+    # Configure first exercise
+    Edit Complete Exercise Set    Pullups    1
+    ...    SET_REPS=10
+    ...    SET_WEIGHT=100
+    ...    SET_REST=60
+    Set exercise level notes    Pullups    First exercise notes
+    
+    # Add and configure second exercise
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
+    Click Element    ${ADD_EXERCISE_BTN}
+    Populate New Exercise Info    Chin Ups    2
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
+    Edit Complete Exercise Set    Chin Ups    1
+    ...    SET_REPS=12
+    ...    SET_WEIGHT=80
+    ...    SET_REST=45
+    Set exercise level notes    Chin Ups    Second exercise notes
+    Sleep    1s
+    
+    # Reorder exercises
+    Execute JavaScript    window.scrollTo(0, 0)
+    ${pullups_down_arrow} =    Get nth exercise reorder button    Pullups    down
+    Click Element    ${pullups_down_arrow}
+    Sleep    0.5s
+    
+    # Verify order changed
+    Verify Exercise Order    Chin Ups    Pullups
+    
+    # Verify Chin Ups data intact (now first)
+    Verify Complete Exercise Set    Chin Ups    1
+    ...    ${SET_REPS}=12
+    ...    ${SET_WEIGHT}=80
+    ...    ${SET_REST}=45
+    Verify exercise set field value    Chin Ups    ${EXERCISE_NOTES}    1    Second exercise notes
+    
+    # Verify Pullups data intact (now second)
+    Verify Complete Exercise Set    Pullups    1
+    ...    ${SET_REPS}=10
+    ...    ${SET_WEIGHT}=100
+    ...    ${SET_REST}=60
+    Verify exercise set field value    Pullups    ${EXERCISE_NOTES}    1    First exercise notes
+
+# =============================================================================
 # EXERCISE COLLAPSE TESTS
 # =============================================================================
 Exercise can be manually collapsed and expanded

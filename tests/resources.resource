@@ -112,6 +112,8 @@ ${EXERCISE_NOTES_SAVE}      //button[contains(@class, "zz_btn_save_exercise_note
 ${EXERCISE_NOTES_CANCEL}    //button[contains(@class, "zz_btn_cancel_edit_exercise_notes")]
 ${COLLAPSE_EXERCISE_BTN}    //button[contains(@class, "zz_btn_toggle_collapse")]
 ${EXERCISE_COMPLETE_INDICATOR}  //div/*[local-name()='svg' and contains(@class, 'w-5') and contains(@class, 'h-5')]
+${EXERCISE_REORDER_UP}      //button[contains(@class, "zz_btn_move_exercise_up")]
+${EXERCISE_REORDER_DOWN}    //button[contains(@class, "zz_btn_move_exercise_down")]
 
 ${ADD_EXERCISE_BTN}         //button[contains(@class, "zz_btn_add_exercise_between") or contains(@class, "zz_btn_add_exercise_end")]
 ${COMPLETE_WORKOUT_BTN}     //button[contains(@class, "zz_btn_complete_workout")]
@@ -171,7 +173,19 @@ Populate New Exercise Info
     [Arguments]    ${exercise_name}    ${sets}
     Wait Until Element Is Visible    ${EXERCISE_NAME_INPUT}
     Input Text    ${EXERCISE_NAME_INPUT}    ${exercise_name}
-    Input Text    ${EXERCISE_SETS_INPUT}    ${sets}
+    
+    # Input sets with verification and retry
+    FOR    ${attempt}    IN RANGE    5
+        Input Text    ${EXERCISE_SETS_INPUT}    ${sets}
+        ${actual_value}=    Get Value    ${EXERCISE_SETS_INPUT}
+        Exit For Loop If    '${actual_value}' == '${sets}'
+        Sleep    0.2s
+    END
+    
+    # Final verification
+    ${final_value}=    Get Value    ${EXERCISE_SETS_INPUT}
+    Should Be Equal    ${final_value}    ${sets}    Sets input value '${final_value}' does not match expected '${sets}' after retries
+    
     Click Element    ${SAVE_BTN}
     Wait Until Element Is Visible    //h2[contains(@class, "text-xl") and text()="${exercise_name}"]
 
@@ -400,3 +414,33 @@ Click Next Weight Done Button
         Sleep    0.5s
     END
     Click Element    ${button_locator}
+
+Get nth exercise reorder button
+    [Documentation]    Get the up or down reorder button for a specific exercise
+    [Arguments]    ${exercise}    ${direction}
+    IF    '${direction}' == 'up'
+        ${button} =    Set Variable    //div[./div/div/h2[contains(text(),'${exercise}')]]${EXERCISE_REORDER_UP}
+    ELSE
+        ${button} =    Set Variable    //div[./div/div/h2[contains(text(),'${exercise}')]]${EXERCISE_REORDER_DOWN}
+    END
+    RETURN    ${button}
+
+Element Should Not Have Class
+    [Documentation]    Verify that an element does not have a specific class
+    [Arguments]    ${locator}    ${class_name}
+    ${classes}=    Get Element Attribute    ${locator}    class
+    Should Not Contain    ${classes}    ${class_name}
+
+Verify Exercise Order
+    [Documentation]    Verify that exercises appear in the specified order
+    [Arguments]    @{exercise_names}
+    ${exercises}=    Get WebElements    ${EXERCISE_TITLE}
+    ${exercise_count}=    Get Length    ${exercises}
+    ${expected_count}=    Get Length    ${exercise_names}
+    Should Be Equal As Numbers    ${exercise_count}    ${expected_count}    Expected ${expected_count} exercises but found ${exercise_count}
+    
+    FOR    ${index}    IN RANGE    ${expected_count}
+        ${actual_name}=    Get Text    ${exercises}[${index}]
+        ${expected_name}=    Set Variable    ${exercise_names}[${index}]
+        Should Be Equal    ${actual_name}    ${expected_name}    Exercise at position ${index + 1} should be '${expected_name}' but was '${actual_name}'
+    END
