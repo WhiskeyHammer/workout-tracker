@@ -171,11 +171,18 @@ Create a workout using json
 # =============================================================================
 Create a manual workout
     Create Manual Exercise    Pullups    2
+    
+    # Verify we're on tracker page (not import page)
+    Wait Until Element Is Visible    ${EDIT_WORKOUT_BTN}    5s
+    Element Should Not Be Visible    ${MANUAL_IMPORT_BTN}
+    
     ${sets} =    Get WebElements    ${SET_ROWS}
     ${set_count} =    Get Length    ${sets}
     Should Be Equal    '${set_count}'    '2'
-    Click Element    ${EDIT_WORKOUT_BTN}
+    
+    # Verify edit mode is enabled (we should see SET_GROUP which only shows in edit mode)
     Wait Until Element Is Visible    ${SET_REPS}    5s
+    Wait Until Element Is Visible    ${SET_GROUP}    5s
     
     Verify Complete Exercise Set    Pullups    1
     ...    ${SET_REPS}=0
@@ -193,17 +200,31 @@ Create a manual workout
     
     Verify exercise set field value    Pullups    ${EXERCISE_NOTES}    1   Click to add notes about this exercise...
     [Teardown]   Click Element   ${BACK_BUTTON}
-    # Approved
 
 Cancel the creation of a manual import
     Click Element    ${MANUAL_IMPORT_BTN}
-    Wait Until Element Is Visible    ${EXERCISE_NAME_INPUT}
+    
+    # The add exercise dialog should open immediately (bypassing import screen)
+    Wait Until Element Is Visible    ${EXERCISE_NAME_INPUT}    5s
+    
+    # Verify we're on tracker page with footer visible
+    Element Should Be Visible    ${EDIT_WORKOUT_BTN}
+    Element Should Not Be Visible    ${MANUAL_IMPORT_BTN}
+    
+    # Enter exercise name
     Input Text    ${EXERCISE_NAME_INPUT}    Pullups
-    Input Text    ${EXERCISE_SETS_INPUT}    2
+    
+    # Cancel the dialog
     Wait Until Element Is Enabled    ${CANCEL_BTN}
     Click Element    ${CANCEL_BTN}
-    Wait Until Element Is Visible    ${MANUAL_IMPORT_BTN}
-    # Approved
+    
+    # After canceling, we should still be on the tracker page (with no exercises)
+    # The footer should still be visible
+    Wait Until Element Is Visible    ${EDIT_WORKOUT_BTN}    5s
+    
+    # Verify no exercise sets were created
+    ${set_count} =    Get Element Count    ${SET_ROWS}
+    Should Be Equal As Numbers    ${set_count}    0
 
 # =============================================================================
 # NAVIGATION TESTS

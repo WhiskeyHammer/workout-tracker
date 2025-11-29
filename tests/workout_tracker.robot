@@ -30,7 +30,8 @@ Edits persists
     Make edit to field that uses single input modal    Pullups    1    ${EXERCISE_TITLE}    PULLUPS
     # Create New Exercise
     Click Element    ${ADD_EXERCISE_BTN}
-    Populate New Exercise Info    Chin Ups    2
+    Populate New Exercise Info    Chin Ups
+    Click Element    ${ADD_SET}
 
     # Slight pause for the save process
     Wait Until Element Is Visible    ${SYNC_SUCCESS_TOAST}
@@ -492,7 +493,7 @@ When a workout is completed it rolls over as expected
     # Create New Exercise
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
     Click Element    ${ADD_EXERCISE_BTN}
-    Populate New Exercise Info    Chin Ups    1
+    Populate New Exercise Info    Chin Ups
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
 
     # Set simple lift fields
@@ -788,10 +789,12 @@ Reorder buttons appear in edit mode
     # Add two more exercises so we have three total
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
     Click Element    ${ADD_EXERCISE_BTN}
-    Populate New Exercise Info    Chin Ups    2
+    Populate New Exercise Info    Chin Ups
+    Click Element    ${ADD_SET}
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
     Click Element    ${ADD_EXERCISE_BTN}
-    Populate New Exercise Info    Dips    2
+    Populate New Exercise Info    Dips
+    Click Element    ${ADD_SET}
     Sleep    1s
     
     # Verify reorder buttons are visible in edit mode
@@ -818,10 +821,12 @@ Reorder buttons have correct disabled states
     # Add two more exercises
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
     Click Element    ${ADD_EXERCISE_BTN}
-    Populate New Exercise Info    Chin Ups    2
+    Populate New Exercise Info    Chin Ups
+    Click Element    ${ADD_SET}
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
     Click Element    ${ADD_EXERCISE_BTN}
-    Populate New Exercise Info    Dips    2
+    Populate New Exercise Info    Dips
+    Click Element    ${ADD_SET}
     Sleep    1s
     
     # Check first exercise (Pullups) - up arrow should be disabled
@@ -851,7 +856,8 @@ Exercise can be moved down
     # Add second exercise
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
     Click Element    ${ADD_EXERCISE_BTN}
-    Populate New Exercise Info    Chin Ups    2
+    Populate New Exercise Info    Chin Ups
+    Click Element    ${ADD_SET}
     Sleep    1s
     
     # Verify initial order
@@ -873,7 +879,8 @@ Exercise can be moved up
     # Add second exercise
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
     Click Element    ${ADD_EXERCISE_BTN}
-    Populate New Exercise Info    Chin Ups    2
+    Populate New Exercise Info    Chin Ups
+    Click Element    ${ADD_SET}
     Sleep    1s
     
     # Verify initial order
@@ -896,10 +903,12 @@ Multiple exercises can be reordered
     # Add two more exercises
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
     Click Element    ${ADD_EXERCISE_BTN}
-    Populate New Exercise Info    Chin Ups    2
+    Populate New Exercise Info    Chin Ups
+    Click Element    ${ADD_SET}
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
     Click Element    ${ADD_EXERCISE_BTN}
-    Populate New Exercise Info    Dips    2
+    Populate New Exercise Info    Dips
+    Click Element    ${ADD_SET}
     Sleep    1s
     
     # Verify initial order (Pullups, Dips, Chin Ups)
@@ -934,7 +943,8 @@ Exercise reorder persists after reload
     # Add second exercise
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
     Click Element    ${ADD_EXERCISE_BTN}
-    Populate New Exercise Info    Chin Ups    2
+    Populate New Exercise Info    Chin Ups
+    Click Element    ${ADD_SET}
     Sleep    1s
     
     # Reorder exercises
@@ -967,7 +977,8 @@ Exercise data remains intact after reordering
     # Add and configure second exercise
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
     Click Element    ${ADD_EXERCISE_BTN}
-    Populate New Exercise Info    Chin Ups    2
+    Populate New Exercise Info    Chin Ups
+    Click Element    ${ADD_SET}
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
     Edit Complete Exercise Set    Chin Ups    1
     ...    SET_REPS=12
@@ -1148,7 +1159,8 @@ Collapse works with multiple exercises
     # Add second exercise
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
     Click Element    ${ADD_EXERCISE_BTN}
-    Populate New Exercise Info    Chin Ups    2
+    Populate New Exercise Info    Chin Ups
+    Click Element    ${ADD_SET}
     Sleep    1s
     
     # Collapse first exercise

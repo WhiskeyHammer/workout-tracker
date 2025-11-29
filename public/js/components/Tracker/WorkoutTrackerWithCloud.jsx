@@ -374,6 +374,7 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
                     hideFileUpload={true}
                     onComplete={handleComplete}
                     autoImportData={autoImportData}
+                    initialEditMode={false}
                 />
             )}
             {showInfoModal && (

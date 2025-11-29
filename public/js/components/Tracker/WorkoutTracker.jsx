@@ -13,6 +13,7 @@ function WorkoutTracker({
   hideFileUpload = false,
   onComplete,
   autoImportData,
+  initialEditMode = false,
 } = {}) {
   const { useState, useEffect, useRef } = React;
   
@@ -35,10 +36,13 @@ function WorkoutTracker({
   const [exerciseToDelete, setExerciseToDelete] = useState(null);
   const [showAddExerciseDialog, setShowAddExerciseDialog] = useState(false);
   const [newExerciseName, setNewExerciseName] = useState("");
-  const [newExerciseSets, setNewExerciseSets] = useState("3");
+  const [newExerciseSets, setNewExerciseSets] = useState("1");
   const [insertAfterGroup, setInsertAfterGroup] = useState(null);
   const [editingExerciseName, setEditingExerciseName] = useState(null);
-  const [editMode, setEditMode] = useState(false);
+  const [editMode, setEditMode] = useState(() => {
+    console.log('🎯 WorkoutTracker: Initializing editMode with initialEditMode =', initialEditMode);
+    return initialEditMode;
+  });
   const [internalDarkMode, setInternalDarkMode] = useState(true);
   const [showWeightGroupModal, setShowWeightGroupModal] = useState(false);
   const [weightGroupValues, setWeightGroupValues] = useState({});
@@ -59,6 +63,7 @@ function WorkoutTracker({
   const isAutoImporting = useRef(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [infoModalContent, setInfoModalContent] = useState({ title: '', message: '' });
+  const [bypassImportScreen, setBypassImportScreen] = useState(false);
 
   // Use external darkMode if provided, otherwise use internal state
   const darkMode = propDarkMode !== undefined ? propDarkMode : internalDarkMode;
@@ -400,12 +405,12 @@ function WorkoutTracker({
     (setInsertAfterGroup(e),
       setShowAddExerciseDialog(!0),
       setNewExerciseName(""),
-      setNewExerciseSets("3"));
+      setNewExerciseSets("1"));
   };
   const closeAddExerciseDialog = () => {
     (setShowAddExerciseDialog(!1),
       setNewExerciseName(""),
-      setNewExerciseSets("3"),
+      setNewExerciseSets("1"),
       setInsertAfterGroup(null));
   };
   const confirmAddExercise = () => {
@@ -841,7 +846,7 @@ function WorkoutTracker({
     <div
       className={`min-h-screen pb-20 transition-colors overflow-x-hidden ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}
     >
-      {0 === exercises.length && (
+      {0 === exercises.length && !bypassImportScreen && (
         <div className="p-4">
           <label
             className={`flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${darkMode ? "border-gray-600 bg-gray-800 hover:bg-gray-750" : "border-gray-300 bg-white hover:bg-gray-50"}`}
@@ -868,7 +873,12 @@ function WorkoutTracker({
           </label>
           <div className="mt-4">
             <button
-              onClick={() => openAddExerciseDialog(null)}
+              onClick={() => {
+                console.log('✨ WorkoutTracker: Create Workout Manually clicked. Bypassing import screen, enabling edit mode, and opening add exercise dialog');
+                setBypassImportScreen(true);
+                setEditMode(true);
+                openAddExerciseDialog(null);
+              }}
               className={`zz_btn_create_workout_manual w-full py-4 border-2 border-dashed rounded-lg transition-colors flex items-center justify-center gap-3 ${darkMode ? "border-green-700 bg-gray-800 hover:bg-gray-750 text-green-400" : "border-green-400 bg-green-50 hover:bg-green-100 text-green-600"}`}
             >
               <Plus className="w-6 h-6" />
@@ -884,7 +894,7 @@ function WorkoutTracker({
           </div>
         </div>
       )}
-      {exercises.length > 0 && (
+      {(exercises.length > 0 || bypassImportScreen) && (
         <div className="p-4 space-y-8">
           {Object.entries(groupedExercises).map(([exerciseName, t], r) => (
             <React.Fragment key={exerciseName}>
@@ -1444,7 +1454,7 @@ function WorkoutTracker({
             <h2 className={`text-xl font-bold mb-4 transition-colors ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
               Add New Exercise
             </h2>
-            <div className="mb-4">
+            <div className="mb-6">
               <label className={`block text-sm font-medium mb-2 transition-colors ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 Exercise Name
               </label>
@@ -1455,19 +1465,6 @@ function WorkoutTracker({
                 className={`zz_input_new_exercise_name w-full px-4 py-3 border-2 rounded-lg text-lg focus:outline-none transition-colors ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 placeholder-gray-400' : 'border-gray-300 text-gray-900 focus:border-blue-500'}`}
                 placeholder="e.g. Dumbbell Curls"
                 autoFocus
-              />
-            </div>
-            <div className="mb-6">
-              <label className={`block text-sm font-medium mb-2 transition-colors ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Number of Sets
-              </label>
-              <input
-                type="number"
-                value={newExerciseSets}
-                onChange={(e) => setNewExerciseSets(e.target.value)}
-                className={`zz_input_new_exercise_sets w-full px-4 py-3 border-2 rounded-lg text-lg focus:outline-none transition-colors ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 placeholder-gray-400' : 'border-gray-300 text-gray-900 focus:border-blue-500'}`}
-                placeholder="3"
-                min="1"
               />
             </div>
             <div className="flex gap-3">
@@ -1646,7 +1643,10 @@ function WorkoutTracker({
               
               {/* Right: Edit button */}
               <button
-                onClick={() => setEditMode(!editMode)}
+                onClick={() => {
+                  console.log('🔧 WorkoutTracker: Edit mode toggle clicked. Current editMode =', editMode, '→ New editMode =', !editMode);
+                  setEditMode(!editMode);
+                }}
                 className={`zz_btn_edit_mode inline-flex items-center justify-center gap-2 px-4 h-10 rounded-lg font-medium transition-colors ${darkMode ? "bg-gray-700 text-gray-200 hover:bg-gray-600" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}
               >
                 <Edit className="w-5 h-5" />

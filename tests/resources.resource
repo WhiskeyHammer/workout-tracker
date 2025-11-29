@@ -63,7 +63,6 @@ ${MANUAL_IMPORT_BTN}        //button[.//p[contains(text(),'Create Workout Manual
 
 # Add Exercise Modal
 ${EXERCISE_NAME_INPUT}      //label[text()='Exercise Name']/following-sibling::input
-${EXERCISE_SETS_INPUT}      //label[text()='Number of Sets']/following-sibling::input
 ${CANCEL_BTN}               //button[contains(text(),'Cancel')]
 ${SAVE_BTN}                 //button[contains(text(),'Add')]
 
@@ -164,28 +163,29 @@ Go To Import Page
     Wait Until Element Is Visible    ${MANUAL_IMPORT_BTN}
 
 Create Manual Exercise
-    [Documentation]    Create a manual exercise with specified name and number of sets
-    [Arguments]    ${exercise_name}    ${num_sets}
+    [Documentation]    Create a manual exercise with specified name and optionally add additional sets
+    ...                Note: Clicking manual import button now bypasses import screen and goes directly to tracker
+    [Arguments]    ${exercise_name}    ${num_sets}=1
     Click Element    ${MANUAL_IMPORT_BTN}
-    Populate New Exercise Info    ${exercise_name}    ${num_sets}
+    
+    # After clicking manual import, we should be on tracker page with add exercise dialog open
+    # Edit mode should already be enabled
+    Populate New Exercise Info    ${exercise_name}
+    
+    # Add additional sets if needed (exercise is created with 1 set by default)
+    # Edit mode is already enabled from the manual import flow
+    IF    ${num_sets} > 1
+        ${additional_sets}=    Evaluate    ${num_sets} - 1
+        FOR    ${i}    IN RANGE    ${additional_sets}
+            Click Element    ${ADD_SET}
+            Sleep    0.3s
+        END
+    END
 
 Populate New Exercise Info
-    [Arguments]    ${exercise_name}    ${sets}
+    [Arguments]    ${exercise_name}
     Wait Until Element Is Visible    ${EXERCISE_NAME_INPUT}
     Input Text    ${EXERCISE_NAME_INPUT}    ${exercise_name}
-    
-    # Input sets with verification and retry
-    FOR    ${attempt}    IN RANGE    5
-        Input Text    ${EXERCISE_SETS_INPUT}    ${sets}
-        ${actual_value}=    Get Value    ${EXERCISE_SETS_INPUT}
-        Exit For Loop If    '${actual_value}' == '${sets}'
-        Sleep    0.2s
-    END
-    
-    # Final verification
-    ${final_value}=    Get Value    ${EXERCISE_SETS_INPUT}
-    Should Be Equal    ${final_value}    ${sets}    Sets input value '${final_value}' does not match expected '${sets}' after retries
-    
     Click Element    ${SAVE_BTN}
     Wait Until Element Is Visible    //h2[contains(@class, "text-xl") and text()="${exercise_name}"]
 
