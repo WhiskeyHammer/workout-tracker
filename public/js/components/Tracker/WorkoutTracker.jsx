@@ -60,6 +60,7 @@ function WorkoutTracker({
   const [editingExerciseNotes, setEditingExerciseNotes] = useState(null);
   const [editExerciseNotesValue, setEditExerciseNotesValue] = useState("");
   const exerciseNotesTextareaRef = useRef(null);
+  const setNotesTextareaRef = useRef(null);
   const isAutoImporting = useRef(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [infoModalContent, setInfoModalContent] = useState({ title: '', message: '' });
@@ -782,6 +783,16 @@ function WorkoutTracker({
       textarea.focus();
     }
   }, [editingExerciseNotes]);
+  
+  // Position cursor at end of text when set notes modal opens
+  useEffect(() => {
+    if (editingField && editingField.field === "notes" && setNotesTextareaRef.current) {
+      const textarea = setNotesTextareaRef.current;
+      const length = textarea.value.length;
+      textarea.setSelectionRange(length, length);
+      textarea.focus();
+    }
+  }, [editingField]);
   // Reset timerJustStarted flag after initial fill
   useEffect(() => {
     if (timerJustStarted) {
@@ -1340,12 +1351,12 @@ function WorkoutTracker({
             </h2>
             {"notes" === editingField.field ? (
               <textarea
+                ref={setNotesTextareaRef}
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
                 className={`zz_input_edit_notes w-full px-4 py-3 border-2 rounded-lg text-lg focus:outline-none mb-6 resize-none transition-colors ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 placeholder-gray-400' : 'border-gray-300 text-gray-900 focus:border-blue-500'}`}
                 placeholder="Add notes..."
                 rows="4"
-                autoFocus
               />
             ) : (
               <input
