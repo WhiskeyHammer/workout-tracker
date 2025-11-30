@@ -1206,7 +1206,7 @@ function WorkoutTracker({
                       onClick={() => openWeightGroupModal(exerciseName, t)}
                       className={`zz_btn_set_next_weight w-full mt-3 py-3 text-white rounded-lg font-medium transition-colors ${darkMode ? "bg-green-700 hover:bg-green-600" : "bg-green-600 hover:bg-green-700"}`}
                     >
-                      Set Weight For Next Lift
+                      Complete Exercise & Set Next Weight
                     </button>
                   ))}
                   </>
