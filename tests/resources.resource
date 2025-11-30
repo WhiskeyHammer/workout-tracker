@@ -104,7 +104,6 @@ ${SET_COMPLETE}             //button[contains(@class, "zz_btn_toggle_set_complet
 ${SET_COMPLETE_CONFIRM}     //button[contains(@class, "zz_btn_confirm_uncomplete")]
 ${SET_COMPLETE_CANCEL}      //button[contains(@class, "zz_btn_cancel_uncomplete")]
 ${SET_NOTES_INPUT}          //textarea[contains(@class, "zz_input_edit_notes")]
-${ADD_SET_BTN}              //button[contains(@class, "zz_btn_add_set")]
 ${EXERCISE_NOTES}           //p[contains(@class, "zz_editable_exercise_notes")]
 ${EXERCISE_NOTES_INPUT}     //textarea[contains(@class, "zz_input_edit_exercise_notes")]
 ${EXERCISE_NOTES_SAVE}      //button[contains(@class, "zz_btn_save_exercise_notes")]
