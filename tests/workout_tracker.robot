@@ -675,6 +675,21 @@ When a workout is completed it rolls over as expected
     Element Attribute Value Should Be    ${NEXT_WEIGHT_INPUT}    value    20
     Click Element    ${NEXT_WEIGHT_CANCEL}
 
+Next weight button displays correct text
+    [Documentation]    Verify that the "Set Next Weight" button displays the correct text
+    [Setup]    Setup for workout tests    Manual Test Workout 27
+    
+    # Add weight to the exercise
+    Make edit to field that uses single input modal    Pullups    1    ${SET_WEIGHT}    100
+    
+    # Complete both sets to trigger next weight button
+    Toggle complete set field    Pullups    1
+    Toggle complete set field    Pullups    2
+    
+    # Verify the button is visible and has correct text
+    Element Should Be Visible    ${NEXT_WEIGHT_BTN}
+    Element Text Should Be    ${NEXT_WEIGHT_BTN}    Complete Exercise & Set Next Weight
+
 Complete workout button less aggressive until all next weights are set
     [Documentation]    Complete Workout button is disabled until all exercises have next weights set
     [Setup]    Setup for workout tests    Manual Test Workout 18
