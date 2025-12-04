@@ -1500,7 +1500,7 @@ function WorkoutTracker({
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-30 p-4 pt-[15vh]">
           <div className={`rounded-2xl p-6 max-w-md w-full shadow-2xl transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
             <h2 className={`text-xl font-bold mb-4 transition-colors ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-              Set Weight For Next Lift
+              Complete Exercise and Set Next Weight
             </h2>
             <div className="mb-6 space-y-4">
               {Object.keys(weightGroupValues).map((group) => (

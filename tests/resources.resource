@@ -8,8 +8,8 @@ Library          OperatingSystem
 # =============================================================================
 # GLOBAL CONFIGURATION
 # =============================================================================
-#${URL}                       https://workout-tracker-hxg5.onrender.com/
-${URL}                       http://localhost:3000/
+${URL}                       https://workout-tracker-hxg5.onrender.com/
+#${URL}                       http://localhost:3000/
 ${BROWSER}                   Chrome
 ${USERNAME}                  test@test.com
 ${PASSWORD}                  testpassword5
