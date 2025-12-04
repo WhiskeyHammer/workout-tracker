@@ -14,6 +14,31 @@ function App() {
         localStorage.setItem('darkMode', JSON.stringify(darkMode));
     }, [darkMode]);
     
+    // Handle browser back/forward button navigation
+    useEffect(() => {
+        const handlePopState = (event) => {
+            if (event.state) {
+                setView(event.state.view || 'library');
+                setSelectedWorkoutId(event.state.workoutId || null);
+            } else {
+                // No state, go back to library
+                setView('library');
+                setSelectedWorkoutId(null);
+            }
+        };
+        
+        // Set initial history state
+        if (!window.history.state) {
+            window.history.replaceState({ view: 'library', workoutId: null }, '', window.location.pathname);
+        }
+        
+        window.addEventListener('popstate', handlePopState);
+        
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+        };
+    }, []);
+    
     const handleLogin = (newToken) => {
         setToken(newToken);
     };
@@ -36,16 +61,22 @@ function App() {
     const handleSelectWorkout = (workoutId) => {
         setSelectedWorkoutId(workoutId);
         setView('tracker');
+        // Push new history state when navigating to tracker
+        window.history.pushState({ view: 'tracker', workoutId: workoutId }, '', window.location.pathname);
     };
     
     const handleCreateNew = (workoutId = null) => {
         setSelectedWorkoutId(workoutId);
         setView('tracker');
+        // Push new history state when navigating to tracker
+        window.history.pushState({ view: 'tracker', workoutId: workoutId }, '', window.location.pathname);
     };
     
     const handleBackToLibrary = () => {
         setView('library');
         setSelectedWorkoutId(null);
+        // Go back in history instead of just updating state
+        window.history.back();
     };
     
     if (!token) {
