@@ -62,81 +62,61 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
         }
     };
     
-    const checkForUpdates = async () => {
+    const clearCacheAndReload = async () => {
         setCheckingUpdate(true);
-        console.log('🔄 Checking for updates...');
-        console.log('   Current version:', currentVersion);
+        console.log('🧹 Clearing cache and reloading...');
         
         try {
-            if (!currentVersion || currentVersion.commitHash === 'unknown') {
-                console.error('   ❌ No valid version information available');
-                setInfoModalContent({
-                    title: 'Cannot Check for Updates',
-                    message: 'Version information not available.\n\nMake sure the app was built with Git information.'
-                });
-                setShowInfoModal(true);
-                setCheckingUpdate(false);
-                return;
+            // Step 1: Delete all caches
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                console.log('   Found caches:', cacheNames);
+                
+                await Promise.all(
+                    cacheNames.map(cacheName => {
+                        console.log('   Deleting cache:', cacheName);
+                        return caches.delete(cacheName);
+                    })
+                );
+                
+                console.log('   ✅ All caches cleared');
             }
             
-            // Use the branch from the current version
-            const branch = currentVersion.branch || 'main';
-            const githubUrl = `https://api.github.com/repos/WhiskeyHammer/workout-tracker/commits/${branch}`;
-            
-            // Fetch latest commit from GitHub
-            const githubResponse = await fetch(githubUrl);
-            
-            if (!githubResponse.ok) {
-                if (githubResponse.status === 404) {
-                    // Repository might be private or doesn't exist
-                    setInfoModalContent({
-                        title: 'Unable to Check for Updates',
-                        message: 'This may be because:\n• The repository is private (GitHub API requires authentication)\n• Network connection issue\n\nCurrent version: ' + currentVersion.shortHash
-                    });
-                    setShowInfoModal(true);
-                } else {
-                    throw new Error(`GitHub API returned ${githubResponse.status}`);
-                }
-                setCheckingUpdate(false);
-                return;
-            }
-            
-            const githubData = await githubResponse.json();
-            const latestCommitHash = githubData.sha;
-            const latestCommitShort = latestCommitHash.substring(0, 7);
-            
-            setLatestVersion({
-                commitHash: latestCommitHash,
-                shortHash: latestCommitShort,
-                commitDate: githubData.commit.committer.date,
-                message: githubData.commit.message
-            });
-            
-            // Compare with current version
-            if (currentVersion.commitHash !== latestCommitHash) {
-                setUpdateAvailable(true);
-            } else {
-                setInfoModalContent({
-                    title: 'Up to Date',
-                    message: 'You are running the latest version (' + currentVersion.shortHash + ')'
-                });
-                setShowInfoModal(true);
-            }
-            
-            // Also trigger service worker update check
+            // Step 2: Unregister service worker
             if ('serviceWorker' in navigator) {
-                const registration = await navigator.serviceWorker.ready;
-                await registration.update();
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                console.log('   Found service worker registrations:', registrations.length);
+                
+                await Promise.all(
+                    registrations.map(registration => {
+                        console.log('   Unregistering service worker');
+                        return registration.unregister();
+                    })
+                );
+                
+                console.log('   ✅ Service worker unregistered');
             }
             
-        } catch (error) {
-            console.error('Error checking for updates:', error);
+            // Step 3: Show success message and reload
             setInfoModalContent({
-                title: 'Failed to Check for Updates',
-                message: 'Error: ' + error.message + '\n\nCurrent version: ' + (currentVersion ? currentVersion.shortHash : 'unknown')
+                title: 'Cache Cleared',
+                message: 'All cached files have been cleared.\n\nThe app will now reload to fetch the latest code.'
             });
             setShowInfoModal(true);
-        } finally {
+            
+            // Reload after a short delay to show the message
+            setTimeout(() => {
+                console.log('   🔄 Reloading application...');
+                window.location.reload(true);
+            }, 2000);
+            
+        } catch (error) {
+            console.error('❌ Error clearing cache:', error);
+            setInfoModalContent({
+                title: 'Error Clearing Cache',
+                message: 'An error occurred while clearing the cache:\n\n' + error.message
+            });
+            setShowInfoModal(true);
             setCheckingUpdate(false);
         }
     };
@@ -515,7 +495,7 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
                         </button>
                     ) : (
                         <button
-                            onClick={checkForUpdates}
+                            onClick={clearCacheAndReload}
                             disabled={checkingUpdate}
                             className={`mb-2 transition-all ${
                                 darkMode 
@@ -523,9 +503,9 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
                                     : 'text-gray-300 hover:text-gray-400'
                             } ${checkingUpdate ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                             style={{ fontSize: '10px' }}
-                            title="Check for app updates"
+                            title="Clear cache and reload app"
                         >
-                            {checkingUpdate ? 'checking...' : 'check for updates'}
+                            {checkingUpdate ? 'clearing...' : 'clear cache & reload'}
                         </button>
                     )}
                     <p className={`text-xs transition-colors ${darkMode ? 'text-gray-700' : 'text-gray-300'}`}>
