@@ -1,6 +1,0 @@
-{
-    "robotcode.robot.args": [
-        "--outputdir",
-        "tests/test_logs"
-    ],
-}
