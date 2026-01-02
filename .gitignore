@@ -4,3 +4,4 @@ node_modules/
 .DS_Store
 tests/test_logs
 public/version.json
+.vscode
