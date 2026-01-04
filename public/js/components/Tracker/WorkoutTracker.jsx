@@ -1625,7 +1625,10 @@ const confirmUncomplete = () => {
       {exercises.length > 0 && activeTimer !== null && timeRemaining > 0 && (
         <div
           className={`fixed left-0 right-0 border-t shadow-lg transition-colors ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}
-          style={{ bottom: '73px', marginBottom: '8px' }}
+          style={{ 
+            bottom: 'calc(73px + env(safe-area-inset-bottom))', // <--- UPDATED
+            marginBottom: '8px' 
+          }}
         >
           <div className="px-4 py-2">
             <div className="flex items-center justify-between mb-2">
@@ -1659,6 +1662,7 @@ const confirmUncomplete = () => {
       {exercises.length > 0 && (
         <div
           className={`fixed bottom-0 left-0 right-0 border-t shadow-lg transition-colors ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }} // <--- ADDED
         >
           <div className="px-4 py-3">
             <div className="flex items-center justify-between">
