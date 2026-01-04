@@ -4,8 +4,9 @@
   "description": "Workout tracker with MongoDB",
   "main": "server.js",
   "scripts": {
-    "start": "npm run generate-version && node server.js",
-    "dev": "npm run generate-version && nodemon server.js",
+    "build:utils": "esbuild scripts/wakeLock.src.js --bundle --outfile=public/js/utils/wakeLock.js --platform=browser",
+    "start": "npm run build:utils && npm run generate-version && node server.js",
+    "dev": "npm run build:utils && npm run generate-version && nodemon server.js",
     "generate-version": "node scripts/generate-version.js"
   },
   "dependencies": {
@@ -16,9 +17,14 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.20.0",
     "mongoose": "^8.0.0",
-    "sharp": "^0.34.5"
+    "sharp": "^0.34.5",
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/local-notifications": "^6.0.0"
   },
   "devDependencies": {
+    "@capacitor/cli": "^6.0.0",
+    "esbuild": "^0.20.0",
     "js-beautify": "^1.15.4",
     "nodemon": "^3.0.1"
   }

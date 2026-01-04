@@ -233,7 +233,7 @@ function WorkoutTracker({
       return isNaN(e) ? 0 : Math.round(60 * e);
     }
   };
-  const toggleComplete = (e) => {
+const toggleComplete = (e) => {
     const t = exercises.find((t) => t.id === e),
       r = t.exercise || t.name || "Exercise",
       n = groupedExercises[r],
@@ -256,8 +256,14 @@ function WorkoutTracker({
           setTimerJustStarted(true);
           setActiveTimer(e);
           setTimeRemaining(r);
-          setTimeRemainingMs(r * 1000);  // Initialize with full time in milliseconds
+          setTimeRemainingMs(r * 1000);
           setTimerEndTime(Date.now() + (r * 1000));
+          
+          // === NEW CODE START ===
+          if (window.notificationManager) {
+            window.notificationManager.schedule(r, "Rest Complete", "Time for your next set!");
+          }
+          // === NEW CODE END ===
         }
       }
       setExercises(
@@ -278,14 +284,12 @@ function WorkoutTracker({
       );
       
       if (isLastSet && allSetsWillBeComplete) {
-        // Check if exercise has weight groups and all weights are "-"
         const hasWeightGroups = n.some((set) => set["weight group"]);
         const allWeightsAreDash = n.every((set) => 
           set.weight === "-" || set.weight === "- "
         );
         
         if (hasWeightGroups && allWeightsAreDash) {
-          // Automatically set next weight values to "-" for all weight groups in this exercise
           const weightGroups = n
             .filter((set) => set["weight group"])
             .map((set) => set["weight group"])
@@ -296,7 +300,6 @@ function WorkoutTracker({
             autoWeightValues[group] = "-";
           });
           
-          // Update state to mark weights as set
           const newSet = new Set(exercisesWithWeightSet);
           newSet.add(r);
           setExercisesWithWeightSet(newSet);
@@ -305,7 +308,6 @@ function WorkoutTracker({
             ...autoWeightValues,
           });
           
-          // Collapse the exercise after auto-setting weights
           setCollapsedExercises(prev => {
             const newCollapsed = new Set(prev);
             newCollapsed.add(r);
@@ -314,8 +316,14 @@ function WorkoutTracker({
         }
       }
     }
-  };
-  const confirmUncomplete = () => {
+  };  
+const confirmUncomplete = () => {
+    // === NEW CODE START ===
+    if (activeTimer === exerciseToUncomplete && window.notificationManager) {
+      window.notificationManager.cancel();
+    }
+    // === NEW CODE END ===
+
     (null !== exerciseToUncomplete &&
       (activeTimer === exerciseToUncomplete &&
         (setActiveTimer(null), setTimeRemaining(0), setTimerEndTime(null)),
@@ -339,6 +347,12 @@ function WorkoutTracker({
     setShowSkipRestDialog(!0);
   };
   const confirmSkipRest = () => {
+    // === NEW CODE START ===
+    if (window.notificationManager) {
+      window.notificationManager.cancel();
+    }
+    // === NEW CODE END ===
+    
     (setActiveTimer(null), setTimeRemaining(0), setTimerEndTime(null), setShowSkipRestDialog(!1));
   };
   const cancelSkipRest = () => {
@@ -392,6 +406,12 @@ function WorkoutTracker({
     (setExerciseToDelete(e), setShowDeleteDialog(!0));
   };
   const confirmDelete = () => {
+    // === NEW CODE START ===
+    if (activeTimer === exerciseToDelete && window.notificationManager) {
+      window.notificationManager.cancel();
+    }
+    // === NEW CODE END ===
+
     (null !== exerciseToDelete &&
       (activeTimer === exerciseToDelete &&
         (setActiveTimer(null), setTimeRemaining(0), setTimerEndTime(null)),
