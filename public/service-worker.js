@@ -1,18 +1,7 @@
-// Service Worker for Workout Tracker PWA
-// Cache name will be updated dynamically from version.json
-let CACHE_NAME = 'workout-tracker-dev';
+// SERVICE WORKER - NETWORK FIRST STRATEGY (No Plugins)
+const CACHE_NAME = 'workout-tracker-net-first-v3'; 
 
-// Try to load version info and update cache name
-fetch('/version.json')
-  .then(response => response.json())
-  .then(versionData => {
-    CACHE_NAME = `workout-tracker-${versionData.shortHash}`;
-  })
-  .catch(() => {
-    console.log('Using default cache name');
-  });
-
-const urlsToCache = [
+const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
@@ -26,95 +15,65 @@ const urlsToCache = [
   '/js/components/Library/WorkoutLibrary.jsx',
   '/js/components/Tracker/WorkoutTracker.jsx',
   '/js/components/Tracker/WorkoutTrackerWithCloud.jsx',
-  '/icons/icon-72x72.png',
-  '/icons/icon-96x96.png',
-  '/icons/icon-128x128.png',
-  '/icons/icon-144x144.png',
-  '/icons/icon-152x152.png',
-  '/icons/icon-192x192.png',
-  '/icons/icon-384x384.png',
-  '/icons/icon-512x512.png'
+  '/icons/icon-192x192.png'
 ];
 
-// Install event - cache assets
+// 1. INSTALL: Cache assets immediately
 self.addEventListener('install', (event) => {
+  self.skipWaiting(); // Force this new SW to activate immediately
+  
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('Opened cache');
-        return cache.addAll(urlsToCache);
-      })
-      .catch((error) => {
-        console.error('Cache installation failed:', error);
-      })
-  );
-  // Force the waiting service worker to become the active service worker
-  self.skipWaiting();
-});
-
-// Fetch event - serve from cache, fallback to network
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Cache hit - return response
-        if (response) {
-          return response;
-        }
-
-        // Clone the request
-        const fetchRequest = event.request.clone();
-
-        return fetch(fetchRequest).then((response) => {
-          // Check if valid response
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
-
-          // Clone the response
-          const responseToCache = response.clone();
-
-          // Cache the fetched response for future use (except for API calls)
-          if (!event.request.url.includes('/api/')) {
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
-          }
-
-          return response;
-        }).catch(() => {
-          // Network request failed, return offline page if available
-          return caches.match('/index.html');
-        });
+        return cache.addAll(STATIC_ASSETS);
       })
   );
 });
 
-// Activate event - clean up old caches
+// 2. ACTIVATE: Clean up old caches
 self.addEventListener('activate', (event) => {
-  const cacheWhitelist = [CACHE_NAME];
+  event.waitUntil(self.clients.claim()); // Take control of all pages immediately
   
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            console.log('Deleting old cache:', cache);
+            return caches.delete(cache);
           }
         })
       );
     })
   );
-  
-  // Claim clients to ensure service worker takes control immediately
-  return self.clients.claim();
 });
 
-// Handle skip waiting message from client
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
+// 3. FETCH: Network First (with Cache Fallback)
+self.addEventListener('fetch', (event) => {
+  // Only handle GET requests
+  if (event.request.method !== 'GET') return;
+  if (!event.request.url.startsWith('http')) return;
+
+  event.respondWith(
+    fetch(event.request)
+      .then((networkResponse) => {
+        // ONLINE: We got a fresh response from the server
+        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+          return networkResponse;
+        }
+
+        // Clone and Cache the fresh version
+        const responseToCache = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseToCache);
+        });
+
+        return networkResponse;
+      })
+      .catch(() => {
+        // OFFLINE: Network failed, fall back to cache
+        console.log('Network failed, serving offline cache for:', event.request.url);
+        return caches.match(event.request);
+      })
+  );
 });
