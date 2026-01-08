@@ -5,6 +5,7 @@ import qrcode
 import sys
 import shutil
 import platform
+import time  # <--- Added import
 
 def set_java_home():
     """Auto-detects Java from Android Studio if JAVA_HOME is missing."""
@@ -14,13 +15,12 @@ def set_java_home():
     system = platform.system()
     candidates = []
     
-    # Common Android Studio Java paths
     if system == "Windows":
         candidates = [
             r"C:\Program Files\Android\Android Studio\jbr",
             r"C:\Program Files\Android\Android Studio\jre",
         ]
-    elif system == "Darwin": # macOS
+    elif system == "Darwin": 
         candidates = [
             "/Applications/Android Studio.app/Contents/jbr/Contents/Home",
             "/Applications/Android Studio.app/Contents/jre/Contents/Home",
@@ -45,7 +45,6 @@ def set_java_home():
 
 def set_android_sdk():
     """Auto-detects Android SDK and creates local.properties."""
-    # Check if we already have it
     if os.environ.get('ANDROID_HOME') and os.path.exists(os.environ['ANDROID_HOME']):
         print(f"[+] Using existing ANDROID_HOME: {os.environ['ANDROID_HOME']}")
         return
@@ -53,15 +52,13 @@ def set_android_sdk():
     system = platform.system()
     sdk_path = None
     
-    # 1. Search for SDK in common locations
     if system == "Windows":
-        # Standard Windows Path: %LOCALAPPDATA%\Android\Sdk
         local_app_data = os.environ.get('LOCALAPPDATA')
         if local_app_data:
             candidate = os.path.join(local_app_data, "Android", "Sdk")
             if os.path.exists(candidate):
                 sdk_path = candidate
-    elif system == "Darwin": # macOS
+    elif system == "Darwin":
         candidate = os.path.expanduser("~/Library/Android/sdk")
         if os.path.exists(candidate):
             sdk_path = candidate
@@ -70,21 +67,17 @@ def set_android_sdk():
         if os.path.exists(candidate):
             sdk_path = candidate
 
-    # 2. If found, configure environment and local.properties
     if sdk_path:
         print(f"[+] Found Android SDK at: {sdk_path}")
         os.environ['ANDROID_HOME'] = sdk_path
         os.environ['ANDROID_SDK_ROOT'] = sdk_path
         
-        # Add platform-tools to path (optional but helpful)
         platform_tools = os.path.join(sdk_path, "platform-tools")
         if os.path.exists(platform_tools):
             os.environ['PATH'] = platform_tools + os.pathsep + os.environ['PATH']
 
-        # 3. Create android/local.properties (Critical for Gradle)
         local_props_path = os.path.join("android", "local.properties")
         
-        # Windows paths in properties files need double backslashes
         if system == "Windows":
             write_path = sdk_path.replace("\\", "\\\\")
         else:
@@ -100,7 +93,6 @@ def set_android_sdk():
         print("[-] Warning: Could not auto-detect Android SDK. Build might fail.")
 
 def get_ip():
-    """Finds the local IP address of your computer."""
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         s.connect(('10.255.255.255', 1))
@@ -112,7 +104,6 @@ def get_ip():
     return IP
 
 def run_command(command, cwd=None):
-    """Runs a shell command and stops if it fails."""
     print(f"🔹 Running: {command}")
     try:
         subprocess.check_call(command, shell=True, cwd=cwd)
@@ -121,7 +112,6 @@ def run_command(command, cwd=None):
         sys.exit(1)
 
 def generate_qr(data):
-    """Generates a QR code in the terminal."""
     qr = qrcode.QRCode()
     qr.add_data(data)
     qr.print_ascii()
@@ -129,57 +119,75 @@ def generate_qr(data):
 def main():
     print("🚀 Starting Local Build Process...")
 
-    # 1. Sync Web Assets
+    # Define Output Paths
+    output_dir = os.path.abspath(os.path.join("android", "app", "build", "outputs", "apk", "debug"))
+    default_apk = "app-debug.apk"
+    custom_apk = "app-debug-run-coach.apk"
+    
+    source_path = os.path.join(output_dir, default_apk)
+    final_path = os.path.join(output_dir, custom_apk)
+
+    # 1. Sync
     print("\n📦 Syncing HTML/JS to Android...")
     run_command("npx cap sync android")
 
-    # 2. Build APK via Gradle
+    # 2. Build
     print("\n🔨 Compiling APK...")
     is_windows = os.name == 'nt'
     gradle_cmd = "gradlew.bat assembleDebug" if is_windows else "./gradlew assembleDebug"
     run_command(gradle_cmd, cwd="android")
 
-    # 3. Locate Output
-    output_dir = os.path.join("android", "app", "build", "outputs", "apk", "debug")
-    apk_name = "app-debug.apk"
-    source_apk = os.path.join(output_dir, apk_name)
-    
-    if not os.path.exists(source_apk):
-        print("❌ Build finished, but APK not found.")
+    # 3. Locate & Verify Freshness
+    if not os.path.exists(source_path):
+        print(f"❌ Build finished, but {default_apk} not found.")
         sys.exit(1)
 
-    # 3.5 Copy to Windows Downloads Folder
-    print("\n📂 Copying to Downloads...")
+    file_age = time.time() - os.path.getmtime(source_path)
+    if file_age > 60:
+        print(f"❌ Error: The APK found is stale! It is {int(file_age)} seconds old.")
+        print("   This means the Gradle build failed to produce a NEW file.")
+        sys.exit(1)
+    
+    print(f"✨ Verified fresh build (created {int(file_age)}s ago).")
+
+    # 4. Rename
+    # Ensure no conflict before renaming
+    if os.path.exists(final_path):
+        os.remove(final_path)
+    
+    os.rename(source_path, final_path)
+    print(f"✨ Renamed to: {custom_apk}")
+
+    # 5. Copy to Downloads (Optional Backup)
     try:
         downloads_path = os.path.join(os.path.expanduser("~"), "Downloads")
-        destination_apk = os.path.join(downloads_path, apk_name)
-        shutil.copy2(source_apk, destination_apk)
-        print(f"✅ APK Saved to: {destination_apk}")
-    except Exception as e:
-        print(f"⚠️ Could not copy to Downloads folder: {e}")
+        destination_apk = os.path.join(downloads_path, custom_apk)
+        shutil.copy2(final_path, destination_apk)
+        print(f"📂 Backup copied to: {destination_apk}")
+    except Exception:
+        pass
 
-    # 4. Generate Link & QR
+    # 6. Generate Link & QR
     ip = get_ip()
     port = 8000
-    url = f"http://{ip}:{port}/{apk_name}"
+    url = f"http://{ip}:{port}/{custom_apk}"
     
     print("\n" + "="*40)
     print(f"✅ BUILD SUCCESSFUL!")
-    print(f"scan the QR code below to install:")
+    print(f"Scan the QR code below to install:")
     print("="*40)
     
     generate_qr(url)
     
-    print(f"\n🔗 Text Link: {url}")
+    print(f"\n🔗 Link: {url}")
     print("📡 Server running... Press Ctrl+C to stop.")
 
-    # 5. Start Server
-    if is_windows:
-        os.system(f"python -m http.server {port} --directory {output_dir}")
-    else:
-        os.system(f"python3 -m http.server {port} --directory {output_dir}")
+    # 7. Start Server from Project Output Directory
+    # We change directory explicitly to handle paths with spaces
+    os.chdir(output_dir)
+    subprocess.run([sys.executable, "-m", "http.server", str(port)])
 
 if __name__ == "__main__":
     set_java_home()
-    set_android_sdk() # <--- Added this call
+    set_android_sdk()
     main()
