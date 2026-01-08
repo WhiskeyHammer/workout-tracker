@@ -333,15 +333,6 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
                 </div>
             </div>
             
-            <div className="max-w-4xl mx-auto mb-6">
-                <button
-                    onClick={() => setShowNewWorkoutModal(true)}
-                    className="w-full bg-blue-600 text-white py-4 rounded-xl hover:bg-blue-700 transition-colors font-medium text-lg"
-                >
-                    + Create New Workout
-                </button>
-            </div>
-            
             <div className="max-w-4xl mx-auto">
                 {loading ? (
                     <div className={`text-center py-12 transition-colors ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -354,7 +345,13 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
                 ) : workouts.length === 0 ? (
                     <div className={`rounded-xl shadow-sm p-12 text-center transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
                         <p className={`text-xl mb-4 transition-colors ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>No workouts yet</p>
-                        <p className={`transition-colors ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Create your first workout to get started!</p>
+                        <p className={`mb-6 transition-colors ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Create your first workout to get started!</p>
+                        <button
+                            onClick={() => setShowNewWorkoutModal(true)}
+                            className="w-full bg-blue-600 text-white py-4 rounded-xl hover:bg-blue-700 transition-colors font-medium text-lg"
+                        >
+                            + Create New Workout
+                        </button>
                     </div>
                 ) : (
                     <>
@@ -467,6 +464,16 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
                                 </div>
                             ))}
                         </div>
+                        
+                        <div className="mb-6">
+                            <button
+                                onClick={() => setShowNewWorkoutModal(true)}
+                                className="w-full bg-blue-600 text-white py-4 rounded-xl hover:bg-blue-700 transition-colors font-medium text-lg"
+                            >
+                                + Create New Workout
+                            </button>
+                        </div>
+                        
                         <div className="max-w-4xl mx-auto">
                             <button
                                 onClick={() => setEditMode(!editMode)}
