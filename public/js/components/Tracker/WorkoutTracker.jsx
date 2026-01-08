@@ -123,6 +123,39 @@ function WorkoutTracker({
     if (propSetExercisesWithWeightSet)
       propSetExercisesWithWeightSet(exercisesWithWeightSet);
   }, [exercisesWithWeightSet]);
+
+  // Helper function for global Capacitor notifications
+  const scheduleBackgroundAlert = async (seconds, exerciseName) => {
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
+        try {
+            const endTime = new Date(Date.now() + seconds * 1000);
+            await window.Capacitor.Plugins.LocalNotifications.schedule({
+                notifications: [{
+                    title: "Rest Finished",
+                    body: `Time for your next set of ${exerciseName}!`,
+                    id: 1, // Use fixed ID to overwrite previous
+                    schedule: { at: endTime },
+                    sound: null,
+                    actionTypeId: "",
+                    extra: null
+                }]
+            });
+        } catch (err) {
+            console.error("Failed to schedule background notification", err);
+        }
+    }
+  };
+
+  const cancelBackgroundAlert = async () => {
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
+        try {
+            await window.Capacitor.Plugins.LocalNotifications.cancel({ notifications: [{ id: 1 }] });
+        } catch (err) {
+            console.error("Failed to cancel notification", err);
+        }
+    }
+  };
+
   const handleFileUpload = async (e) => {
     const t = e.target.files[0];
     if (!t) return;
@@ -251,19 +284,16 @@ const toggleComplete = (e) => {
           }),
         t.rest)
       ) {
-        const r = parseRestTime(t.rest);
-        if (r > 0) {
+        const restSec = parseRestTime(t.rest);
+        if (restSec > 0) {
           setTimerJustStarted(true);
           setActiveTimer(e);
-          setTimeRemaining(r);
-          setTimeRemainingMs(r * 1000);
-          setTimerEndTime(Date.now() + (r * 1000));
+          setTimeRemaining(restSec);
+          setTimeRemainingMs(restSec * 1000);
+          setTimerEndTime(Date.now() + (restSec * 1000));
           
-          // === NEW CODE START ===
-          if (window.notificationManager) {
-            window.notificationManager.schedule(r, "Rest Complete", "Time for your next set!");
-          }
-          // === NEW CODE END ===
+          // Schedule background notification
+          scheduleBackgroundAlert(restSec, r);
         }
       }
       setExercises(
@@ -318,12 +348,14 @@ const toggleComplete = (e) => {
     }
   };  
 const confirmUncomplete = () => {
-    // === NEW CODE START ===
-    if (activeTimer === exerciseToUncomplete && window.notificationManager) {
-      window.notificationManager.cancel();
+    // Cancel any active background timer if we are uncompleting the active set
+    if (activeTimer === exerciseToUncomplete) {
+        cancelBackgroundAlert();
+        setActiveTimer(null);
+        setTimeRemaining(0);
+        setTimerEndTime(null);
     }
-    // === NEW CODE END ===
-
+    
     (null !== exerciseToUncomplete &&
       (activeTimer === exerciseToUncomplete &&
         (setActiveTimer(null), setTimeRemaining(0), setTimerEndTime(null)),
@@ -347,12 +379,8 @@ const confirmUncomplete = () => {
     setShowSkipRestDialog(!0);
   };
   const confirmSkipRest = () => {
-    // === NEW CODE START ===
-    if (window.notificationManager) {
-      window.notificationManager.cancel();
-    }
-    // === NEW CODE END ===
-    
+    // Cancel background notification
+    cancelBackgroundAlert();
     (setActiveTimer(null), setTimeRemaining(0), setTimerEndTime(null), setShowSkipRestDialog(!1));
   };
   const cancelSkipRest = () => {
@@ -406,12 +434,14 @@ const confirmUncomplete = () => {
     (setExerciseToDelete(e), setShowDeleteDialog(!0));
   };
   const confirmDelete = () => {
-    // === NEW CODE START ===
-    if (activeTimer === exerciseToDelete && window.notificationManager) {
-      window.notificationManager.cancel();
+    // Cancel background timer if we delete the active set
+    if (activeTimer === exerciseToDelete) {
+        cancelBackgroundAlert();
+        setActiveTimer(null);
+        setTimeRemaining(0);
+        setTimerEndTime(null);
     }
-    // === NEW CODE END ===
-
+    
     (null !== exerciseToDelete &&
       (activeTimer === exerciseToDelete &&
         (setActiveTimer(null), setTimeRemaining(0), setTimerEndTime(null)),

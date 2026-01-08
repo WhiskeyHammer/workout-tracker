@@ -10,6 +10,20 @@ function App() {
         return saved !== null ? JSON.parse(saved) : true;
     });
     
+    // NEW: Request Notification Permissions for background timer
+    useEffect(() => {
+        const requestPermissions = async () => {
+            if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
+                const { LocalNotifications } = window.Capacitor.Plugins;
+                const perm = await LocalNotifications.checkPermissions();
+                if (perm.display !== 'granted') {
+                    await LocalNotifications.requestPermissions();
+                }
+            }
+        };
+        requestPermissions();
+    }, []);
+
     useEffect(() => {
         localStorage.setItem('darkMode', JSON.stringify(darkMode));
     }, [darkMode]);
@@ -65,14 +79,10 @@ function App() {
         <div 
             className="min-h-screen w-full transition-colors duration-200"
             style={{ 
-                // VISUAL FIX: CSS Safe Areas
-                // Since we don't have plugins to control the bar, we rely on the 
-                // OS to tell us where the safe content area is.
                 paddingTop: 'env(safe-area-inset-top)', 
                 paddingBottom: 'env(safe-area-inset-bottom)',
                 paddingLeft: 'env(safe-area-inset-left)',
                 paddingRight: 'env(safe-area-inset-right)',
-                
                 backgroundColor: darkMode ? '#111827' : '#f9fafb' 
             }}
         >
@@ -121,7 +131,6 @@ function App() {
                         workoutId={selectedWorkoutId}
                         onBack={handleBackToLibrary}
                     />
-                    
                     {showLogoutModal && (
                         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                             <div className={`rounded-2xl p-6 max-w-md w-full shadow-2xl transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
