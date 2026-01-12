@@ -122,7 +122,7 @@ def main():
     # Define Output Paths
     output_dir = os.path.abspath(os.path.join("android", "app", "build", "outputs", "apk", "debug"))
     default_apk = "app-debug.apk"
-    custom_apk = "app-debug-run-coach.apk"
+    custom_apk = "app-debug-lift.apk"
     
     source_path = os.path.join(output_dir, default_apk)
     final_path = os.path.join(output_dir, custom_apk)
