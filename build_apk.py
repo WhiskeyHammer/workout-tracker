@@ -5,7 +5,8 @@ import qrcode
 import sys
 import shutil
 import platform
-import time  # <--- Added import
+import time
+from urllib.parse import quote as url_quote
 
 def set_java_home():
     """Auto-detects Java from Android Studio if JAVA_HOME is missing."""
@@ -140,6 +141,7 @@ def main():
     # 3. Locate & Verify Freshness
     if not os.path.exists(source_path):
         print(f"❌ Build finished, but {default_apk} not found.")
+        print(f"   Expected location: {source_path}")
         sys.exit(1)
 
     file_age = time.time() - os.path.getmtime(source_path)
@@ -151,14 +153,18 @@ def main():
     print(f"✨ Verified fresh build (created {int(file_age)}s ago).")
 
     # 4. Rename
-    # Ensure no conflict before renaming
     if os.path.exists(final_path):
         os.remove(final_path)
     
     os.rename(source_path, final_path)
     print(f"✨ Renamed to: {custom_apk}")
 
-    # 5. Copy to Downloads (Optional Backup)
+    # 5. Verify rename succeeded
+    if not os.path.exists(final_path):
+        print(f"❌ Error: Rename failed! {custom_apk} does not exist at {final_path}")
+        sys.exit(1)
+
+    # 6. Copy to Downloads (Optional Backup)
     try:
         downloads_path = os.path.join(os.path.expanduser("~"), "Downloads")
         destination_apk = os.path.join(downloads_path, custom_apk)
@@ -167,11 +173,37 @@ def main():
     except Exception:
         pass
 
-    # 6. Generate Link & QR
+    # 7. Change to output directory BEFORE generating URL
+    os.chdir(output_dir)
+    
+    # 8. Final verification - file must exist in current directory
+    if not os.path.exists(custom_apk):
+        print(f"❌ Error: {custom_apk} not found in {os.getcwd()}")
+        print(f"   Files present: {os.listdir('.')}")
+        sys.exit(1)
+
+    # 9. Generate URL (URL-encode the filename for safety)
     ip = get_ip()
     port = 8000
-    url = f"http://{ip}:{port}/{custom_apk}"
-    
+    encoded_filename = url_quote(custom_apk)
+    url = f"http://{ip}:{port}/{encoded_filename}"
+
+    # 10. Debug info
+    print("\n" + "-"*40)
+    print("🔍 DEBUG INFO:")
+    print(f"   Server directory: {os.getcwd()}")
+    print(f"   Serving file: {custom_apk}")
+    print(f"   URL-encoded as: {encoded_filename}")
+    print(f"   File exists: {os.path.exists(custom_apk)}")
+    file_size = os.path.getsize(custom_apk)
+    print(f"   File size: {file_size / (1024*1024):.2f} MB")
+    print(f"   All files in directory:")
+    for f in os.listdir('.'):
+        size = os.path.getsize(f) if os.path.isfile(f) else 0
+        print(f"      - {f} ({size / 1024:.1f} KB)")
+    print("-"*40)
+
+    # 11. QR code and final output (last thing before server starts)
     print("\n" + "="*40)
     print(f"✅ BUILD SUCCESSFUL!")
     print(f"Scan the QR code below to install:")
@@ -180,12 +212,11 @@ def main():
     generate_qr(url)
     
     print(f"\n🔗 Link: {url}")
-    print("📡 Server running... Press Ctrl+C to stop.")
-
-    # 7. Start Server from Project Output Directory
-    # We change directory explicitly to handle paths with spaces
-    os.chdir(output_dir)
-    subprocess.run([sys.executable, "-m", "http.server", str(port)])
+    print(f"💡 Test locally first: http://127.0.0.1:{port}/{encoded_filename}")
+    print("\n📡 Server running... Press Ctrl+C to stop.")
+    
+    # 11. Start server bound to all IPv4 interfaces
+    subprocess.run([sys.executable, "-m", "http.server", str(port), "--bind", "0.0.0.0"])
 
 if __name__ == "__main__":
     set_java_home()
