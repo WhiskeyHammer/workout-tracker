@@ -715,7 +715,7 @@
     web: () => Promise.resolve().then(() => (init_web(), web_exports)).then((m) => new m.LocalNotificationsWeb())
   });
 
-  // scripts/wakeLock.src.js
+// scripts/wakeLock.src.js
   init_dist();
   window.wakeLockManager = {
     wakeLock: null,
@@ -724,7 +724,12 @@
         if ("wakeLock" in navigator) {
           this.wakeLock = await navigator.wakeLock.request("screen");
           console.log("Wake Lock acquired");
-          this.wakeLock.addEventListener("release", () => console.log("Wake Lock released"));
+          // Re-request if page becomes visible again
+          document.addEventListener('visibilitychange', async () => {
+            if (this.wakeLock !== null && document.visibilityState === 'visible') {
+              this.wakeLock = await navigator.wakeLock.request('screen');
+            }
+          });
           return true;
         }
         return false;
@@ -740,34 +745,34 @@
       }
     }
   };
+
   window.notificationManager = {
-    // Request permissions for both Web and Android
     requestPermission: async function() {
       if (Capacitor.isNativePlatform()) {
         const result = await LocalNotifications.requestPermissions();
         return result.display === "granted";
       } else {
         if (!("Notification" in window)) return false;
-        if (Notification.permission === "granted") return true;
         const permission = await Notification.requestPermission();
         return permission === "granted";
       }
     },
-    // Schedule a notification for the future (Key for Rest Timer)
     schedule: async function(seconds, title, body = "") {
       const fireDate = new Date(Date.now() + seconds * 1e3);
-      const id = 12345;
+      const id = 1; // Fixed ID to prevent notification spam
+      
       if (Capacitor.isNativePlatform()) {
+        // Use schedule for native to ensure OS handles the timing, not JS
         await LocalNotifications.schedule({
           notifications: [{
             id,
             title,
             body,
-            schedule: { at: fireDate },
-            sound: null,
-            // Uses default system sound
-            smallIcon: "ic_stat_icon_config_sample"
-            // Android resource name
+            schedule: { at: fireDate, allowPause: false }, // allowPause: false is key for Android
+            sound: 'beep.wav', // Matches your capacitor.config.json
+            attachments: [],
+            actionTypeId: "",
+            extra: null
           }]
         });
       } else {
@@ -780,10 +785,9 @@
         }, seconds * 1e3);
       }
     },
-    // Cancel any pending notifications (e.g., user skipped rest)
     cancel: async function() {
       if (Capacitor.isNativePlatform()) {
-        await LocalNotifications.cancel({ notifications: [{ id: 12345 }] });
+        await LocalNotifications.cancel({ notifications: [{ id: 1 }] });
       } else {
         if (this.webTimer) clearTimeout(this.webTimer);
       }

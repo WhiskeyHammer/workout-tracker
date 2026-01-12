@@ -126,35 +126,20 @@ function WorkoutTracker({
 
   // Helper function for global Capacitor notifications
   const scheduleBackgroundAlert = async (seconds, exerciseName) => {
-    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
-        try {
-            const endTime = new Date(Date.now() + seconds * 1000);
-            await window.Capacitor.Plugins.LocalNotifications.schedule({
-                notifications: [{
-                    title: "Rest Finished",
-                    body: `Time for your next set of ${exerciseName}!`,
-                    id: 1, // Use fixed ID to overwrite previous
-                    schedule: { at: endTime },
-                    sound: null,
-                    actionTypeId: "",
-                    extra: null
-                }]
-            });
-        } catch (err) {
-            console.error("Failed to schedule background notification", err);
-        }
-    }
-  };
+      if (window.notificationManager) {
+          await window.notificationManager.schedule(
+              seconds, 
+              "Rest Finished", 
+              `Time for your next set of ${exerciseName}!`
+          );
+      }
+    };
 
-  const cancelBackgroundAlert = async () => {
-    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
-        try {
-            await window.Capacitor.Plugins.LocalNotifications.cancel({ notifications: [{ id: 1 }] });
-        } catch (err) {
-            console.error("Failed to cancel notification", err);
-        }
-    }
-  };
+    const cancelBackgroundAlert = async () => {
+      if (window.notificationManager) {
+          await window.notificationManager.cancel();
+      }
+    };
 
   const handleFileUpload = async (e) => {
     const t = e.target.files[0];
