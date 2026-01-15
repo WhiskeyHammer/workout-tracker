@@ -124,22 +124,31 @@ function WorkoutTracker({
       propSetExercisesWithWeightSet(exercisesWithWeightSet);
   }, [exercisesWithWeightSet]);
 
-  // Helper function for global Capacitor notifications
-  const scheduleBackgroundAlert = async (seconds, exerciseName) => {
-      if (window.notificationManager) {
-          await window.notificationManager.schedule(
-              seconds, 
-              "Rest Finished", 
-              `Time for your next set of ${exerciseName}!`
-          );
-      }
-    };
+  // Helper function to start the timer with foreground service
+  const startRestTimer = async (seconds, exerciseName) => {
+    if (window.timerService) {
+      await window.timerService.start({
+        seconds,
+        exerciseName,
+        onTick: ({ remainingMs, remainingSeconds }) => {
+          setTimeRemaining(remainingSeconds);
+          setTimeRemainingMs(remainingMs);
+        },
+        onComplete: (wasSkipped) => {
+          setActiveTimer(null);
+          setTimerEndTime(null);
+          setTimeRemaining(0);
+          setTimeRemainingMs(0);
+        }
+      });
+    }
+  };
 
-    const cancelBackgroundAlert = async () => {
-      if (window.notificationManager) {
-          await window.notificationManager.cancel();
-      }
-    };
+  const stopRestTimer = async () => {
+    if (window.timerService) {
+      await window.timerService.stop();
+    }
+  };
 
   const handleFileUpload = async (e) => {
     const t = e.target.files[0];
@@ -277,8 +286,8 @@ const toggleComplete = (e) => {
           setTimeRemainingMs(restSec * 1000);
           setTimerEndTime(Date.now() + (restSec * 1000));
           
-          // Schedule background notification
-          scheduleBackgroundAlert(restSec, r);
+          // Start the foreground service timer
+          startRestTimer(restSec, r);
         }
       }
       setExercises(
@@ -335,7 +344,7 @@ const toggleComplete = (e) => {
 const confirmUncomplete = () => {
     // Cancel any active background timer if we are uncompleting the active set
     if (activeTimer === exerciseToUncomplete) {
-        cancelBackgroundAlert();
+        stopRestTimer();
         setActiveTimer(null);
         setTimeRemaining(0);
         setTimerEndTime(null);
@@ -365,7 +374,7 @@ const confirmUncomplete = () => {
   };
   const confirmSkipRest = () => {
     // Cancel background notification
-    cancelBackgroundAlert();
+    stopRestTimer();
     (setActiveTimer(null), setTimeRemaining(0), setTimerEndTime(null), setShowSkipRestDialog(!1));
   };
   const cancelSkipRest = () => {
@@ -421,7 +430,7 @@ const confirmUncomplete = () => {
   const confirmDelete = () => {
     // Cancel background timer if we delete the active set
     if (activeTimer === exerciseToDelete) {
-        cancelBackgroundAlert();
+        stopRestTimer();
         setActiveTimer(null);
         setTimeRemaining(0);
         setTimerEndTime(null);
@@ -840,54 +849,10 @@ const confirmUncomplete = () => {
     }
   }, [timerJustStarted]);
 
-  useEffect(() => {
-    if (null !== activeTimer && timerEndTime !== null) {
-      // Use timestamp-based timer for accuracy even when app is backgrounded
-      const intervalId = setInterval(() => {
-        const now = Date.now();
-        const remainingMs = Math.max(0, timerEndTime - now);
-        const remainingSeconds = Math.ceil(remainingMs / 1000);
-        
-        setTimeRemaining(remainingSeconds);
-        setTimeRemainingMs(remainingMs);
-        
-        if (remainingMs === 0) {
-          // Play audio alert
-          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-          const oscillator = audioContext.createOscillator();
-          const gainNode = audioContext.createGain();
-          
-          oscillator.connect(gainNode);
-          gainNode.connect(audioContext.destination);
-          oscillator.frequency.value = 800;
-          oscillator.type = "sine";
-          gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-          oscillator.start(audioContext.currentTime);
-          oscillator.stop(audioContext.currentTime + 0.5);
-          
-          // Second beep
-          setTimeout(() => {
-            const oscillator2 = audioContext.createOscillator();
-            const gainNode2 = audioContext.createGain();
-            oscillator2.connect(gainNode2);
-            gainNode2.connect(audioContext.destination);
-            oscillator2.frequency.value = 800;
-            oscillator2.type = "sine";
-            gainNode2.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gainNode2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-            oscillator2.start(audioContext.currentTime);
-            oscillator2.stop(audioContext.currentTime + 0.5);
-          }, 200);
-          
-          setActiveTimer(null);
-          setTimerEndTime(null);
-        }
-      }, 100); // Check every 100ms for better accuracy
-      
-      return () => clearInterval(intervalId);
-    }
-  }, [activeTimer, timerEndTime]);
+  // Timer is now handled by window.timerService (foreground service + native audio)
+  // The onTick callback in startRestTimer updates the UI state
+  // The onComplete callback handles timer completion
+
   return (
     <div
       className={`min-h-screen pb-20 transition-colors overflow-x-hidden ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}

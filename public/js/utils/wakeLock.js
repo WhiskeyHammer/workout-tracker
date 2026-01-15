@@ -10,9 +10,32 @@
   };
 
   // node_modules/@capacitor/core/dist/index.js
-  var ExceptionCode, CapacitorException, getPlatformId, createCapacitor, initCapacitorGlobal, Capacitor, registerPlugin, WebPlugin, encode, decode, CapacitorCookiesPluginWeb, CapacitorCookies, readBlobAsBase64, normalizeHttpHeaders, buildUrlParams, buildRequestInit, CapacitorHttpPluginWeb, CapacitorHttp, SystemBarsStyle, SystemBarType, SystemBarsPluginWeb, SystemBars;
+  var createCapacitorPlatforms, initPlatforms, CapacitorPlatforms, addPlatform, setPlatform, ExceptionCode, CapacitorException, getPlatformId, createCapacitor, initCapacitorGlobal, Capacitor, registerPlugin, Plugins, WebPlugin, encode, decode, CapacitorCookiesPluginWeb, CapacitorCookies, readBlobAsBase64, normalizeHttpHeaders, buildUrlParams, buildRequestInit, CapacitorHttpPluginWeb, CapacitorHttp;
   var init_dist = __esm({
     "node_modules/@capacitor/core/dist/index.js"() {
+      createCapacitorPlatforms = (win) => {
+        const defaultPlatformMap = /* @__PURE__ */ new Map();
+        defaultPlatformMap.set("web", { name: "web" });
+        const capPlatforms = win.CapacitorPlatforms || {
+          currentPlatform: { name: "web" },
+          platforms: defaultPlatformMap
+        };
+        const addPlatform2 = (name, platform) => {
+          capPlatforms.platforms.set(name, platform);
+        };
+        const setPlatform2 = (name) => {
+          if (capPlatforms.platforms.has(name)) {
+            capPlatforms.currentPlatform = capPlatforms.platforms.get(name);
+          }
+        };
+        capPlatforms.addPlatform = addPlatform2;
+        capPlatforms.setPlatform = setPlatform2;
+        return capPlatforms;
+      };
+      initPlatforms = (win) => win.CapacitorPlatforms = createCapacitorPlatforms(win);
+      CapacitorPlatforms = /* @__PURE__ */ initPlatforms(typeof globalThis !== "undefined" ? globalThis : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : {});
+      addPlatform = CapacitorPlatforms.addPlatform;
+      setPlatform = CapacitorPlatforms.setPlatform;
       (function(ExceptionCode2) {
         ExceptionCode2["Unimplemented"] = "UNIMPLEMENTED";
         ExceptionCode2["Unavailable"] = "UNAVAILABLE";
@@ -36,14 +59,18 @@
         }
       };
       createCapacitor = (win) => {
+        var _a, _b, _c, _d, _e;
         const capCustomPlatform = win.CapacitorCustomPlatform || null;
         const cap = win.Capacitor || {};
-        const Plugins = cap.Plugins = cap.Plugins || {};
-        const getPlatform = () => {
+        const Plugins2 = cap.Plugins = cap.Plugins || {};
+        const capPlatforms = win.CapacitorPlatforms;
+        const defaultGetPlatform = () => {
           return capCustomPlatform !== null ? capCustomPlatform.name : getPlatformId(win);
         };
-        const isNativePlatform = () => getPlatform() !== "web";
-        const isPluginAvailable = (pluginName) => {
+        const getPlatform = ((_a = capPlatforms === null || capPlatforms === void 0 ? void 0 : capPlatforms.currentPlatform) === null || _a === void 0 ? void 0 : _a.getPlatform) || defaultGetPlatform;
+        const defaultIsNativePlatform = () => getPlatform() !== "web";
+        const isNativePlatform = ((_b = capPlatforms === null || capPlatforms === void 0 ? void 0 : capPlatforms.currentPlatform) === null || _b === void 0 ? void 0 : _b.isNativePlatform) || defaultIsNativePlatform;
+        const defaultIsPluginAvailable = (pluginName) => {
           const plugin = registeredPlugins.get(pluginName);
           if (plugin === null || plugin === void 0 ? void 0 : plugin.platforms.has(getPlatform())) {
             return true;
@@ -53,13 +80,18 @@
           }
           return false;
         };
-        const getPluginHeader = (pluginName) => {
-          var _a;
-          return (_a = cap.PluginHeaders) === null || _a === void 0 ? void 0 : _a.find((h) => h.name === pluginName);
+        const isPluginAvailable = ((_c = capPlatforms === null || capPlatforms === void 0 ? void 0 : capPlatforms.currentPlatform) === null || _c === void 0 ? void 0 : _c.isPluginAvailable) || defaultIsPluginAvailable;
+        const defaultGetPluginHeader = (pluginName) => {
+          var _a2;
+          return (_a2 = cap.PluginHeaders) === null || _a2 === void 0 ? void 0 : _a2.find((h) => h.name === pluginName);
         };
+        const getPluginHeader = ((_d = capPlatforms === null || capPlatforms === void 0 ? void 0 : capPlatforms.currentPlatform) === null || _d === void 0 ? void 0 : _d.getPluginHeader) || defaultGetPluginHeader;
         const handleError = (err) => win.console.error(err);
+        const pluginMethodNoop = (_target, prop, pluginName) => {
+          return Promise.reject(`${pluginName} does not have an implementation of "${prop}".`);
+        };
         const registeredPlugins = /* @__PURE__ */ new Map();
-        const registerPlugin2 = (pluginName, jsImplementations = {}) => {
+        const defaultRegisterPlugin = (pluginName, jsImplementations = {}) => {
           const registeredPlugin = registeredPlugins.get(pluginName);
           if (registeredPlugin) {
             console.warn(`Capacitor plugin "${pluginName}" already registered. Cannot register plugins twice.`);
@@ -77,7 +109,7 @@
             return jsImplementation;
           };
           const createPluginMethod = (impl, prop) => {
-            var _a, _b;
+            var _a2, _b2;
             if (pluginHeader) {
               const methodHeader = pluginHeader === null || pluginHeader === void 0 ? void 0 : pluginHeader.methods.find((m) => prop === m.name);
               if (methodHeader) {
@@ -87,10 +119,10 @@
                   return (options, callback) => cap.nativeCallback(pluginName, prop.toString(), options, callback);
                 }
               } else if (impl) {
-                return (_a = impl[prop]) === null || _a === void 0 ? void 0 : _a.bind(impl);
+                return (_a2 = impl[prop]) === null || _a2 === void 0 ? void 0 : _a2.bind(impl);
               }
             } else if (impl) {
-              return (_b = impl[prop]) === null || _b === void 0 ? void 0 : _b.bind(impl);
+              return (_b2 = impl[prop]) === null || _b2 === void 0 ? void 0 : _b2.bind(impl);
             } else {
               throw new CapacitorException(`"${pluginName}" plugin is not implemented on ${platform}`, ExceptionCode.Unimplemented);
             }
@@ -142,7 +174,6 @@
           const proxy = new Proxy({}, {
             get(_, prop) {
               switch (prop) {
-                // https://github.com/facebook/react/issues/20030
                 case "$$typeof":
                   return void 0;
                 case "toJSON":
@@ -156,14 +187,18 @@
               }
             }
           });
-          Plugins[pluginName] = proxy;
+          Plugins2[pluginName] = proxy;
           registeredPlugins.set(pluginName, {
             name: pluginName,
             proxy,
-            platforms: /* @__PURE__ */ new Set([...Object.keys(jsImplementations), ...pluginHeader ? [platform] : []])
+            platforms: /* @__PURE__ */ new Set([
+              ...Object.keys(jsImplementations),
+              ...pluginHeader ? [platform] : []
+            ])
           });
           return proxy;
         };
+        const registerPlugin2 = ((_e = capPlatforms === null || capPlatforms === void 0 ? void 0 : capPlatforms.currentPlatform) === null || _e === void 0 ? void 0 : _e.registerPlugin) || defaultRegisterPlugin;
         if (!cap.convertFileSrc) {
           cap.convertFileSrc = (filePath) => filePath;
         }
@@ -171,20 +206,28 @@
         cap.handleError = handleError;
         cap.isNativePlatform = isNativePlatform;
         cap.isPluginAvailable = isPluginAvailable;
+        cap.pluginMethodNoop = pluginMethodNoop;
         cap.registerPlugin = registerPlugin2;
         cap.Exception = CapacitorException;
         cap.DEBUG = !!cap.DEBUG;
         cap.isLoggingEnabled = !!cap.isLoggingEnabled;
+        cap.platform = cap.getPlatform();
+        cap.isNative = cap.isNativePlatform();
         return cap;
       };
       initCapacitorGlobal = (win) => win.Capacitor = createCapacitor(win);
       Capacitor = /* @__PURE__ */ initCapacitorGlobal(typeof globalThis !== "undefined" ? globalThis : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : {});
       registerPlugin = Capacitor.registerPlugin;
+      Plugins = Capacitor.Plugins;
       WebPlugin = class {
-        constructor() {
+        constructor(config) {
           this.listeners = {};
           this.retainedEventArguments = {};
           this.windowListeners = {};
+          if (config) {
+            console.warn(`Capacitor WebPlugin "${config.name}" config object was deprecated in v3 and will be removed in v4.`);
+            this.config = config;
+          }
         }
         addListener(eventName, listenerFunc) {
           let firstListener = false;
@@ -228,8 +271,7 @@
           listeners.forEach((listener) => listener(data));
         }
         hasListeners(eventName) {
-          var _a;
-          return !!((_a = this.listeners[eventName]) === null || _a === void 0 ? void 0 : _a.length);
+          return !!this.listeners[eventName].length;
         }
         registerWindowListener(windowEventName, pluginEventName) {
           this.windowListeners[pluginEventName] = {
@@ -489,32 +531,6 @@
       CapacitorHttp = registerPlugin("CapacitorHttp", {
         web: () => new CapacitorHttpPluginWeb()
       });
-      (function(SystemBarsStyle2) {
-        SystemBarsStyle2["Dark"] = "DARK";
-        SystemBarsStyle2["Light"] = "LIGHT";
-        SystemBarsStyle2["Default"] = "DEFAULT";
-      })(SystemBarsStyle || (SystemBarsStyle = {}));
-      (function(SystemBarType2) {
-        SystemBarType2["StatusBar"] = "StatusBar";
-        SystemBarType2["NavigationBar"] = "NavigationBar";
-      })(SystemBarType || (SystemBarType = {}));
-      SystemBarsPluginWeb = class extends WebPlugin {
-        async setStyle() {
-          this.unavailable("not available for web");
-        }
-        async setAnimation() {
-          this.unavailable("not available for web");
-        }
-        async show() {
-          this.unavailable("not available for web");
-        }
-        async hide() {
-          this.unavailable("not available for web");
-        }
-      };
-      SystemBars = registerPlugin("SystemBars", {
-        web: () => new SystemBarsPluginWeb()
-      });
     }
   });
 
@@ -540,7 +556,7 @@
               try {
                 new Notification("");
               } catch (e) {
-                if (e instanceof Error && e.name === "TypeError") {
+                if (e.name == "TypeError") {
                   return false;
                 }
               }
@@ -715,84 +731,384 @@
     web: () => Promise.resolve().then(() => (init_web(), web_exports)).then((m) => new m.LocalNotificationsWeb())
   });
 
-// scripts/wakeLock.src.js
+  // scripts/wakeLock.src.js
   init_dist();
+  var logHistory = [];
+  var MAX_LOGS = 500;
+  function captureLog(level, ...args) {
+    const timestamp = (/* @__PURE__ */ new Date()).toISOString();
+    const message = args.map((a) => {
+      if (typeof a === "object") {
+        try {
+          return JSON.stringify(a, null, 2);
+        } catch (e) {
+          return String(a);
+        }
+      }
+      return String(a);
+    }).join(" ");
+    const entry = { timestamp, level, message };
+    logHistory.push(entry);
+    if (logHistory.length > MAX_LOGS) {
+      logHistory.shift();
+    }
+    const prefix = "\u{1F514} [NotificationDebug]";
+    if (level === "error") {
+      console.error(prefix, timestamp, ...args);
+    } else if (level === "warn") {
+      console.warn(prefix, timestamp, ...args);
+    } else {
+      console.log(prefix, timestamp, ...args);
+    }
+  }
+  function logInfo(...args) {
+    captureLog("info", ...args);
+  }
+  function logWarn(...args) {
+    captureLog("warn", ...args);
+  }
+  function logError(...args) {
+    captureLog("error", ...args);
+  }
+  function createLogViewer() {
+    const existing = document.getElementById("debug-log-viewer");
+    if (existing)
+      existing.remove();
+    const overlay = document.createElement("div");
+    overlay.id = "debug-log-viewer";
+    overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #000;
+    color: #0f0;
+    font-family: monospace;
+    font-size: 11px;
+    z-index: 999999;
+    display: flex;
+    flex-direction: column;
+  `;
+    const header = document.createElement("div");
+    header.style.cssText = `
+    padding: 10px;
+    background: #222;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  `;
+    const closeBtn = document.createElement("button");
+    closeBtn.textContent = "CLOSE";
+    closeBtn.style.cssText = "padding: 8px 16px; background: #c00; color: white; border: none; border-radius: 4px;";
+    closeBtn.onclick = () => overlay.remove();
+    const copyBtn = document.createElement("button");
+    copyBtn.textContent = "COPY ALL";
+    copyBtn.style.cssText = "padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px;";
+    copyBtn.onclick = () => {
+      const text = logHistory.map((l) => `[${l.timestamp}] [${l.level.toUpperCase()}] ${l.message}`).join("\n");
+      navigator.clipboard.writeText(text).then(() => {
+        copyBtn.textContent = "COPIED!";
+        setTimeout(() => copyBtn.textContent = "COPY ALL", 2e3);
+      }).catch(() => {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        copyBtn.textContent = "COPIED!";
+        setTimeout(() => copyBtn.textContent = "COPY ALL", 2e3);
+      });
+    };
+    const clearBtn = document.createElement("button");
+    clearBtn.textContent = "CLEAR";
+    clearBtn.style.cssText = "padding: 8px 16px; background: #666; color: white; border: none; border-radius: 4px;";
+    clearBtn.onclick = () => {
+      logHistory.length = 0;
+      refreshLogs();
+    };
+    const testBtn = document.createElement("button");
+    testBtn.textContent = "TEST 5s";
+    testBtn.style.cssText = "padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px;";
+    testBtn.onclick = async () => {
+      testBtn.textContent = "WAIT...";
+      await window.notificationManager.schedule(5, "Test Timer", "Fired after 5 seconds");
+      testBtn.textContent = "SENT!";
+      setTimeout(() => testBtn.textContent = "TEST 5s", 2e3);
+    };
+    const channelBtn = document.createElement("button");
+    channelBtn.textContent = "LIST CH";
+    channelBtn.style.cssText = "padding: 8px 16px; background: #17a2b8; color: white; border: none; border-radius: 4px;";
+    channelBtn.onclick = () => listNotificationChannels();
+    const permBtn = document.createElement("button");
+    permBtn.textContent = "PERMS";
+    permBtn.style.cssText = "padding: 8px 16px; background: #ffc107; color: black; border: none; border-radius: 4px;";
+    permBtn.onclick = () => checkAndLogPermissions();
+    header.appendChild(closeBtn);
+    header.appendChild(copyBtn);
+    header.appendChild(clearBtn);
+    header.appendChild(testBtn);
+    header.appendChild(channelBtn);
+    header.appendChild(permBtn);
+    const countDiv = document.createElement("div");
+    countDiv.style.cssText = "padding: 5px 10px; background: #333; color: #aaa;";
+    countDiv.id = "log-count";
+    const logContent = document.createElement("pre");
+    logContent.style.cssText = `
+    flex: 1;
+    overflow: auto;
+    padding: 10px;
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  `;
+    logContent.id = "log-content";
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+    function refreshLogs() {
+      const content = document.getElementById("log-content");
+      const count = document.getElementById("log-count");
+      if (content) {
+        content.innerHTML = logHistory.map((l) => {
+          const color = l.level === "error" ? "#f00" : l.level === "warn" ? "#ff0" : "#0f0";
+          return `<span style="color:${color}">[${l.timestamp.split("T")[1]}] [${l.level.toUpperCase()}]</span> ${escapeHtml(l.message)}`;
+        }).join("\n");
+        content.scrollTop = content.scrollHeight;
+      }
+      if (count) {
+        count.textContent = `${logHistory.length} entries | Tap COPY ALL to export`;
+      }
+    }
+    overlay.appendChild(header);
+    overlay.appendChild(countDiv);
+    overlay.appendChild(logContent);
+    document.body.appendChild(overlay);
+    refreshLogs();
+    const intervalId = setInterval(() => {
+      if (document.getElementById("debug-log-viewer")) {
+        refreshLogs();
+      } else {
+        clearInterval(intervalId);
+      }
+    }, 500);
+  }
+  logInfo("============================================================");
+  logInfo("NOTIFICATION SERVICE INITIALIZING");
+  logInfo("============================================================");
+  logInfo("Platform:", Capacitor.getPlatform());
+  logInfo("Is Native:", Capacitor.isNativePlatform());
+  logInfo("User Agent:", navigator.userAgent);
+  async function setupNotificationListeners() {
+    if (!Capacitor.isNativePlatform()) {
+      logInfo("Skipping native listeners - web platform");
+      return;
+    }
+    try {
+      logInfo("Setting up notification listeners...");
+      await LocalNotifications.addListener("localNotificationReceived", (notification) => {
+        logInfo(">>> EVENT: localNotificationReceived <<<");
+        logInfo("Notification data:", notification);
+      });
+      logInfo("\u2713 localNotificationReceived listener added");
+      await LocalNotifications.addListener("localNotificationActionPerformed", (action) => {
+        logInfo(">>> EVENT: localNotificationActionPerformed <<<");
+        logInfo("Action data:", action);
+      });
+      logInfo("\u2713 localNotificationActionPerformed listener added");
+    } catch (err) {
+      logError("Listener setup failed:", err.message, err.stack);
+    }
+  }
+  setupNotificationListeners();
+  async function checkAndLogPermissions() {
+    if (!Capacitor.isNativePlatform()) {
+      logInfo("Skipping permission check - web platform");
+      return;
+    }
+    try {
+      logInfo("Checking permissions...");
+      const status = await LocalNotifications.checkPermissions();
+      logInfo("Permission status:", status);
+      try {
+        const exact = await LocalNotifications.checkExactNotificationSetting();
+        logInfo("Exact alarm setting:", exact);
+      } catch (e) {
+        logWarn("checkExactNotificationSetting error:", e.message);
+      }
+    } catch (err) {
+      logError("Permission check failed:", err.message);
+    }
+  }
+  checkAndLogPermissions();
+  async function listNotificationChannels() {
+    if (!Capacitor.isNativePlatform())
+      return;
+    try {
+      logInfo("Listing notification channels...");
+      const result = await LocalNotifications.listChannels();
+      logInfo("Channels result:", result);
+      if (!result.channels || result.channels.length === 0) {
+        logWarn("*** NO CHANNELS FOUND - THIS MAY BE THE PROBLEM ***");
+      } else {
+        result.channels.forEach((ch, i) => {
+          logInfo(`Channel[${i}]: id="${ch.id}" name="${ch.name}" importance=${ch.importance} sound="${ch.sound}"`);
+        });
+      }
+    } catch (err) {
+      logError("listChannels failed:", err.message);
+    }
+  }
+  listNotificationChannels();
+  var webTimer = null;
   window.wakeLockManager = {
     wakeLock: null,
     request: async function() {
+      logInfo("Wake Lock request");
       try {
         if ("wakeLock" in navigator) {
           this.wakeLock = await navigator.wakeLock.request("screen");
-          console.log("Wake Lock acquired");
-          // Re-request if page becomes visible again
-          document.addEventListener('visibilitychange', async () => {
-            if (this.wakeLock !== null && document.visibilityState === 'visible') {
-              this.wakeLock = await navigator.wakeLock.request('screen');
-            }
-          });
+          logInfo("\u2713 Wake Lock acquired");
+          this.wakeLock.addEventListener("release", () => logInfo("Wake Lock released"));
           return true;
         }
+        logWarn("Wake Lock not supported");
         return false;
       } catch (err) {
-        console.error("Failed to acquire Wake Lock:", err);
+        logError("Wake Lock failed:", err.message);
         return false;
       }
     },
     release: async function() {
-      if (this.wakeLock !== null) {
+      if (this.wakeLock) {
         await this.wakeLock.release();
         this.wakeLock = null;
+        logInfo("Wake Lock released");
       }
     }
   };
-
   window.notificationManager = {
     requestPermission: async function() {
+      logInfo("=== REQUEST PERMISSION ===");
       if (Capacitor.isNativePlatform()) {
-        const result = await LocalNotifications.requestPermissions();
-        return result.display === "granted";
-      } else {
-        if (!("Notification" in window)) return false;
-        const permission = await Notification.requestPermission();
-        return permission === "granted";
+        try {
+          const result = await LocalNotifications.requestPermissions();
+          logInfo("Permission result:", result);
+          return result.display === "granted";
+        } catch (err) {
+          logError("Permission request failed:", err.message);
+          return false;
+        }
       }
+      return false;
     },
     schedule: async function(seconds, title, body = "") {
-      const fireDate = new Date(Date.now() + seconds * 1e3);
-      const id = 1; // Fixed ID to prevent notification spam
-      
+      logInfo("============================================================");
+      logInfo("=== SCHEDULE NOTIFICATION ===");
+      logInfo("============================================================");
+      logInfo("seconds:", seconds);
+      logInfo("title:", title);
+      logInfo("body:", body);
+      logInfo("Platform:", Capacitor.getPlatform());
+      logInfo("isNative:", Capacitor.isNativePlatform());
+      await this.cancel();
       if (Capacitor.isNativePlatform()) {
-        // Use schedule for native to ensure OS handles the timing, not JS
-        await LocalNotifications.schedule({
+        const fireDate = new Date(Date.now() + seconds * 1e3);
+        logInfo("Now:", (/* @__PURE__ */ new Date()).toISOString());
+        logInfo("Fire at:", fireDate.toISOString());
+        const config = {
           notifications: [{
-            id,
+            id: 1001,
             title,
             body,
-            schedule: { at: fireDate, allowPause: false }, // allowPause: false is key for Android
-            sound: 'beep.wav', // Matches your capacitor.config.json
-            attachments: [],
+            schedule: { at: fireDate, allowWhileIdle: true },
+            sound: null,
+            smallIcon: "ic_stat_icon_config_sample",
             actionTypeId: "",
             extra: null
           }]
-        });
-      } else {
-        if (this.webTimer) clearTimeout(this.webTimer);
-        this.webTimer = setTimeout(() => {
-          if (Notification.permission === "granted") {
-            new Notification(title, { body, icon: "/icons/icon-192x192.png" });
+        };
+        logInfo("Config:", config);
+        try {
+          logInfo("Calling LocalNotifications.schedule()...");
+          const result = await LocalNotifications.schedule(config);
+          logInfo("Schedule returned:", result);
+          const pending = await LocalNotifications.getPending();
+          logInfo("Pending after schedule:", pending);
+          if (pending.notifications?.length > 0) {
+            logInfo("\u2713 SUCCESS - notification queued");
+          } else {
+            logError("\u2717 FAIL - notification NOT in queue");
           }
-          if (window.playBeep) window.playBeep();
+        } catch (err) {
+          logError("*** SCHEDULE FAILED ***");
+          logError("Error:", err.message);
+          logError("Name:", err.name);
+          logError("Stack:", err.stack);
+        }
+      } else {
+        logInfo("Web fallback - setTimeout");
+        webTimer = setTimeout(() => {
+          logInfo("Web timer fired");
+          if (Notification.permission === "granted") {
+            new Notification(title, { body });
+          }
         }, seconds * 1e3);
       }
     },
     cancel: async function() {
+      logInfo("=== CANCEL ===");
       if (Capacitor.isNativePlatform()) {
-        await LocalNotifications.cancel({ notifications: [{ id: 1 }] });
-      } else {
-        if (this.webTimer) clearTimeout(this.webTimer);
+        try {
+          const pending = await LocalNotifications.getPending();
+          logInfo("Pending before cancel:", pending);
+          if (pending.notifications?.length > 0) {
+            await LocalNotifications.cancel({ notifications: pending.notifications });
+            logInfo("Cancelled", pending.notifications.length, "notification(s)");
+          }
+        } catch (err) {
+          logError("Cancel failed:", err.message);
+        }
+      } else if (webTimer) {
+        clearTimeout(webTimer);
+        webTimer = null;
       }
     }
   };
+  document.addEventListener("visibilitychange", async () => {
+    logInfo("Visibility:", document.visibilityState);
+    if (document.visibilityState === "visible" && !window.wakeLockManager.wakeLock) {
+      if (document.querySelector(".zz_btn_toggle_set_complete")) {
+        await window.wakeLockManager.request();
+      }
+    }
+  });
+  window.showDebugLogs = createLogViewer;
+  setTimeout(() => {
+    const btn = document.createElement("button");
+    btn.textContent = "\u{1F514}";
+    btn.style.cssText = `
+    position: fixed;
+    bottom: 90px;
+    right: 15px;
+    z-index: 99999;
+    width: 50px;
+    height: 50px;
+    background: #c00;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  `;
+    btn.onclick = createLogViewer;
+    document.body.appendChild(btn);
+    logInfo("Debug button added");
+  }, 1500);
+  logInfo("============================================================");
+  logInfo("SERVICE READY - tap red \u{1F514} button to view logs");
+  logInfo("============================================================");
 })();
 /*! Bundled license information:
 

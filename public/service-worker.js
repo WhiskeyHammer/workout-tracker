@@ -9,6 +9,7 @@ const STATIC_ASSETS = [
   '/js/config/api.js',
   '/js/utils/workoutHelpers.js',
   '/js/utils/wakeLock.js',
+  '/js/utils/timerWorker.js',
   '/js/components/icons/AuthIcons.jsx',
   '/js/components/icons/TrackerIcons.jsx',
   '/js/components/Auth/AuthScreen.jsx',

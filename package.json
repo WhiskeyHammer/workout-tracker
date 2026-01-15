@@ -5,8 +5,9 @@
   "main": "server.js",
   "scripts": {
     "build:utils": "esbuild scripts/wakeLock.src.js --bundle --outfile=public/js/utils/wakeLock.js --platform=browser",
-    "start": "npm run build:utils && npm run generate-version && node server.js",
-    "dev": "npm run build:utils && npm run generate-version && nodemon server.js",
+    "build:timer": "esbuild scripts/timerService.src.js --bundle --outfile=public/js/utils/timerService.js --platform=browser",
+    "start": "npm run build:utils && npm run build:timer && npm run generate-version && node server.js",
+    "dev": "npm run build:utils && npm run build:timer && npm run generate-version && nodemon server.js",
     "generate-version": "node scripts/generate-version.js"
   },
   "dependencies": {
@@ -20,7 +21,9 @@
     "sharp": "^0.34.5",
     "@capacitor/android": "^6.0.0",
     "@capacitor/core": "^6.0.0",
-    "@capacitor/local-notifications": "^6.0.0"
+    "@capacitor/local-notifications": "^6.0.0",
+    "@capawesome-team/capacitor-android-foreground-service": "^6.0.0",
+    "@capacitor-community/native-audio": "^6.0.0"
   },
   "devDependencies": {
     "@capacitor/cli": "^6.0.0",
