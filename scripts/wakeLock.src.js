@@ -168,9 +168,9 @@ function createLogViewer() {
     }
   }
   
-  overlay.appendChild(header);
   overlay.appendChild(countDiv);
   overlay.appendChild(logContent);
+  overlay.appendChild(header);
   document.body.appendChild(overlay);
   
   refreshLogs();
