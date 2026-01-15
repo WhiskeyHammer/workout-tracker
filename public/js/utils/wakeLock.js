@@ -995,6 +995,21 @@
         try {
           const result = await LocalNotifications.requestPermissions();
           logInfo("Permission result:", result);
+          
+          // Check exact alarm permission (Android 12+)
+          try {
+            const exactAlarm = await LocalNotifications.checkExactNotificationSetting();
+            logInfo("Exact alarm setting:", exactAlarm);
+            
+            if (exactAlarm.exact_alarm === "denied") {
+              logWarn("⚠️ Exact alarm permission denied - prompting user");
+              // Prompt user to grant permission
+              await this.requestExactAlarmPermission();
+            }
+          } catch (e) {
+            logWarn("Exact alarm check error:", e.message);
+          }
+          
           return result.display === "granted";
         } catch (err) {
           logError("Permission request failed:", err.message);
@@ -1002,6 +1017,55 @@
         }
       }
       return false;
+    },
+    requestExactAlarmPermission: async function() {
+      logInfo("=== REQUEST EXACT ALARM PERMISSION ===");
+      
+      if (!Capacitor.isNativePlatform()) {
+        return false;
+      }
+
+      try {
+        // Check if already granted
+        const check = await LocalNotifications.checkExactNotificationSetting();
+        if (check.exact_alarm === "granted") {
+          logInfo("✓ Exact alarm permission already granted");
+          return true;
+        }
+
+        // Show explanation dialog to user
+        const userConfirmed = confirm(
+          "This app needs permission to schedule exact alarms for workout timers.\n\n" +
+          "You'll be taken to Settings to enable 'Alarms & reminders' for this app."
+        );
+
+        if (!userConfirmed) {
+          logWarn("User declined to grant exact alarm permission");
+          return false;
+        }
+
+        // Open system settings for the app
+        // Try using App plugin if available, otherwise show manual instructions
+        try {
+          if (Capacitor.Plugins && Capacitor.Plugins.App) {
+            await Capacitor.Plugins.App.openSettings();
+            logInfo("Opened app settings for user to grant permission");
+          } else {
+            throw new Error("App plugin not available");
+          }
+        } catch (e) {
+          logWarn("Could not open settings automatically:", e.message);
+          alert(
+            "Please enable 'Alarms & reminders' permission manually:\n\n" +
+            "Settings > Apps > Workout Tracker > Alarms & reminders"
+          );
+        }
+
+        return false; // User needs to manually grant in settings
+      } catch (err) {
+        logError("requestExactAlarmPermission failed:", err.message);
+        return false;
+      }
     },
     schedule: async function(seconds, title, body = "") {
       logInfo("============================================================");
@@ -1014,6 +1078,31 @@
       logInfo("isNative:", Capacitor.isNativePlatform());
       await this.cancel();
       if (Capacitor.isNativePlatform()) {
+        // Check exact alarm permission before scheduling
+        try {
+          const exactAlarm = await LocalNotifications.checkExactNotificationSetting();
+          logInfo("Checking exact alarm permission before schedule:", exactAlarm);
+          
+          if (exactAlarm.exact_alarm === "denied") {
+            logWarn("⚠️ Cannot schedule - exact alarm permission denied");
+            const retry = await this.requestExactAlarmPermission();
+            if (!retry) {
+              logError("User did not grant exact alarm permission");
+              alert(
+                "Timer notifications require 'Alarms & reminders' permission.\n\n" +
+                "Please enable it in Settings > Apps > Workout Tracker > Alarms & reminders"
+              );
+              return;
+            }
+            // After user grants permission, they'll need to retry the action
+            logInfo("User needs to retry after granting permission");
+            return;
+          }
+        } catch (e) {
+          logWarn("Could not check exact alarm permission:", e.message);
+          // Continue anyway - might work on older Android versions
+        }
+        
         const fireDate = new Date(Date.now() + seconds * 1e3);
         logInfo("Now:", (/* @__PURE__ */ new Date()).toISOString());
         logInfo("Fire at:", fireDate.toISOString());

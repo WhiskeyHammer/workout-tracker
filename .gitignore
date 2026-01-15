@@ -5,3 +5,4 @@ node_modules/
 tests/test_logs
 public/version.json
 .vscode
+troubleshooting*
