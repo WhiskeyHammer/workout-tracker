@@ -894,23 +894,21 @@
   var onTickCallback = null;
   var onCompleteCallback = null;
   var ALERT_ID = 99999;
+  var ALERT_CHANNEL_ID = "workout-timer-alert-v2";
+  var ALERT_SOUND = "beep";
   async function init() {
     if (Capacitor.isNativePlatform()) {
       try {
         await LocalNotifications.requestPermissions();
-        try {
-          await LocalNotifications.deleteChannel({ id: "workout-timer-alert" });
-        } catch (e) {
-        }
         await LocalNotifications.createChannel({
-          id: "workout-timer-alert",
+          id: ALERT_CHANNEL_ID,
           name: "Workout Timer (Complete)",
           description: "Alerts when rest is done",
           importance: 5,
           // High
           visibility: 1,
-          sound: "beep.wav",
-          // Looks for res/raw/beep.wav
+          sound: ALERT_SOUND,
+          // 'beep' (looks for res/raw/beep.wav)
           vibration: true
         });
         await ForegroundService.createNotificationChannel({
@@ -948,12 +946,12 @@
           id: ALERT_ID,
           title: "REST COMPLETE",
           body: `Time to set: ${exerciseName}`,
-          channelId: "workout-timer-alert",
-          // Use the loud channel
-          sound: "beep.wav",
+          channelId: ALERT_CHANNEL_ID,
+          // Use the new V2 channel
+          sound: ALERT_SOUND,
+          // 'beep'
           schedule: { at: endTime },
           smallIcon: "ic_stat_icon_config_sample",
-          // ensure this icon exists or remove line
           actionTypeId: "OPEN_APP"
         }]
       });
