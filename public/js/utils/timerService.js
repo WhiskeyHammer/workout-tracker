@@ -661,6 +661,183 @@
     }
   });
 
+  // node_modules/@capacitor/local-notifications/dist/esm/web.js
+  var web_exports2 = {};
+  __export(web_exports2, {
+    LocalNotificationsWeb: () => LocalNotificationsWeb
+  });
+  var LocalNotificationsWeb;
+  var init_web2 = __esm({
+    "node_modules/@capacitor/local-notifications/dist/esm/web.js"() {
+      init_dist();
+      LocalNotificationsWeb = class extends WebPlugin {
+        constructor() {
+          super(...arguments);
+          this.pending = [];
+          this.deliveredNotifications = [];
+          this.hasNotificationSupport = () => {
+            if (!("Notification" in window) || !Notification.requestPermission) {
+              return false;
+            }
+            if (Notification.permission !== "granted") {
+              try {
+                new Notification("");
+              } catch (e) {
+                if (e.name == "TypeError") {
+                  return false;
+                }
+              }
+            }
+            return true;
+          };
+        }
+        async getDeliveredNotifications() {
+          const deliveredSchemas = [];
+          for (const notification of this.deliveredNotifications) {
+            const deliveredSchema = {
+              title: notification.title,
+              id: parseInt(notification.tag),
+              body: notification.body
+            };
+            deliveredSchemas.push(deliveredSchema);
+          }
+          return {
+            notifications: deliveredSchemas
+          };
+        }
+        async removeDeliveredNotifications(delivered) {
+          for (const toRemove of delivered.notifications) {
+            const found = this.deliveredNotifications.find((n) => n.tag === String(toRemove.id));
+            found === null || found === void 0 ? void 0 : found.close();
+            this.deliveredNotifications = this.deliveredNotifications.filter(() => !found);
+          }
+        }
+        async removeAllDeliveredNotifications() {
+          for (const notification of this.deliveredNotifications) {
+            notification.close();
+          }
+          this.deliveredNotifications = [];
+        }
+        async createChannel() {
+          throw this.unimplemented("Not implemented on web.");
+        }
+        async deleteChannel() {
+          throw this.unimplemented("Not implemented on web.");
+        }
+        async listChannels() {
+          throw this.unimplemented("Not implemented on web.");
+        }
+        async schedule(options) {
+          if (!this.hasNotificationSupport()) {
+            throw this.unavailable("Notifications not supported in this browser.");
+          }
+          for (const notification of options.notifications) {
+            this.sendNotification(notification);
+          }
+          return {
+            notifications: options.notifications.map((notification) => ({
+              id: notification.id
+            }))
+          };
+        }
+        async getPending() {
+          return {
+            notifications: this.pending
+          };
+        }
+        async registerActionTypes() {
+          throw this.unimplemented("Not implemented on web.");
+        }
+        async cancel(pending) {
+          this.pending = this.pending.filter((notification) => !pending.notifications.find((n) => n.id === notification.id));
+        }
+        async areEnabled() {
+          const { display } = await this.checkPermissions();
+          return {
+            value: display === "granted"
+          };
+        }
+        async changeExactNotificationSetting() {
+          throw this.unimplemented("Not implemented on web.");
+        }
+        async checkExactNotificationSetting() {
+          throw this.unimplemented("Not implemented on web.");
+        }
+        async requestPermissions() {
+          if (!this.hasNotificationSupport()) {
+            throw this.unavailable("Notifications not supported in this browser.");
+          }
+          const display = this.transformNotificationPermission(await Notification.requestPermission());
+          return { display };
+        }
+        async checkPermissions() {
+          if (!this.hasNotificationSupport()) {
+            throw this.unavailable("Notifications not supported in this browser.");
+          }
+          const display = this.transformNotificationPermission(Notification.permission);
+          return { display };
+        }
+        transformNotificationPermission(permission) {
+          switch (permission) {
+            case "granted":
+              return "granted";
+            case "denied":
+              return "denied";
+            default:
+              return "prompt";
+          }
+        }
+        sendPending() {
+          var _a;
+          const toRemove = [];
+          const now = (/* @__PURE__ */ new Date()).getTime();
+          for (const notification of this.pending) {
+            if (((_a = notification.schedule) === null || _a === void 0 ? void 0 : _a.at) && notification.schedule.at.getTime() <= now) {
+              this.buildNotification(notification);
+              toRemove.push(notification);
+            }
+          }
+          this.pending = this.pending.filter((notification) => !toRemove.find((n) => n === notification));
+        }
+        sendNotification(notification) {
+          var _a;
+          if ((_a = notification.schedule) === null || _a === void 0 ? void 0 : _a.at) {
+            const diff = notification.schedule.at.getTime() - (/* @__PURE__ */ new Date()).getTime();
+            this.pending.push(notification);
+            setTimeout(() => {
+              this.sendPending();
+            }, diff);
+            return;
+          }
+          this.buildNotification(notification);
+        }
+        buildNotification(notification) {
+          const localNotification = new Notification(notification.title, {
+            body: notification.body,
+            tag: String(notification.id)
+          });
+          localNotification.addEventListener("click", this.onClick.bind(this, notification), false);
+          localNotification.addEventListener("show", this.onShow.bind(this, notification), false);
+          localNotification.addEventListener("close", () => {
+            this.deliveredNotifications = this.deliveredNotifications.filter(() => !this);
+          }, false);
+          this.deliveredNotifications.push(localNotification);
+          return localNotification;
+        }
+        onClick(notification) {
+          const data = {
+            actionId: "tap",
+            notification
+          };
+          this.notifyListeners("localNotificationActionPerformed", data);
+        }
+        onShow(notification) {
+          this.notifyListeners("localNotificationReceived", notification);
+        }
+      };
+    }
+  });
+
   // scripts/timerService.src.js
   init_dist();
 
@@ -691,29 +868,58 @@
     web: () => Promise.resolve().then(() => (init_web(), web_exports)).then((m) => new m.NativeAudioWeb())
   });
 
+  // node_modules/@capacitor/local-notifications/dist/esm/index.js
+  init_dist();
+
+  // node_modules/@capacitor/local-notifications/dist/esm/definitions.js
+  var Weekday;
+  (function(Weekday2) {
+    Weekday2[Weekday2["Sunday"] = 1] = "Sunday";
+    Weekday2[Weekday2["Monday"] = 2] = "Monday";
+    Weekday2[Weekday2["Tuesday"] = 3] = "Tuesday";
+    Weekday2[Weekday2["Wednesday"] = 4] = "Wednesday";
+    Weekday2[Weekday2["Thursday"] = 5] = "Thursday";
+    Weekday2[Weekday2["Friday"] = 6] = "Friday";
+    Weekday2[Weekday2["Saturday"] = 7] = "Saturday";
+  })(Weekday || (Weekday = {}));
+
+  // node_modules/@capacitor/local-notifications/dist/esm/index.js
+  var LocalNotifications = registerPlugin("LocalNotifications", {
+    web: () => Promise.resolve().then(() => (init_web2(), web_exports2)).then((m) => new m.LocalNotificationsWeb())
+  });
+
   // scripts/timerService.src.js
   var timerInterval = null;
   var timerEndTime = null;
   var onTickCallback = null;
   var onCompleteCallback = null;
+  var ALERT_ID = 99999;
   async function init() {
     if (Capacitor.isNativePlatform()) {
       try {
+        await LocalNotifications.requestPermissions();
+        try {
+          await LocalNotifications.deleteChannel({ id: "workout-timer-alert" });
+        } catch (e) {
+        }
+        await LocalNotifications.createChannel({
+          id: "workout-timer-alert",
+          name: "Workout Timer (Complete)",
+          description: "Alerts when rest is done",
+          importance: 5,
+          // High
+          visibility: 1,
+          sound: "beep.wav",
+          // Looks for res/raw/beep.wav
+          vibration: true
+        });
         await ForegroundService.createNotificationChannel({
           id: "workout-timer-silent",
           name: "Workout Timer (Countdown)",
           description: "Shows active countdown",
           importance: 2,
+          // Low (no sound, no popup)
           visibility: 1
-        });
-        await ForegroundService.createNotificationChannel({
-          id: "workout-timer-alert",
-          name: "Workout Timer (Complete)",
-          description: "Alerts when rest is done",
-          importance: 5,
-          sound: "beep",
-          visibility: 1,
-          vibration: true
         });
         await NativeAudio.preload({
           assetId: "timerBeep",
@@ -732,20 +938,45 @@
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   }
-  async function startForegroundService(seconds, exerciseName) {
+  async function startNativeTimer(seconds, exerciseName) {
     if (!Capacitor.isNativePlatform())
       return;
+    const endTime = new Date(Date.now() + seconds * 1e3);
     try {
+      await LocalNotifications.schedule({
+        notifications: [{
+          id: ALERT_ID,
+          title: "REST COMPLETE",
+          body: `Time to set: ${exerciseName}`,
+          channelId: "workout-timer-alert",
+          // Use the loud channel
+          sound: "beep.wav",
+          schedule: { at: endTime },
+          smallIcon: "ic_stat_icon_config_sample",
+          // ensure this icon exists or remove line
+          actionTypeId: "OPEN_APP"
+        }]
+      });
       await ForegroundService.startForegroundService({
         id: 1,
         title: "Rest Timer",
         body: `${formatTime(seconds)} - ${exerciseName}`,
         smallIcon: "ic_stat_icon_config_sample",
-        buttons: [{ title: "Skip", id: 1 }],
-        notificationChannelId: "workout-timer-silent"
+        notificationChannelId: "workout-timer-silent",
+        buttons: [{ title: "Skip", id: 1 }]
       });
     } catch (err) {
-      console.error("Failed to start foreground service:", err);
+      console.error("Failed to start native timer:", err);
+    }
+  }
+  async function stopNativeTimer() {
+    if (!Capacitor.isNativePlatform())
+      return;
+    try {
+      await LocalNotifications.cancel({ notifications: [{ id: ALERT_ID }] });
+      await ForegroundService.stopForegroundService();
+    } catch (err) {
+      console.error("Error stopping timer:", err);
     }
   }
   async function updateForegroundService(seconds, exerciseName) {
@@ -762,32 +993,10 @@
     } catch (err) {
     }
   }
-  async function triggerCompleteNotification() {
-    if (!Capacitor.isNativePlatform())
-      return;
-    try {
-      await ForegroundService.stopForegroundService();
-      await ForegroundService.startForegroundService({
-        id: 2,
-        title: "REST COMPLETE",
-        body: "Get back to work!",
-        smallIcon: "ic_stat_icon_config_sample",
-        notificationChannelId: "workout-timer-alert",
-        // Uses the sound channel
-        buttons: [{ title: "OK", id: 2 }]
-      });
-      setTimeout(() => {
-        ForegroundService.stopForegroundService();
-      }, 5e3);
-    } catch (err) {
-      console.error("Failed to trigger complete notification:", err);
-    }
-  }
   async function playBeep() {
     try {
       await NativeAudio.play({ assetId: "timerBeep" });
     } catch (e) {
-      console.log("NativeAudio play failed (app likely backgrounded), relying on Notification sound.");
     }
   }
   async function setupButtonListener() {
@@ -799,8 +1008,9 @@
         if (onCompleteCallback)
           onCompleteCallback(true);
       }
-      if (event.buttonId === 2) {
-        ForegroundService.stopForegroundService();
+    });
+    await LocalNotifications.addListener("localNotificationActionPerformed", (payload) => {
+      if (payload.notification.id === ALERT_ID) {
       }
     });
   }
@@ -813,9 +1023,9 @@
       const { seconds, exerciseName, onTick, onComplete } = options;
       onTickCallback = onTick;
       onCompleteCallback = onComplete;
-      this.stop();
+      this.stop(false);
       timerEndTime = Date.now() + seconds * 1e3;
-      await startForegroundService(seconds, exerciseName);
+      await startNativeTimer(seconds, exerciseName);
       timerInterval = setInterval(async () => {
         const now = Date.now();
         const remainingMs = Math.max(0, timerEndTime - now);
@@ -827,23 +1037,26 @@
           await updateForegroundService(remainingSeconds, exerciseName);
         }
         if (remainingMs === 0) {
-          this.stop(false);
+          if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+          }
           await playBeep();
-          await triggerCompleteNotification();
+          await ForegroundService.stopForegroundService();
           if (onCompleteCallback)
             onCompleteCallback(false);
         }
       }, 100);
     },
-    stop: async function(clearNotification = true) {
+    stop: async function(shouldStopNative = true) {
       if (timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
       }
       timerEndTime = null;
       this._lastSecond = null;
-      if (clearNotification) {
-        await ForegroundService.stopForegroundService();
+      if (shouldStopNative) {
+        await stopNativeTimer();
       }
     },
     isRunning: function() {

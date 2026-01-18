@@ -1,41 +1,49 @@
 import { Capacitor } from '@capacitor/core';
 import { ForegroundService } from '@capawesome-team/capacitor-android-foreground-service';
 import { NativeAudio } from '@capacitor-community/native-audio';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 // Timer state
 let timerInterval = null;
 let timerEndTime = null;
 let onTickCallback = null;
 let onCompleteCallback = null;
+const ALERT_ID = 99999; // Unique ID for the finish alarm
 
-// Initialize
 async function init() {
   if (Capacitor.isNativePlatform()) {
     try {
-      // 1. Create SILENT channel (For the countdown)
-      // We set 'importance: 2' (Low) so it doesn't make sound or popup
+      // 1. Request permissions for Notifications and Alarms
+      await LocalNotifications.requestPermissions();
+      
+      // 2. Delete the old possibly broken channel (crucial step!)
+      try {
+        await LocalNotifications.deleteChannel({ id: 'workout-timer-alert' });
+      } catch (e) { /* ignore if didn't exist */ }
+
+      // 3. Create the ALERT channel (High Importance + Sound)
+      // This is for the "DONE" message
+      await LocalNotifications.createChannel({
+        id: 'workout-timer-alert',
+        name: 'Workout Timer (Complete)',
+        description: 'Alerts when rest is done',
+        importance: 5, // High
+        visibility: 1,
+        sound: 'beep.wav', // Looks for res/raw/beep.wav
+        vibration: true
+      });
+
+      // 4. Create the SILENT channel (Low Importance)
+      // This is for the countdown updating every second
       await ForegroundService.createNotificationChannel({
         id: 'workout-timer-silent',
         name: 'Workout Timer (Countdown)',
         description: 'Shows active countdown',
-        importance: 2, 
+        importance: 2, // Low (no sound, no popup)
         visibility: 1
       });
 
-      // 2. Create ALERT channel (For the finish)
-      // We set 'importance: 5' (High) and attach the 'beep' sound
-      // This tells Android: "When a notification hits this channel, play res/raw/beep.wav"
-      await ForegroundService.createNotificationChannel({
-        id: 'workout-timer-alert',
-        name: 'Workout Timer (Complete)',
-        description: 'Alerts when rest is done',
-        importance: 5, 
-        sound: 'beep', 
-        visibility: 1,
-        vibration: true
-      });
-
-      // 3. Preload NativeAudio (For when the app is actually open)
+      // Preload NativeAudio as backup for when app is open
       await NativeAudio.preload({
         assetId: 'timerBeep',
         assetPath: 'beep.wav',
@@ -57,29 +65,61 @@ function formatTime(seconds) {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-// Start foreground service (Countdown)
-async function startForegroundService(seconds, exerciseName) {
+async function startNativeTimer(seconds, exerciseName) {
   if (!Capacitor.isNativePlatform()) return;
-  
+
+  const endTime = new Date(Date.now() + seconds * 1000);
+
   try {
-    // Start the service using the SILENT channel
+    // 1. Schedule the FINAL ALERT immediately
+    // Android OS handles this, so it works even if app sleeps
+    await LocalNotifications.schedule({
+      notifications: [{
+        id: ALERT_ID,
+        title: 'REST COMPLETE',
+        body: `Time to set: ${exerciseName}`,
+        channelId: 'workout-timer-alert', // Use the loud channel
+        sound: 'beep.wav',
+        schedule: { at: endTime },
+        smallIcon: 'ic_stat_icon_config_sample', // ensure this icon exists or remove line
+        actionTypeId: 'OPEN_APP'
+      }]
+    });
+
+    // 2. Start the SILENT countdown service
+    // This updates the notification bar visually while app is alive
     await ForegroundService.startForegroundService({
       id: 1,
       title: 'Rest Timer',
       body: `${formatTime(seconds)} - ${exerciseName}`,
       smallIcon: 'ic_stat_icon_config_sample',
-      buttons: [{ title: 'Skip', id: 1 }],
-      notificationChannelId: 'workout-timer-silent', 
+      notificationChannelId: 'workout-timer-silent',
+      buttons: [{ title: 'Skip', id: 1 }]
     });
+    
   } catch (err) {
-    console.error('Failed to start foreground service:', err);
+    console.error('Failed to start native timer:', err);
   }
 }
 
-// Update the countdown
+// Stop everything
+async function stopNativeTimer() {
+  if (!Capacitor.isNativePlatform()) return;
+  
+  try {
+    // Cancel the scheduled future beep
+    await LocalNotifications.cancel({ notifications: [{ id: ALERT_ID }] });
+    // Stop the visual countdown
+    await ForegroundService.stopForegroundService();
+  } catch (err) {
+    console.error('Error stopping timer:', err);
+  }
+}
+
 async function updateForegroundService(seconds, exerciseName) {
   if (!Capacitor.isNativePlatform()) return;
   try {
+    // Only update the visual text
     await ForegroundService.updateForegroundService({
       id: 1,
       title: 'Rest Timer',
@@ -87,62 +127,35 @@ async function updateForegroundService(seconds, exerciseName) {
       smallIcon: 'ic_stat_icon_config_sample',
       notificationChannelId: 'workout-timer-silent'
     });
-  } catch (err) { /* Service might have stopped */ }
-}
-
-// Trigger the 'DONE' notification
-async function triggerCompleteNotification() {
-  if (!Capacitor.isNativePlatform()) return;
-
-  try {
-    // Stop the silent countdown...
-    await ForegroundService.stopForegroundService();
-    
-    // ...and immediately start the ALERT service (Sound!)
-    await ForegroundService.startForegroundService({
-      id: 2, 
-      title: 'REST COMPLETE',
-      body: 'Get back to work!',
-      smallIcon: 'ic_stat_icon_config_sample',
-      notificationChannelId: 'workout-timer-alert', // Uses the sound channel
-      buttons: [{ title: 'OK', id: 2 }]
-    });
-
-    // Auto-clear after 5s so the notification doesn't stay forever
-    setTimeout(() => {
-        ForegroundService.stopForegroundService();
-    }, 5000);
-
-  } catch (err) {
-    console.error('Failed to trigger complete notification:', err);
-  }
+  } catch (err) {}
 }
 
 async function playBeep() {
   try {
-    // Try to play the in-app sound first
     await NativeAudio.play({ assetId: 'timerBeep' });
-  } catch (e) { 
-    console.log("NativeAudio play failed (app likely backgrounded), relying on Notification sound.");
-  }
+  } catch (e) {}
 }
 
-// Listen for button clicks (Skip / OK)
 async function setupButtonListener() {
   if (!Capacitor.isNativePlatform()) return;
   
+  // Listen for "Skip" on the foreground service
   await ForegroundService.addListener('buttonClicked', (event) => {
-    if (event.buttonId === 1) { // Skip button
+    if (event.buttonId === 1) { // Skip
         window.timerService.stop();
         if (onCompleteCallback) onCompleteCallback(true);
     }
-    if (event.buttonId === 2) { // OK button (Finish)
-        ForegroundService.stopForegroundService();
+  });
+
+  // Listen for clicking the "Complete" notification to open app
+  await LocalNotifications.addListener('localNotificationActionPerformed', (payload) => {
+    // If they click the "Rest Complete" notification, just clear it
+    if (payload.notification.id === ALERT_ID) {
+       // App is opening, logic is handled by UI
     }
   });
 }
 
-// Main Service
 window.timerService = {
   init: async function() {
     await init();
@@ -154,11 +167,15 @@ window.timerService = {
     onTickCallback = onTick;
     onCompleteCallback = onComplete;
     
-    this.stop(); 
+    // Clear any existing
+    this.stop(false); 
     
     timerEndTime = Date.now() + (seconds * 1000);
-    await startForegroundService(seconds, exerciseName);
     
+    // Start Native Schedulers
+    await startNativeTimer(seconds, exerciseName);
+    
+    // Start JS Interval (for UI updates and foreground countdown)
     timerInterval = setInterval(async () => {
       const now = Date.now();
       const remainingMs = Math.max(0, timerEndTime - now);
@@ -166,23 +183,32 @@ window.timerService = {
       
       if (onTickCallback) onTickCallback({ remainingMs, remainingSeconds });
       
+      // Update notification text (if app is awake enough to do so)
       if (remainingMs > 0 && remainingSeconds !== this._lastSecond) {
         this._lastSecond = remainingSeconds;
         await updateForegroundService(remainingSeconds, exerciseName);
       }
       
+      // Timer Complete Logic
       if (remainingMs === 0) {
-        this.stop(false); // Stop interval, keep notification logic for completion
+        // Clear interval but don't cancel notification yet (let it ring)
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
         
-        await playBeep(); // 1. Try NativeAudio
-        await triggerCompleteNotification(); // 2. Trigger System Sound
+        // If app is OPEN, play sound via NativeAudio too (double safety)
+        await playBeep();
         
+        // Stop the "countdown" service, but leave the "Alert" notification
+        await ForegroundService.stopForegroundService();
+
         if (onCompleteCallback) onCompleteCallback(false);
       }
     }, 100);
   },
   
-  stop: async function(clearNotification = true) {
+  stop: async function(shouldStopNative = true) {
     if (timerInterval) {
       clearInterval(timerInterval);
       timerInterval = null;
@@ -190,8 +216,8 @@ window.timerService = {
     timerEndTime = null;
     this._lastSecond = null;
     
-    if (clearNotification) {
-        await ForegroundService.stopForegroundService();
+    if (shouldStopNative) {
+        await stopNativeTimer();
     }
   },
   
@@ -199,7 +225,7 @@ window.timerService = {
   _lastSecond: null
 };
 
-// WakeLock Logic (Unchanged from your original code)
+// WakeLock Manager
 window.wakeLockManager = {
   wakeLock: null,
   request: async function() {
