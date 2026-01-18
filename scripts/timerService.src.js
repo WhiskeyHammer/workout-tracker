@@ -14,7 +14,7 @@ async function initAudio() {
     try {
       await NativeAudio.preload({
         assetId: 'timerBeep',
-        assetPath: 'beep.mp3',
+        assetPath: 'beep.wav',
         audioChannelNum: 1,
         isUrl: false
       });
