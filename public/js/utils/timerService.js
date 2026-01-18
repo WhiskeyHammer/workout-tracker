@@ -534,581 +534,354 @@
     }
   });
 
-  // node_modules/@capacitor/local-notifications/dist/esm/web.js
-  var web_exports = {};
-  __export(web_exports, {
-    LocalNotificationsWeb: () => LocalNotificationsWeb
-  });
-  var LocalNotificationsWeb;
-  var init_web = __esm({
-    "node_modules/@capacitor/local-notifications/dist/esm/web.js"() {
-      init_dist();
-      LocalNotificationsWeb = class extends WebPlugin {
-        constructor() {
-          super(...arguments);
-          this.pending = [];
-          this.deliveredNotifications = [];
-          this.hasNotificationSupport = () => {
-            if (!("Notification" in window) || !Notification.requestPermission) {
-              return false;
-            }
-            if (Notification.permission !== "granted") {
-              try {
-                new Notification("");
-              } catch (e) {
-                if (e.name == "TypeError") {
-                  return false;
-                }
-              }
-            }
-            return true;
-          };
-        }
-        async getDeliveredNotifications() {
-          const deliveredSchemas = [];
-          for (const notification of this.deliveredNotifications) {
-            const deliveredSchema = {
-              title: notification.title,
-              id: parseInt(notification.tag),
-              body: notification.body
-            };
-            deliveredSchemas.push(deliveredSchema);
-          }
-          return {
-            notifications: deliveredSchemas
-          };
-        }
-        async removeDeliveredNotifications(delivered) {
-          for (const toRemove of delivered.notifications) {
-            const found = this.deliveredNotifications.find((n) => n.tag === String(toRemove.id));
-            found === null || found === void 0 ? void 0 : found.close();
-            this.deliveredNotifications = this.deliveredNotifications.filter(() => !found);
-          }
-        }
-        async removeAllDeliveredNotifications() {
-          for (const notification of this.deliveredNotifications) {
-            notification.close();
-          }
-          this.deliveredNotifications = [];
-        }
-        async createChannel() {
-          throw this.unimplemented("Not implemented on web.");
-        }
-        async deleteChannel() {
-          throw this.unimplemented("Not implemented on web.");
-        }
-        async listChannels() {
-          throw this.unimplemented("Not implemented on web.");
-        }
-        async schedule(options) {
-          if (!this.hasNotificationSupport()) {
-            throw this.unavailable("Notifications not supported in this browser.");
-          }
-          for (const notification of options.notifications) {
-            this.sendNotification(notification);
-          }
-          return {
-            notifications: options.notifications.map((notification) => ({
-              id: notification.id
-            }))
-          };
-        }
-        async getPending() {
-          return {
-            notifications: this.pending
-          };
-        }
-        async registerActionTypes() {
-          throw this.unimplemented("Not implemented on web.");
-        }
-        async cancel(pending) {
-          this.pending = this.pending.filter((notification) => !pending.notifications.find((n) => n.id === notification.id));
-        }
-        async areEnabled() {
-          const { display } = await this.checkPermissions();
-          return {
-            value: display === "granted"
-          };
-        }
-        async changeExactNotificationSetting() {
-          throw this.unimplemented("Not implemented on web.");
-        }
-        async checkExactNotificationSetting() {
-          throw this.unimplemented("Not implemented on web.");
-        }
-        async requestPermissions() {
-          if (!this.hasNotificationSupport()) {
-            throw this.unavailable("Notifications not supported in this browser.");
-          }
-          const display = this.transformNotificationPermission(await Notification.requestPermission());
-          return { display };
-        }
-        async checkPermissions() {
-          if (!this.hasNotificationSupport()) {
-            throw this.unavailable("Notifications not supported in this browser.");
-          }
-          const display = this.transformNotificationPermission(Notification.permission);
-          return { display };
-        }
-        transformNotificationPermission(permission) {
-          switch (permission) {
-            case "granted":
-              return "granted";
-            case "denied":
-              return "denied";
-            default:
-              return "prompt";
-          }
-        }
-        sendPending() {
-          var _a;
-          const toRemove = [];
-          const now = (/* @__PURE__ */ new Date()).getTime();
-          for (const notification of this.pending) {
-            if (((_a = notification.schedule) === null || _a === void 0 ? void 0 : _a.at) && notification.schedule.at.getTime() <= now) {
-              this.buildNotification(notification);
-              toRemove.push(notification);
-            }
-          }
-          this.pending = this.pending.filter((notification) => !toRemove.find((n) => n === notification));
-        }
-        sendNotification(notification) {
-          var _a;
-          if ((_a = notification.schedule) === null || _a === void 0 ? void 0 : _a.at) {
-            const diff = notification.schedule.at.getTime() - (/* @__PURE__ */ new Date()).getTime();
-            this.pending.push(notification);
-            setTimeout(() => {
-              this.sendPending();
-            }, diff);
-            return;
-          }
-          this.buildNotification(notification);
-        }
-        buildNotification(notification) {
-          const localNotification = new Notification(notification.title, {
-            body: notification.body,
-            tag: String(notification.id)
-          });
-          localNotification.addEventListener("click", this.onClick.bind(this, notification), false);
-          localNotification.addEventListener("show", this.onShow.bind(this, notification), false);
-          localNotification.addEventListener("close", () => {
-            this.deliveredNotifications = this.deliveredNotifications.filter(() => !this);
-          }, false);
-          this.deliveredNotifications.push(localNotification);
-          return localNotification;
-        }
-        onClick(notification) {
-          const data = {
-            actionId: "tap",
-            notification
-          };
-          this.notifyListeners("localNotificationActionPerformed", data);
-        }
-        onShow(notification) {
-          this.notifyListeners("localNotificationReceived", notification);
+  // node_modules/@capacitor-community/native-audio/dist/esm/audio-asset.js
+  var AudioAsset;
+  var init_audio_asset = __esm({
+    "node_modules/@capacitor-community/native-audio/dist/esm/audio-asset.js"() {
+      AudioAsset = class {
+        constructor(audio) {
+          this.audio = audio;
         }
       };
     }
   });
 
-  // node_modules/@capacitor/local-notifications/dist/esm/index.js
-  init_dist();
-
-  // node_modules/@capacitor/local-notifications/dist/esm/definitions.js
-  var Weekday;
-  (function(Weekday2) {
-    Weekday2[Weekday2["Sunday"] = 1] = "Sunday";
-    Weekday2[Weekday2["Monday"] = 2] = "Monday";
-    Weekday2[Weekday2["Tuesday"] = 3] = "Tuesday";
-    Weekday2[Weekday2["Wednesday"] = 4] = "Wednesday";
-    Weekday2[Weekday2["Thursday"] = 5] = "Thursday";
-    Weekday2[Weekday2["Friday"] = 6] = "Friday";
-    Weekday2[Weekday2["Saturday"] = 7] = "Saturday";
-  })(Weekday || (Weekday = {}));
-
-  // node_modules/@capacitor/local-notifications/dist/esm/index.js
-  var LocalNotifications = registerPlugin("LocalNotifications", {
-    web: () => Promise.resolve().then(() => (init_web(), web_exports)).then((m) => new m.LocalNotificationsWeb())
+  // node_modules/@capacitor-community/native-audio/dist/esm/web.js
+  var web_exports = {};
+  __export(web_exports, {
+    NativeAudioWeb: () => NativeAudioWeb
+  });
+  var NativeAudioWeb;
+  var init_web = __esm({
+    "node_modules/@capacitor-community/native-audio/dist/esm/web.js"() {
+      init_dist();
+      init_audio_asset();
+      NativeAudioWeb = class _NativeAudioWeb extends WebPlugin {
+        async resume(options) {
+          const audio = this.getAudioAsset(options.assetId).audio;
+          if (audio.paused) {
+            return audio.play();
+          }
+        }
+        async pause(options) {
+          const audio = this.getAudioAsset(options.assetId).audio;
+          return audio.pause();
+        }
+        async getCurrentTime(options) {
+          const audio = this.getAudioAsset(options.assetId).audio;
+          return { currentTime: audio.currentTime };
+        }
+        async getDuration(options) {
+          const audio = this.getAudioAsset(options.assetId).audio;
+          if (Number.isNaN(audio.duration)) {
+            throw "no duration available";
+          }
+          if (!Number.isFinite(audio.duration)) {
+            throw "duration not available => media resource is streaming";
+          }
+          return { duration: audio.duration };
+        }
+        async configure(options) {
+          throw `configure is not supported for web: ${JSON.stringify(options)}`;
+        }
+        async preload(options) {
+          var _a;
+          if (_NativeAudioWeb.AUDIO_ASSET_BY_ASSET_ID.has(options.assetId)) {
+            throw "AssetId already exists. Unload first if like to change!";
+          }
+          if (!((_a = options.assetPath) === null || _a === void 0 ? void 0 : _a.length)) {
+            throw "no assetPath provided";
+          }
+          if (!options.isUrl && !new RegExp("^/?" + _NativeAudioWeb.FILE_LOCATION).test(options.assetPath)) {
+            const slashPrefix = options.assetPath.startsWith("/") ? "" : "/";
+            options.assetPath = `${_NativeAudioWeb.FILE_LOCATION}${slashPrefix}${options.assetPath}`;
+          }
+          const audio = new Audio(options.assetPath);
+          audio.autoplay = false;
+          audio.loop = false;
+          audio.preload = "auto";
+          if (options.volume) {
+            audio.volume = options.volume;
+          }
+          _NativeAudioWeb.AUDIO_ASSET_BY_ASSET_ID.set(options.assetId, new AudioAsset(audio));
+        }
+        async play(options) {
+          var _a;
+          const audio = this.getAudioAsset(options.assetId).audio;
+          await this.stop(options);
+          audio.loop = false;
+          audio.currentTime = (_a = options.time) !== null && _a !== void 0 ? _a : 0;
+          return audio.play();
+        }
+        async loop(options) {
+          const audio = this.getAudioAsset(options.assetId).audio;
+          await this.stop(options);
+          audio.loop = true;
+          return audio.play();
+        }
+        async stop(options) {
+          const audio = this.getAudioAsset(options.assetId).audio;
+          audio.pause();
+          audio.loop = false;
+          audio.currentTime = 0;
+        }
+        async unload(options) {
+          await this.stop(options);
+          _NativeAudioWeb.AUDIO_ASSET_BY_ASSET_ID.delete(options.assetId);
+        }
+        async setVolume(options) {
+          if (typeof (options === null || options === void 0 ? void 0 : options.volume) !== "number") {
+            throw "no volume provided";
+          }
+          const audio = this.getAudioAsset(options.assetId).audio;
+          audio.volume = options.volume;
+        }
+        async isPlaying(options) {
+          const audio = this.getAudioAsset(options.assetId).audio;
+          return { isPlaying: !audio.paused };
+        }
+        getAudioAsset(assetId) {
+          this.checkAssetId(assetId);
+          if (!_NativeAudioWeb.AUDIO_ASSET_BY_ASSET_ID.has(assetId)) {
+            throw `no asset for assetId "${assetId}" available. Call preload first!`;
+          }
+          return _NativeAudioWeb.AUDIO_ASSET_BY_ASSET_ID.get(assetId);
+        }
+        checkAssetId(assetId) {
+          if (typeof assetId !== "string") {
+            throw "assetId must be a string";
+          }
+          if (!(assetId === null || assetId === void 0 ? void 0 : assetId.length)) {
+            throw "no assetId provided";
+          }
+        }
+      };
+      NativeAudioWeb.FILE_LOCATION = "assets/sounds";
+      NativeAudioWeb.AUDIO_ASSET_BY_ASSET_ID = /* @__PURE__ */ new Map();
+    }
   });
 
-  // scripts/wakeLock.src.js
+  // scripts/timerService.src.js
   init_dist();
-  var logHistory = [];
-  var MAX_LOGS = 500;
-  function captureLog(level, ...args) {
-    const timestamp = (/* @__PURE__ */ new Date()).toISOString();
-    const message = args.map((a) => {
-      if (typeof a === "object") {
-        try {
-          return JSON.stringify(a, null, 2);
-        } catch (e) {
-          return String(a);
-        }
-      }
-      return String(a);
-    }).join(" ");
-    const entry = { timestamp, level, message };
-    logHistory.push(entry);
-    if (logHistory.length > MAX_LOGS) {
-      logHistory.shift();
-    }
-    const prefix = "\u{1F514} [NotificationDebug]";
-    if (level === "error") {
-      console.error(prefix, timestamp, ...args);
-    } else if (level === "warn") {
-      console.warn(prefix, timestamp, ...args);
-    } else {
-      console.log(prefix, timestamp, ...args);
-    }
-  }
-  function logInfo(...args) {
-    captureLog("info", ...args);
-  }
-  function logWarn(...args) {
-    captureLog("warn", ...args);
-  }
-  function logError(...args) {
-    captureLog("error", ...args);
-  }
-  function createLogViewer() {
-    const existing = document.getElementById("debug-log-viewer");
-    if (existing)
-      existing.remove();
-    const overlay = document.createElement("div");
-    overlay.id = "debug-log-viewer";
-    overlay.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: #000;
-    color: #0f0;
-    font-family: monospace;
-    font-size: 11px;
-    z-index: 999999;
-    display: flex;
-    flex-direction: column;
-  `;
-    const header = document.createElement("div");
-    header.style.cssText = `
-    padding: 10px;
-    background: #222;
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-  `;
-    const closeBtn = document.createElement("button");
-    closeBtn.textContent = "CLOSE";
-    closeBtn.style.cssText = "padding: 8px 16px; background: #c00; color: white; border: none; border-radius: 4px;";
-    closeBtn.onclick = () => overlay.remove();
-    const copyBtn = document.createElement("button");
-    copyBtn.textContent = "COPY ALL";
-    copyBtn.style.cssText = "padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px;";
-    copyBtn.onclick = () => {
-      const text = logHistory.map((l) => `[${l.timestamp}] [${l.level.toUpperCase()}] ${l.message}`).join("\n");
-      navigator.clipboard.writeText(text).then(() => {
-        copyBtn.textContent = "COPIED!";
-        setTimeout(() => copyBtn.textContent = "COPY ALL", 2e3);
-      }).catch(() => {
-        const ta = document.createElement("textarea");
-        ta.value = text;
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand("copy");
-        document.body.removeChild(ta);
-        copyBtn.textContent = "COPIED!";
-        setTimeout(() => copyBtn.textContent = "COPY ALL", 2e3);
-      });
-    };
-    const clearBtn = document.createElement("button");
-    clearBtn.textContent = "CLEAR";
-    clearBtn.style.cssText = "padding: 8px 16px; background: #666; color: white; border: none; border-radius: 4px;";
-    clearBtn.onclick = () => {
-      logHistory.length = 0;
-      refreshLogs();
-    };
-    const testBtn = document.createElement("button");
-    testBtn.textContent = "TEST 5s";
-    testBtn.style.cssText = "padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px;";
-    testBtn.onclick = async () => {
-      testBtn.textContent = "WAIT...";
-      await window.notificationManager.schedule(5, "Test Timer", "Fired after 5 seconds");
-      testBtn.textContent = "SENT!";
-      setTimeout(() => testBtn.textContent = "TEST 5s", 2e3);
-    };
-    const channelBtn = document.createElement("button");
-    channelBtn.textContent = "LIST CH";
-    channelBtn.style.cssText = "padding: 8px 16px; background: #17a2b8; color: white; border: none; border-radius: 4px;";
-    channelBtn.onclick = () => listNotificationChannels();
-    const permBtn = document.createElement("button");
-    permBtn.textContent = "PERMS";
-    permBtn.style.cssText = "padding: 8px 16px; background: #ffc107; color: black; border: none; border-radius: 4px;";
-    permBtn.onclick = () => checkAndLogPermissions();
-    header.appendChild(closeBtn);
-    header.appendChild(copyBtn);
-    header.appendChild(clearBtn);
-    header.appendChild(testBtn);
-    header.appendChild(channelBtn);
-    header.appendChild(permBtn);
-    const countDiv = document.createElement("div");
-    countDiv.style.cssText = "padding: 5px 10px; background: #333; color: #aaa;";
-    countDiv.id = "log-count";
-    const logContent = document.createElement("pre");
-    logContent.style.cssText = `
-    flex: 1;
-    overflow: auto;
-    padding: 10px;
-    margin: 0;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-  `;
-    logContent.id = "log-content";
-    function escapeHtml(str) {
-      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    }
-    function refreshLogs() {
-      const content = document.getElementById("log-content");
-      const count = document.getElementById("log-count");
-      if (content) {
-        content.innerHTML = logHistory.map((l) => {
-          const color = l.level === "error" ? "#f00" : l.level === "warn" ? "#ff0" : "#0f0";
-          return `<span style="color:${color}">[${l.timestamp.split("T")[1]}] [${l.level.toUpperCase()}]</span> ${escapeHtml(l.message)}`;
-        }).join("\n");
-        content.scrollTop = content.scrollHeight;
-      }
-      if (count) {
-        count.textContent = `${logHistory.length} entries | Tap COPY ALL to export`;
-      }
-    }
-    overlay.appendChild(countDiv);
-    overlay.appendChild(logContent);
-    overlay.appendChild(header);
-    document.body.appendChild(overlay);
-    refreshLogs();
-    const intervalId = setInterval(() => {
-      if (document.getElementById("debug-log-viewer")) {
-        refreshLogs();
-      } else {
-        clearInterval(intervalId);
-      }
-    }, 500);
-  }
-  logInfo("============================================================");
-  logInfo("NOTIFICATION SERVICE INITIALIZING");
-  logInfo("============================================================");
-  logInfo("Platform:", Capacitor.getPlatform());
-  logInfo("Is Native:", Capacitor.isNativePlatform());
-  logInfo("User Agent:", navigator.userAgent);
-  async function setupNotificationListeners() {
-    if (!Capacitor.isNativePlatform()) {
-      logInfo("Skipping native listeners - web platform");
-      return;
-    }
-    try {
-      logInfo("Setting up notification listeners...");
-      await LocalNotifications.addListener("localNotificationReceived", (notification) => {
-        logInfo(">>> EVENT: localNotificationReceived <<<");
-        logInfo("Notification data:", notification);
-      });
-      logInfo("\u2713 localNotificationReceived listener added");
-      await LocalNotifications.addListener("localNotificationActionPerformed", (action) => {
-        logInfo(">>> EVENT: localNotificationActionPerformed <<<");
-        logInfo("Action data:", action);
-      });
-      logInfo("\u2713 localNotificationActionPerformed listener added");
-    } catch (err) {
-      logError("Listener setup failed:", err.message, err.stack);
-    }
-  }
-  setupNotificationListeners();
-  async function checkAndLogPermissions() {
-    if (!Capacitor.isNativePlatform()) {
-      logInfo("Skipping permission check - web platform");
-      return;
-    }
-    try {
-      logInfo("Checking permissions...");
-      const status = await LocalNotifications.checkPermissions();
-      logInfo("Permission status:", status);
+
+  // node_modules/@capawesome-team/capacitor-android-foreground-service/dist/esm/index.js
+  init_dist();
+
+  // node_modules/@capawesome-team/capacitor-android-foreground-service/dist/esm/definitions.js
+  var Importance;
+  (function(Importance2) {
+    Importance2[Importance2["Min"] = 1] = "Min";
+    Importance2[Importance2["Low"] = 2] = "Low";
+    Importance2[Importance2["Default"] = 3] = "Default";
+    Importance2[Importance2["High"] = 4] = "High";
+    Importance2[Importance2["Max"] = 5] = "Max";
+  })(Importance || (Importance = {}));
+  var ServiceType;
+  (function(ServiceType2) {
+    ServiceType2[ServiceType2["Location"] = 8] = "Location";
+    ServiceType2[ServiceType2["Microphone"] = 128] = "Microphone";
+  })(ServiceType || (ServiceType = {}));
+
+  // node_modules/@capawesome-team/capacitor-android-foreground-service/dist/esm/index.js
+  var ForegroundService = registerPlugin("ForegroundService");
+
+  // node_modules/@capacitor-community/native-audio/dist/esm/index.js
+  init_dist();
+  var NativeAudio = registerPlugin("NativeAudio", {
+    web: () => Promise.resolve().then(() => (init_web(), web_exports)).then((m) => new m.NativeAudioWeb())
+  });
+
+  // scripts/timerService.src.js
+  var timerInterval = null;
+  var timerEndTime = null;
+  var onTickCallback = null;
+  var onCompleteCallback = null;
+  async function init() {
+    if (Capacitor.isNativePlatform()) {
       try {
-        const exact = await LocalNotifications.checkExactNotificationSetting();
-        logInfo("Exact alarm setting:", exact);
-      } catch (e) {
-        logWarn("checkExactNotificationSetting error:", e.message);
+        await ForegroundService.createNotificationChannel({
+          id: "workout-timer-silent",
+          name: "Workout Timer (Countdown)",
+          description: "Shows active countdown",
+          importance: 2,
+          visibility: 1
+        });
+        await ForegroundService.createNotificationChannel({
+          id: "workout-timer-alert",
+          name: "Workout Timer (Complete)",
+          description: "Alerts when rest is done",
+          importance: 5,
+          sound: "beep",
+          visibility: 1,
+          vibration: true
+        });
+        await NativeAudio.preload({
+          assetId: "timerBeep",
+          assetPath: "beep.wav",
+          audioChannelNum: 1,
+          isUrl: false
+        });
+        console.log("Timer channels and audio initialized");
+      } catch (err) {
+        console.error("Failed to init timer service:", err);
       }
-    } catch (err) {
-      logError("Permission check failed:", err.message);
     }
   }
-  checkAndLogPermissions();
-  async function listNotificationChannels() {
+  function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  }
+  async function startForegroundService(seconds, exerciseName) {
     if (!Capacitor.isNativePlatform())
       return;
     try {
-      logInfo("Listing notification channels...");
-      const result = await LocalNotifications.listChannels();
-      logInfo("Channels result:", result);
-      if (!result.channels || result.channels.length === 0) {
-        logWarn("*** NO CHANNELS FOUND - THIS MAY BE THE PROBLEM ***");
-      } else {
-        result.channels.forEach((ch, i) => {
-          logInfo(`Channel[${i}]: id="${ch.id}" name="${ch.name}" importance=${ch.importance} sound="${ch.sound}"`);
-        });
-      }
+      await ForegroundService.startForegroundService({
+        id: 1,
+        title: "Rest Timer",
+        body: `${formatTime(seconds)} - ${exerciseName}`,
+        smallIcon: "ic_stat_icon_config_sample",
+        buttons: [{ title: "Skip", id: 1 }],
+        notificationChannelId: "workout-timer-silent"
+      });
     } catch (err) {
-      logError("listChannels failed:", err.message);
+      console.error("Failed to start foreground service:", err);
     }
   }
-  listNotificationChannels();
-  var webTimer = null;
+  async function updateForegroundService(seconds, exerciseName) {
+    if (!Capacitor.isNativePlatform())
+      return;
+    try {
+      await ForegroundService.updateForegroundService({
+        id: 1,
+        title: "Rest Timer",
+        body: `${formatTime(seconds)} - ${exerciseName}`,
+        smallIcon: "ic_stat_icon_config_sample",
+        notificationChannelId: "workout-timer-silent"
+      });
+    } catch (err) {
+    }
+  }
+  async function triggerCompleteNotification() {
+    if (!Capacitor.isNativePlatform())
+      return;
+    try {
+      await ForegroundService.stopForegroundService();
+      await ForegroundService.startForegroundService({
+        id: 2,
+        title: "REST COMPLETE",
+        body: "Get back to work!",
+        smallIcon: "ic_stat_icon_config_sample",
+        notificationChannelId: "workout-timer-alert",
+        // Uses the sound channel
+        buttons: [{ title: "OK", id: 2 }]
+      });
+      setTimeout(() => {
+        ForegroundService.stopForegroundService();
+      }, 5e3);
+    } catch (err) {
+      console.error("Failed to trigger complete notification:", err);
+    }
+  }
+  async function playBeep() {
+    try {
+      await NativeAudio.play({ assetId: "timerBeep" });
+    } catch (e) {
+      console.log("NativeAudio play failed (app likely backgrounded), relying on Notification sound.");
+    }
+  }
+  async function setupButtonListener() {
+    if (!Capacitor.isNativePlatform())
+      return;
+    await ForegroundService.addListener("buttonClicked", (event) => {
+      if (event.buttonId === 1) {
+        window.timerService.stop();
+        if (onCompleteCallback)
+          onCompleteCallback(true);
+      }
+      if (event.buttonId === 2) {
+        ForegroundService.stopForegroundService();
+      }
+    });
+  }
+  window.timerService = {
+    init: async function() {
+      await init();
+      await setupButtonListener();
+    },
+    start: async function(options) {
+      const { seconds, exerciseName, onTick, onComplete } = options;
+      onTickCallback = onTick;
+      onCompleteCallback = onComplete;
+      this.stop();
+      timerEndTime = Date.now() + seconds * 1e3;
+      await startForegroundService(seconds, exerciseName);
+      timerInterval = setInterval(async () => {
+        const now = Date.now();
+        const remainingMs = Math.max(0, timerEndTime - now);
+        const remainingSeconds = Math.ceil(remainingMs / 1e3);
+        if (onTickCallback)
+          onTickCallback({ remainingMs, remainingSeconds });
+        if (remainingMs > 0 && remainingSeconds !== this._lastSecond) {
+          this._lastSecond = remainingSeconds;
+          await updateForegroundService(remainingSeconds, exerciseName);
+        }
+        if (remainingMs === 0) {
+          this.stop(false);
+          await playBeep();
+          await triggerCompleteNotification();
+          if (onCompleteCallback)
+            onCompleteCallback(false);
+        }
+      }, 100);
+    },
+    stop: async function(clearNotification = true) {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      timerEndTime = null;
+      this._lastSecond = null;
+      if (clearNotification) {
+        await ForegroundService.stopForegroundService();
+      }
+    },
+    isRunning: function() {
+      return timerInterval !== null;
+    },
+    _lastSecond: null
+  };
   window.wakeLockManager = {
     wakeLock: null,
     request: async function() {
-      logInfo("Wake Lock request");
       try {
         if ("wakeLock" in navigator) {
           this.wakeLock = await navigator.wakeLock.request("screen");
-          logInfo("\u2713 Wake Lock acquired");
-          this.wakeLock.addEventListener("release", () => logInfo("Wake Lock released"));
           return true;
         }
-        logWarn("Wake Lock not supported");
-        return false;
-      } catch (err) {
-        logError("Wake Lock failed:", err.message);
-        return false;
+      } catch (e) {
       }
+      return false;
     },
     release: async function() {
       if (this.wakeLock) {
         await this.wakeLock.release();
         this.wakeLock = null;
-        logInfo("Wake Lock released");
-      }
-    }
-  };
-  window.notificationManager = {
-    requestPermission: async function() {
-      logInfo("=== REQUEST PERMISSION ===");
-      if (Capacitor.isNativePlatform()) {
-        try {
-          const result = await LocalNotifications.requestPermissions();
-          logInfo("Permission result:", result);
-          return result.display === "granted";
-        } catch (err) {
-          logError("Permission request failed:", err.message);
-          return false;
-        }
-      }
-      return false;
-    },
-    schedule: async function(seconds, title, body = "") {
-      logInfo("============================================================");
-      logInfo("=== SCHEDULE NOTIFICATION ===");
-      logInfo("============================================================");
-      logInfo("seconds:", seconds);
-      logInfo("title:", title);
-      logInfo("body:", body);
-      logInfo("Platform:", Capacitor.getPlatform());
-      logInfo("isNative:", Capacitor.isNativePlatform());
-      await this.cancel();
-      if (Capacitor.isNativePlatform()) {
-        const fireDate = new Date(Date.now() + seconds * 1e3);
-        logInfo("Now:", (/* @__PURE__ */ new Date()).toISOString());
-        logInfo("Fire at:", fireDate.toISOString());
-        const config = {
-          notifications: [{
-            id: 1001,
-            title,
-            body,
-            schedule: { at: fireDate, allowWhileIdle: true },
-            sound: null,
-            smallIcon: "ic_stat_icon_config_sample",
-            actionTypeId: "",
-            extra: null
-          }]
-        };
-        logInfo("Config:", config);
-        try {
-          logInfo("Calling LocalNotifications.schedule()...");
-          const result = await LocalNotifications.schedule(config);
-          logInfo("Schedule returned:", result);
-          const pending = await LocalNotifications.getPending();
-          logInfo("Pending after schedule:", pending);
-          if (pending.notifications?.length > 0) {
-            logInfo("\u2713 SUCCESS - notification queued");
-          } else {
-            logError("\u2717 FAIL - notification NOT in queue");
-          }
-        } catch (err) {
-          logError("*** SCHEDULE FAILED ***");
-          logError("Error:", err.message);
-          logError("Name:", err.name);
-          logError("Stack:", err.stack);
-        }
-      } else {
-        logInfo("Web fallback - setTimeout");
-        webTimer = setTimeout(() => {
-          logInfo("Web timer fired");
-          if (Notification.permission === "granted") {
-            new Notification(title, { body });
-          }
-        }, seconds * 1e3);
-      }
-    },
-    cancel: async function() {
-      logInfo("=== CANCEL ===");
-      if (Capacitor.isNativePlatform()) {
-        try {
-          const pending = await LocalNotifications.getPending();
-          logInfo("Pending before cancel:", pending);
-          if (pending.notifications?.length > 0) {
-            await LocalNotifications.cancel({ notifications: pending.notifications });
-            logInfo("Cancelled", pending.notifications.length, "notification(s)");
-          }
-        } catch (err) {
-          logError("Cancel failed:", err.message);
-        }
-      } else if (webTimer) {
-        clearTimeout(webTimer);
-        webTimer = null;
       }
     }
   };
   document.addEventListener("visibilitychange", async () => {
-    logInfo("Visibility:", document.visibilityState);
     if (document.visibilityState === "visible" && !window.wakeLockManager.wakeLock) {
-      if (document.querySelector(".zz_btn_toggle_set_complete")) {
+      const hasActiveWorkout = document.querySelector(".zz_btn_toggle_set_complete");
+      if (hasActiveWorkout)
         await window.wakeLockManager.request();
-      }
     }
   });
-  window.showDebugLogs = createLogViewer;
-  setTimeout(() => {
-    const btn = document.createElement("button");
-    btn.textContent = "\u{1F514}";
-    btn.style.cssText = `
-    position: fixed;
-    bottom: 90px;
-    right: 15px;
-    z-index: 99999;
-    width: 50px;
-    height: 50px;
-    background: #c00;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    font-size: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
-  `;
-    btn.onclick = createLogViewer;
-    document.body.appendChild(btn);
-    logInfo("Debug button added");
-  }, 1500);
-  logInfo("============================================================");
-  logInfo("SERVICE READY - tap red \u{1F514} button to view logs");
-  logInfo("============================================================");
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => window.timerService.init());
+  } else {
+    window.timerService.init();
+  }
 })();
 /*! Bundled license information:
 
