@@ -6,6 +6,7 @@
   "scripts": {
     "build:utils": "esbuild scripts/wakeLock.src.js --bundle --outfile=public/js/utils/wakeLock.js --platform=browser",
     "build:timer": "esbuild scripts/timerService.src.js --bundle --outfile=public/js/utils/timerService.js --platform=browser",
+    "watch": "node scripts/watch.js",
     "start": "npm run build:utils && npm run build:timer && npm run generate-version && node server.js",
     "dev": "npm run build:utils && npm run build:timer && npm run generate-version && nodemon server.js",
     "generate-version": "node scripts/generate-version.js"
