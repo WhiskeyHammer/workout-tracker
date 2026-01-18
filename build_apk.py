@@ -128,6 +128,15 @@ def main():
     source_path = os.path.join(output_dir, default_apk)
     final_path = os.path.join(output_dir, custom_apk)
 
+    # 0. Force Compile (Ensure changes are picked up!)
+    print("\n⚡ Compiling latest source files...")
+    # Compile Timer Service
+    run_command("npm run build:timer")
+    # Compile Wake Lock Service
+    run_command("npm run build:utils")
+    # Generate Version Info
+    run_command("node scripts/generate-version.js")
+
     # 1. Sync
     print("\n📦 Syncing HTML/JS to Android...")
     run_command("npx cap sync android")
