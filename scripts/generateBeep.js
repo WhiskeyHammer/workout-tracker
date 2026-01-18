@@ -1,10 +1,4 @@
 #!/usr/bin/env node
-/**
- * Generates a simple beep WAV file for the timer notification
- * Usage: node scripts/generateBeep.js
- * Output: beep.wav in the project root
- */
-
 const fs = require('fs');
 const path = require('path');
 
@@ -20,7 +14,6 @@ const samples = new Int16Array(numSamples);
 
 for (let i = 0; i < numSamples; i++) {
   const t = i / sampleRate;
-  // Sine wave with fade out
   const fadeOut = 1 - (i / numSamples);
   const sample = Math.sin(2 * Math.PI * frequency * t) * volume * fadeOut;
   samples[i] = Math.floor(sample * 32767);
@@ -45,8 +38,8 @@ function createWav(samples, sampleRate) {
 
   // fmt chunk
   buffer.write('fmt ', offset); offset += 4;
-  buffer.writeUInt32LE(16, offset); offset += 4; // chunk size
-  buffer.writeUInt16LE(1, offset); offset += 2; // audio format (PCM)
+  buffer.writeUInt32LE(16, offset); offset += 4;
+  buffer.writeUInt16LE(1, offset); offset += 2;
   buffer.writeUInt16LE(numChannels, offset); offset += 2;
   buffer.writeUInt32LE(sampleRate, offset); offset += 4;
   buffer.writeUInt32LE(byteRate, offset); offset += 4;
@@ -67,14 +60,25 @@ function createWav(samples, sampleRate) {
 }
 
 const wavBuffer = createWav(samples, sampleRate);
-const outputPath = path.join(__dirname, '..', 'beep.wav');
 
-fs.writeFileSync(outputPath, wavBuffer);
-console.log(`Generated beep.wav (${duration}s, ${frequency}Hz) at: ${outputPath}`);
-console.log('');
-console.log('To use with the app, copy it to:');
-console.log('  android/app/src/assets/beep.wav');
-console.log('');
-console.log('Commands:');
-console.log('  mkdir -p android/app/src/assets');
-console.log('  cp beep.wav android/app/src/assets/beep.wav');
+// DEFINING TARGET PATHS
+const paths = [
+  // For NativeAudio (Foreground)
+  path.join(__dirname, '..', 'android/app/src/main/assets/beep.wav'),
+  // For Notification Sound (Background)
+  path.join(__dirname, '..', 'android/app/src/main/res/raw/beep.wav')
+];
+
+console.log('Generating beep files...');
+
+paths.forEach(targetPath => {
+  const dir = path.dirname(targetPath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    console.log(`Created directory: ${dir}`);
+  }
+  fs.writeFileSync(targetPath, wavBuffer);
+  console.log(`✓ Wrote: ${targetPath}`);
+});
+
+console.log('\nSuccess! Audio files present in both assets and raw folders.');

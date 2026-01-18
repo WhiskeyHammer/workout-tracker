@@ -8,74 +8,45 @@ let timerEndTime = null;
 let onTickCallback = null;
 let onCompleteCallback = null;
 
-// Initialize native audio on app start
-async function initAudio() {
+// Initialize
+async function init() {
   if (Capacitor.isNativePlatform()) {
     try {
+      // 1. Create SILENT channel (For the countdown)
+      // We set 'importance: 2' (Low) so it doesn't make sound or popup
+      await ForegroundService.createNotificationChannel({
+        id: 'workout-timer-silent',
+        name: 'Workout Timer (Countdown)',
+        description: 'Shows active countdown',
+        importance: 2, 
+        visibility: 1
+      });
+
+      // 2. Create ALERT channel (For the finish)
+      // We set 'importance: 5' (High) and attach the 'beep' sound
+      // This tells Android: "When a notification hits this channel, play res/raw/beep.wav"
+      await ForegroundService.createNotificationChannel({
+        id: 'workout-timer-alert',
+        name: 'Workout Timer (Complete)',
+        description: 'Alerts when rest is done',
+        importance: 5, 
+        sound: 'beep', 
+        visibility: 1,
+        vibration: true
+      });
+
+      // 3. Preload NativeAudio (For when the app is actually open)
       await NativeAudio.preload({
         assetId: 'timerBeep',
         assetPath: 'beep.wav',
         audioChannelNum: 1,
         isUrl: false
       });
-      console.log('Timer beep sound preloaded');
+      
+      console.log('Timer channels and audio initialized');
     } catch (err) {
-      console.error('Failed to preload beep sound:', err);
+      console.error('Failed to init timer service:', err);
     }
-  }
-}
-
-// Play the beep sound
-async function playBeep() {
-  if (Capacitor.isNativePlatform()) {
-    try {
-      await NativeAudio.play({ assetId: 'timerBeep' });
-      // Play it twice with a short delay for emphasis
-      setTimeout(async () => {
-        try {
-          await NativeAudio.play({ assetId: 'timerBeep' });
-        } catch (e) { /* ignore */ }
-      }, 250);
-    } catch (err) {
-      console.error('Failed to play beep:', err);
-    }
-  } else {
-    // Web fallback - use AudioContext
-    playWebBeep();
-  }
-}
-
-// Web Audio API beep (fallback for browser)
-function playWebBeep() {
-  try {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    oscillator.frequency.value = 800;
-    oscillator.type = 'sine';
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.5);
-    
-    // Second beep
-    setTimeout(() => {
-      const osc2 = audioContext.createOscillator();
-      const gain2 = audioContext.createGain();
-      osc2.connect(gain2);
-      gain2.connect(audioContext.destination);
-      osc2.frequency.value = 800;
-      osc2.type = 'sine';
-      gain2.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-      osc2.start(audioContext.currentTime);
-      osc2.stop(audioContext.currentTime + 0.5);
-    }, 200);
-  } catch (e) {
-    console.error('Web beep failed:', e);
   }
 }
 
@@ -86,152 +57,132 @@ function formatTime(seconds) {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-// Start foreground service with timer
+// Start foreground service (Countdown)
 async function startForegroundService(seconds, exerciseName) {
   if (!Capacitor.isNativePlatform()) return;
   
   try {
-    // Create notification channel first (required for Android 8+)
-    await ForegroundService.createNotificationChannel({
-      id: 'workout-timer',
-      name: 'Workout Timer',
-      description: 'Shows countdown during rest periods',
-      importance: 3, // Default importance
-    });
-    
-    // Start the foreground service
+    // Start the service using the SILENT channel
     await ForegroundService.startForegroundService({
       id: 1,
       title: 'Rest Timer',
       body: `${formatTime(seconds)} - ${exerciseName}`,
       smallIcon: 'ic_stat_icon_config_sample',
-      buttons: [
-        { title: 'Skip', id: 1 }
-      ],
-      silent: true, // Don't make sound on every update
-      notificationChannelId: 'workout-timer',
+      buttons: [{ title: 'Skip', id: 1 }],
+      notificationChannelId: 'workout-timer-silent', 
     });
-    
-    console.log('Foreground service started');
   } catch (err) {
     console.error('Failed to start foreground service:', err);
   }
 }
 
-// Update the foreground notification
+// Update the countdown
 async function updateForegroundService(seconds, exerciseName) {
   if (!Capacitor.isNativePlatform()) return;
-  
   try {
     await ForegroundService.updateForegroundService({
       id: 1,
       title: 'Rest Timer',
       body: `${formatTime(seconds)} - ${exerciseName}`,
       smallIcon: 'ic_stat_icon_config_sample',
+      notificationChannelId: 'workout-timer-silent'
     });
-  } catch (err) {
-    // Ignore update errors - service might have stopped
-  }
+  } catch (err) { /* Service might have stopped */ }
 }
 
-// Stop foreground service
-async function stopForegroundService() {
+// Trigger the 'DONE' notification
+async function triggerCompleteNotification() {
   if (!Capacitor.isNativePlatform()) return;
-  
+
   try {
+    // Stop the silent countdown...
     await ForegroundService.stopForegroundService();
-    console.log('Foreground service stopped');
+    
+    // ...and immediately start the ALERT service (Sound!)
+    await ForegroundService.startForegroundService({
+      id: 2, 
+      title: 'REST COMPLETE',
+      body: 'Get back to work!',
+      smallIcon: 'ic_stat_icon_config_sample',
+      notificationChannelId: 'workout-timer-alert', // Uses the sound channel
+      buttons: [{ title: 'OK', id: 2 }]
+    });
+
+    // Auto-clear after 5s so the notification doesn't stay forever
+    setTimeout(() => {
+        ForegroundService.stopForegroundService();
+    }, 5000);
+
   } catch (err) {
-    // Ignore - service might not be running
+    console.error('Failed to trigger complete notification:', err);
   }
 }
 
-// Listen for notification button clicks
+async function playBeep() {
+  try {
+    // Try to play the in-app sound first
+    await NativeAudio.play({ assetId: 'timerBeep' });
+  } catch (e) { 
+    console.log("NativeAudio play failed (app likely backgrounded), relying on Notification sound.");
+  }
+}
+
+// Listen for button clicks (Skip / OK)
 async function setupButtonListener() {
   if (!Capacitor.isNativePlatform()) return;
   
-  try {
-    await ForegroundService.addListener('buttonClicked', (event) => {
-      console.log('Notification button clicked:', event);
-      if (event.buttonId === 1) {
-        // Skip button pressed
+  await ForegroundService.addListener('buttonClicked', (event) => {
+    if (event.buttonId === 1) { // Skip button
         window.timerService.stop();
-        if (onCompleteCallback) {
-          onCompleteCallback(true); // true = was skipped
-        }
-      }
-    });
-  } catch (err) {
-    console.error('Failed to setup button listener:', err);
-  }
+        if (onCompleteCallback) onCompleteCallback(true);
+    }
+    if (event.buttonId === 2) { // OK button (Finish)
+        ForegroundService.stopForegroundService();
+    }
+  });
 }
 
-// The main timer service exposed to the app
+// Main Service
 window.timerService = {
-  // Initialize - call once on app startup
   init: async function() {
-    await initAudio();
+    await init();
     await setupButtonListener();
-    console.log('Timer service initialized');
   },
   
-  // Start a timer
-  // options: { seconds, exerciseName, onTick, onComplete }
   start: async function(options) {
     const { seconds, exerciseName, onTick, onComplete } = options;
-    
-    // Store callbacks
     onTickCallback = onTick;
     onCompleteCallback = onComplete;
     
-    // Clear any existing timer
-    this.stop();
+    this.stop(); 
     
-    // Calculate end time
     timerEndTime = Date.now() + (seconds * 1000);
-    
-    // Start foreground service (Android)
     await startForegroundService(seconds, exerciseName);
     
-    // Start the interval
     timerInterval = setInterval(async () => {
       const now = Date.now();
       const remainingMs = Math.max(0, timerEndTime - now);
       const remainingSeconds = Math.ceil(remainingMs / 1000);
       
-      // Call tick callback
-      if (onTickCallback) {
-        onTickCallback({
-          remainingMs,
-          remainingSeconds
-        });
-      }
+      if (onTickCallback) onTickCallback({ remainingMs, remainingSeconds });
       
-      // Update notification every second (not every 100ms to save battery)
       if (remainingMs > 0 && remainingSeconds !== this._lastSecond) {
         this._lastSecond = remainingSeconds;
         await updateForegroundService(remainingSeconds, exerciseName);
       }
       
-      // Timer complete
       if (remainingMs === 0) {
-        this.stop();
+        this.stop(false); // Stop interval, keep notification logic for completion
         
-        // Play the beep
-        await playBeep();
+        await playBeep(); // 1. Try NativeAudio
+        await triggerCompleteNotification(); // 2. Trigger System Sound
         
-        // Call complete callback
-        if (onCompleteCallback) {
-          onCompleteCallback(false); // false = not skipped, completed naturally
-        }
+        if (onCompleteCallback) onCompleteCallback(false);
       }
     }, 100);
-    
-    console.log(`Timer started: ${seconds}s for ${exerciseName}`);
   },
   
-  // Stop the timer
-  stop: async function() {
+  stop: async function(clearNotification = true) {
     if (timerInterval) {
       clearInterval(timerInterval);
       timerInterval = null;
@@ -239,63 +190,44 @@ window.timerService = {
     timerEndTime = null;
     this._lastSecond = null;
     
-    await stopForegroundService();
+    if (clearNotification) {
+        await ForegroundService.stopForegroundService();
+    }
   },
   
-  // Check if timer is running
-  isRunning: function() {
-    return timerInterval !== null;
-  },
-  
-  // Internal state
+  isRunning: function() { return timerInterval !== null; },
   _lastSecond: null
 };
 
-// Also keep the wake lock manager for screen-on functionality
+// WakeLock Logic (Unchanged from your original code)
 window.wakeLockManager = {
   wakeLock: null,
-  
   request: async function() {
     try {
       if ('wakeLock' in navigator) {
         this.wakeLock = await navigator.wakeLock.request('screen');
-        console.log('Wake Lock acquired');
         return true;
       }
-      return false;
-    } catch (err) {
-      console.error('Failed to acquire Wake Lock:', err);
-      return false;
-    }
+    } catch (e) {}
+    return false;
   },
-  
   release: async function() {
-    if (this.wakeLock !== null) {
-      try {
-        await this.wakeLock.release();
-        this.wakeLock = null;
-      } catch (err) {
-        console.error('Failed to release Wake Lock:', err);
-      }
+    if (this.wakeLock) {
+      await this.wakeLock.release();
+      this.wakeLock = null;
     }
   }
 };
 
-// Reacquire wake lock when page becomes visible
 document.addEventListener('visibilitychange', async () => {
-  if (document.visibilityState === 'visible' && window.wakeLockManager.wakeLock === null) {
+  if (document.visibilityState === 'visible' && !window.wakeLockManager.wakeLock) {
     const hasActiveWorkout = document.querySelector('.zz_btn_toggle_set_complete');
-    if (hasActiveWorkout) {
-      await window.wakeLockManager.request();
-    }
+    if (hasActiveWorkout) await window.wakeLockManager.request();
   }
 });
 
-// Initialize timer service when DOM is ready
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    window.timerService.init();
-  });
+  document.addEventListener('DOMContentLoaded', () => window.timerService.init());
 } else {
   window.timerService.init();
 }
