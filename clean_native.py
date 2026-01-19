@@ -91,10 +91,5 @@ def main():
     print("\n--- 🔄 Syncing Native Assets ---")
     run_command("npx cap sync", cwd=root_dir, env=env)
 
-    # 5. Open Android Studio (Optional)
-    print("\n--- 🚀 Opening Android Studio ---")
-    print("(Remember to click the Green 'Run' arrow inside Android Studio)")
-    run_command("npx cap open android", cwd=root_dir, env=env)
-
 if __name__ == "__main__":
     main()

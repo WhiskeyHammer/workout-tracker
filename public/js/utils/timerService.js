@@ -900,6 +900,10 @@
     if (Capacitor.isNativePlatform()) {
       try {
         await LocalNotifications.requestPermissions();
+        const permStatus = await LocalNotifications.checkPermissions();
+        if (permStatus.exact_alarm !== "granted") {
+          console.warn("Exact Alarm permission not granted! Timer may be delayed.");
+        }
         await LocalNotifications.createChannel({
           id: ALERT_CHANNEL_ID,
           name: "Workout Timer (Complete)",
@@ -945,7 +949,11 @@
           body: `Time to set: ${exerciseName}`,
           channelId: ALERT_CHANNEL_ID,
           sound: ALERT_SOUND,
-          schedule: { at: endTime },
+          schedule: {
+            at: endTime,
+            allowWhileIdle: true
+            // <--- THIS IS THE CRITICAL FIX
+          },
           smallIcon: "ic_stat_icon_config_sample",
           actionTypeId: "OPEN_APP"
         }]

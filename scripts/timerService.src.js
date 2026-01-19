@@ -19,6 +19,12 @@ async function init() {
     try {
       await LocalNotifications.requestPermissions();
       
+      const permStatus = await LocalNotifications.checkPermissions();
+      if (permStatus.exact_alarm !== 'granted') {
+         // Try to request specifically if possible, or just log warn
+         console.warn('Exact Alarm permission not granted! Timer may be delayed.');
+      }
+
       await LocalNotifications.createChannel({
         id: ALERT_CHANNEL_ID,
         name: 'Workout Timer (Complete)',
@@ -63,7 +69,6 @@ async function startNativeTimer(seconds, exerciseName) {
   const endTime = new Date(Date.now() + seconds * 1000);
 
   try {
-    // Schedule the system notification (handles locked state)
     await LocalNotifications.schedule({
       notifications: [{
         id: ALERT_ID,
@@ -71,13 +76,15 @@ async function startNativeTimer(seconds, exerciseName) {
         body: `Time to set: ${exerciseName}`,
         channelId: ALERT_CHANNEL_ID,
         sound: ALERT_SOUND,
-        schedule: { at: endTime },
+        schedule: { 
+            at: endTime,
+            allowWhileIdle: true // <--- THIS IS THE CRITICAL FIX
+        },
         smallIcon: 'ic_stat_icon_config_sample',
         actionTypeId: 'OPEN_APP'
       }]
     });
 
-    // Start foreground service (handles countdown visual)
     await ForegroundService.startForegroundService({
       id: 1,
       title: 'Rest Timer',
@@ -171,17 +178,13 @@ window.timerService = {
             timerInterval = null;
         }
         
-        // --- SMART ALERT LOGIC ---
-        // If the timer finished more than 3 seconds ago, 
-        // the notification already fired while you were asleep.
+        // Smart Check: Did the notification already fire while we were asleep?
         const timeSinceFinish = Date.now() - timerEndTime;
         const isLate = timeSinceFinish > 3000;
         
         if (!isLate) {
-            // App was open, play sound here
             await playBeep(); 
         } else {
-            // App was closed/locked, Notification handled it. Stay silent.
             console.log('Timer finished in background - skipping in-app beep');
         }
         
