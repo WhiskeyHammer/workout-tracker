@@ -894,7 +894,7 @@
   var onTickCallback = null;
   var onCompleteCallback = null;
   var ALERT_ID = 99999;
-  var ALERT_CHANNEL_ID = "workout-timer-alert-v2";
+  var ALERT_CHANNEL_ID = "workout-timer-alert-v3";
   var ALERT_SOUND = "beep";
   async function init() {
     if (Capacitor.isNativePlatform()) {
@@ -905,10 +905,8 @@
           name: "Workout Timer (Complete)",
           description: "Alerts when rest is done",
           importance: 5,
-          // High
           visibility: 1,
           sound: ALERT_SOUND,
-          // 'beep' (looks for res/raw/beep.wav)
           vibration: true
         });
         await ForegroundService.createNotificationChannel({
@@ -916,7 +914,6 @@
           name: "Workout Timer (Countdown)",
           description: "Shows active countdown",
           importance: 2,
-          // Low (no sound, no popup)
           visibility: 1
         });
         await NativeAudio.preload({
@@ -925,7 +922,7 @@
           audioChannelNum: 1,
           isUrl: false
         });
-        console.log("Timer channels and audio initialized");
+        console.log("Timer channels initialized (V3)");
       } catch (err) {
         console.error("Failed to init timer service:", err);
       }
@@ -947,9 +944,7 @@
           title: "REST COMPLETE",
           body: `Time to set: ${exerciseName}`,
           channelId: ALERT_CHANNEL_ID,
-          // Use the new V2 channel
           sound: ALERT_SOUND,
-          // 'beep'
           schedule: { at: endTime },
           smallIcon: "ic_stat_icon_config_sample",
           actionTypeId: "OPEN_APP"
@@ -974,7 +969,6 @@
       await LocalNotifications.cancel({ notifications: [{ id: ALERT_ID }] });
       await ForegroundService.stopForegroundService();
     } catch (err) {
-      console.error("Error stopping timer:", err);
     }
   }
   async function updateForegroundService(seconds, exerciseName) {
