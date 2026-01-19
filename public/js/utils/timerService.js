@@ -894,7 +894,7 @@
   var onTickCallback = null;
   var onCompleteCallback = null;
   var ALERT_ID = 99999;
-  var ALERT_CHANNEL_ID = "workout-timer-alert-v5";
+  var ALERT_CHANNEL_ID = "workout-timer-alert-v6";
   var ALERT_SOUND = "beep";
   async function init() {
     if (Capacitor.isNativePlatform()) {
@@ -905,10 +905,9 @@
           name: "Workout Timer (Complete)",
           description: "Alerts when rest is done",
           importance: 5,
-          // High
           visibility: 1,
-          // Public on lockscreen
           sound: ALERT_SOUND,
+          // Needs res/raw/beep.wav
           vibration: true
         });
         await ForegroundService.createNotificationChannel({
@@ -950,7 +949,6 @@
           schedule: {
             at: endTime,
             allowWhileIdle: true
-            // Critical for locking
           },
           smallIcon: "ic_stat_icon_config_sample",
           actionTypeId: "OPEN_APP"
@@ -1007,10 +1005,6 @@
           onCompleteCallback(true);
       }
     });
-    await LocalNotifications.addListener("localNotificationActionPerformed", (payload) => {
-      if (payload.notification.id === ALERT_ID) {
-      }
-    });
   }
   window.timerService = {
     init: async function() {
@@ -1041,13 +1035,14 @@
           }
           const timeSinceTarget = Date.now() - timerEndTime;
           const isLate = timeSinceTarget > 1500;
+          await LocalNotifications.cancel({ notifications: [{ id: ALERT_ID }] });
+          await ForegroundService.stopForegroundService();
           if (!isLate) {
             console.log("App is active: Playing In-App Beep");
             await playBeep();
           } else {
-            console.log(`App resumed late (${timeSinceTarget}ms). Skipping In-App Beep (Notification handled it).`);
+            console.log(`App resumed late (${timeSinceTarget}ms). Silencing App (Notification handled it).`);
           }
-          await ForegroundService.stopForegroundService();
           if (onCompleteCallback)
             onCompleteCallback(false);
         }
@@ -1069,6 +1064,19 @@
     },
     _lastSecond: null
   };
+  document.addEventListener("visibilitychange", async () => {
+    if (document.visibilityState === "visible") {
+      try {
+        await LocalNotifications.cancel({ notifications: [{ id: ALERT_ID }] });
+      } catch (e) {
+      }
+      if (!window.wakeLockManager.wakeLock) {
+        const hasActiveWorkout = document.querySelector(".zz_btn_toggle_set_complete");
+        if (hasActiveWorkout)
+          await window.wakeLockManager.request();
+      }
+    }
+  });
   window.wakeLockManager = {
     wakeLock: null,
     request: async function() {
@@ -1088,13 +1096,6 @@
       }
     }
   };
-  document.addEventListener("visibilitychange", async () => {
-    if (document.visibilityState === "visible" && !window.wakeLockManager.wakeLock) {
-      const hasActiveWorkout = document.querySelector(".zz_btn_toggle_set_complete");
-      if (hasActiveWorkout)
-        await window.wakeLockManager.request();
-    }
-  });
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => window.timerService.init());
   } else {
