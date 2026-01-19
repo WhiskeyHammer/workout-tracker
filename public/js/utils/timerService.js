@@ -893,17 +893,14 @@
   var timerEndTime = null;
   var onTickCallback = null;
   var onCompleteCallback = null;
+  var isNotificationPending = false;
   var ALERT_ID = 99999;
-  var ALERT_CHANNEL_ID = "workout-timer-alert-v3";
+  var ALERT_CHANNEL_ID = "workout-timer-alert-v4";
   var ALERT_SOUND = "beep";
   async function init() {
     if (Capacitor.isNativePlatform()) {
       try {
         await LocalNotifications.requestPermissions();
-        const permStatus = await LocalNotifications.checkPermissions();
-        if (permStatus.exact_alarm !== "granted") {
-          console.warn("Exact Alarm permission not granted! Timer may be delayed.");
-        }
         await LocalNotifications.createChannel({
           id: ALERT_CHANNEL_ID,
           name: "Workout Timer (Complete)",
@@ -911,6 +908,7 @@
           importance: 5,
           visibility: 1,
           sound: ALERT_SOUND,
+          // 'beep' -> res/raw/beep.wav
           vibration: true
         });
         await ForegroundService.createNotificationChannel({
@@ -941,6 +939,7 @@
     if (!Capacitor.isNativePlatform())
       return;
     const endTime = new Date(Date.now() + seconds * 1e3);
+    isNotificationPending = true;
     try {
       await LocalNotifications.schedule({
         notifications: [{
@@ -952,7 +951,6 @@
           schedule: {
             at: endTime,
             allowWhileIdle: true
-            // <--- THIS IS THE CRITICAL FIX
           },
           smallIcon: "ic_stat_icon_config_sample",
           actionTypeId: "OPEN_APP"
@@ -975,6 +973,7 @@
       return;
     try {
       await LocalNotifications.cancel({ notifications: [{ id: ALERT_ID }] });
+      isNotificationPending = false;
       await ForegroundService.stopForegroundService();
     } catch (err) {
     }
@@ -1036,18 +1035,19 @@
           this._lastSecond = remainingSeconds;
           await updateForegroundService(remainingSeconds, exerciseName);
         }
+        if (remainingMs < 1500 && isNotificationPending) {
+          try {
+            LocalNotifications.cancel({ notifications: [{ id: ALERT_ID }] });
+            isNotificationPending = false;
+          } catch (e) {
+          }
+        }
         if (remainingMs === 0) {
           if (timerInterval) {
             clearInterval(timerInterval);
             timerInterval = null;
           }
-          const timeSinceFinish = Date.now() - timerEndTime;
-          const isLate = timeSinceFinish > 3e3;
-          if (!isLate) {
-            await playBeep();
-          } else {
-            console.log("Timer finished in background - skipping in-app beep");
-          }
+          await playBeep();
           await ForegroundService.stopForegroundService();
           if (onCompleteCallback)
             onCompleteCallback(false);

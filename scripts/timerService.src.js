@@ -8,10 +8,11 @@ let timerInterval = null;
 let timerEndTime = null;
 let onTickCallback = null;
 let onCompleteCallback = null;
+let isNotificationPending = false;
 
 // CONSTANTS
 const ALERT_ID = 99999; 
-const ALERT_CHANNEL_ID = 'workout-timer-alert-v3'; 
+const ALERT_CHANNEL_ID = 'workout-timer-alert-v4'; // V4 to force sound reset
 const ALERT_SOUND = 'beep'; 
 
 async function init() {
@@ -19,19 +20,14 @@ async function init() {
     try {
       await LocalNotifications.requestPermissions();
       
-      const permStatus = await LocalNotifications.checkPermissions();
-      if (permStatus.exact_alarm !== 'granted') {
-         // Try to request specifically if possible, or just log warn
-         console.warn('Exact Alarm permission not granted! Timer may be delayed.');
-      }
-
+      // Create Channel V4
       await LocalNotifications.createChannel({
         id: ALERT_CHANNEL_ID,
         name: 'Workout Timer (Complete)',
         description: 'Alerts when rest is done',
         importance: 5,
         visibility: 1,
-        sound: ALERT_SOUND,
+        sound: ALERT_SOUND, // 'beep' -> res/raw/beep.wav
         vibration: true
       });
 
@@ -67,8 +63,10 @@ async function startNativeTimer(seconds, exerciseName) {
   if (!Capacitor.isNativePlatform()) return;
 
   const endTime = new Date(Date.now() + seconds * 1000);
+  isNotificationPending = true;
 
   try {
+    // Schedule System Notification (For background/locked state)
     await LocalNotifications.schedule({
       notifications: [{
         id: ALERT_ID,
@@ -78,13 +76,14 @@ async function startNativeTimer(seconds, exerciseName) {
         sound: ALERT_SOUND,
         schedule: { 
             at: endTime,
-            allowWhileIdle: true // <--- THIS IS THE CRITICAL FIX
+            allowWhileIdle: true 
         },
         smallIcon: 'ic_stat_icon_config_sample',
         actionTypeId: 'OPEN_APP'
       }]
     });
 
+    // Start Foreground Service (Visual Countdown)
     await ForegroundService.startForegroundService({
       id: 1,
       title: 'Rest Timer',
@@ -103,6 +102,7 @@ async function stopNativeTimer() {
   if (!Capacitor.isNativePlatform()) return;
   try {
     await LocalNotifications.cancel({ notifications: [{ id: ALERT_ID }] });
+    isNotificationPending = false;
     await ForegroundService.stopForegroundService();
   } catch (err) {}
 }
@@ -138,7 +138,7 @@ async function setupButtonListener() {
 
   await LocalNotifications.addListener('localNotificationActionPerformed', (payload) => {
     if (payload.notification.id === ALERT_ID) {
-       // App opened
+       // App opened via notification
     }
   });
 }
@@ -171,22 +171,27 @@ window.timerService = {
         this._lastSecond = remainingSeconds;
         await updateForegroundService(remainingSeconds, exerciseName);
       }
+
+      // --- NEW LOGIC: PRE-EMPTIVE CANCEL ---
+      // If we are less than 1.5 seconds from finish AND the app is active (setInterval is running),
+      // we cancel the System Notification so it doesn't double-fire.
+      if (remainingMs < 1500 && isNotificationPending) {
+         try {
+             LocalNotifications.cancel({ notifications: [{ id: ALERT_ID }] });
+             isNotificationPending = false;
+         } catch(e) {}
+      }
       
+      // Timer Complete
       if (remainingMs === 0) {
         if (timerInterval) {
             clearInterval(timerInterval);
             timerInterval = null;
         }
         
-        // Smart Check: Did the notification already fire while we were asleep?
-        const timeSinceFinish = Date.now() - timerEndTime;
-        const isLate = timeSinceFinish > 3000;
-        
-        if (!isLate) {
-            await playBeep(); 
-        } else {
-            console.log('Timer finished in background - skipping in-app beep');
-        }
+        // App is Open -> Play App Sound
+        // (If app was closed, this code wouldn't run, and the System Notification would have fired)
+        await playBeep(); 
         
         await ForegroundService.stopForegroundService();
 
