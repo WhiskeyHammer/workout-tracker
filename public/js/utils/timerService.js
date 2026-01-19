@@ -922,7 +922,7 @@
           audioChannelNum: 1,
           isUrl: false
         });
-        console.log("Timer channels initialized (V3)");
+        console.log("Timer channels initialized");
       } catch (err) {
         console.error("Failed to init timer service:", err);
       }
@@ -1033,7 +1033,13 @@
             clearInterval(timerInterval);
             timerInterval = null;
           }
-          await playBeep();
+          const timeSinceFinish = Date.now() - timerEndTime;
+          const isLate = timeSinceFinish > 3e3;
+          if (!isLate) {
+            await playBeep();
+          } else {
+            console.log("Timer finished in background - skipping in-app beep");
+          }
           await ForegroundService.stopForegroundService();
           if (onCompleteCallback)
             onCompleteCallback(false);

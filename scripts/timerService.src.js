@@ -9,17 +9,16 @@ let timerEndTime = null;
 let onTickCallback = null;
 let onCompleteCallback = null;
 
-// CONSTANTS - UPDATED TO V3
+// CONSTANTS
 const ALERT_ID = 99999; 
-const ALERT_CHANNEL_ID = 'workout-timer-alert-v3'; // CHANGED to V3
-const ALERT_SOUND = 'beep'; // References res/raw/beep.wav
+const ALERT_CHANNEL_ID = 'workout-timer-alert-v3'; 
+const ALERT_SOUND = 'beep'; 
 
 async function init() {
   if (Capacitor.isNativePlatform()) {
     try {
       await LocalNotifications.requestPermissions();
       
-      // Create the V3 channel
       await LocalNotifications.createChannel({
         id: ALERT_CHANNEL_ID,
         name: 'Workout Timer (Complete)',
@@ -30,7 +29,6 @@ async function init() {
         vibration: true
       });
 
-      // Create silent channel
       await ForegroundService.createNotificationChannel({
         id: 'workout-timer-silent',
         name: 'Workout Timer (Countdown)',
@@ -39,7 +37,6 @@ async function init() {
         visibility: 1
       });
 
-      // Preload NativeAudio (Keep extension here)
       await NativeAudio.preload({
         assetId: 'timerBeep',
         assetPath: 'beep.wav',
@@ -47,7 +44,7 @@ async function init() {
         isUrl: false
       });
       
-      console.log('Timer channels initialized (V3)');
+      console.log('Timer channels initialized');
     } catch (err) {
       console.error('Failed to init timer service:', err);
     }
@@ -66,7 +63,7 @@ async function startNativeTimer(seconds, exerciseName) {
   const endTime = new Date(Date.now() + seconds * 1000);
 
   try {
-    // Schedule V3 notification
+    // Schedule the system notification (handles locked state)
     await LocalNotifications.schedule({
       notifications: [{
         id: ALERT_ID,
@@ -80,7 +77,7 @@ async function startNativeTimer(seconds, exerciseName) {
       }]
     });
 
-    // Start silent countdown
+    // Start foreground service (handles countdown visual)
     await ForegroundService.startForegroundService({
       id: 1,
       title: 'Rest Timer',
@@ -174,7 +171,20 @@ window.timerService = {
             timerInterval = null;
         }
         
-        await playBeep(); 
+        // --- SMART ALERT LOGIC ---
+        // If the timer finished more than 3 seconds ago, 
+        // the notification already fired while you were asleep.
+        const timeSinceFinish = Date.now() - timerEndTime;
+        const isLate = timeSinceFinish > 3000;
+        
+        if (!isLate) {
+            // App was open, play sound here
+            await playBeep(); 
+        } else {
+            // App was closed/locked, Notification handled it. Stay silent.
+            console.log('Timer finished in background - skipping in-app beep');
+        }
+        
         await ForegroundService.stopForegroundService();
 
         if (onCompleteCallback) onCompleteCallback(false);

@@ -1,25 +1,34 @@
 #!/usr/bin/env node
+/**
+ * Generates a SINGLE Loud Beep WAV file at MAX volume
+ */
+
 const fs = require('fs');
 const path = require('path');
 
-// WAV file parameters
+// WAV parameters
 const sampleRate = 44100;
-const duration = 0.3; // seconds
-const frequency = 800; // Hz
-const volume = 0.5;
+const frequency = 880; // A5 (High pitch cuts through noise)
+const volume = 1.0;    // MAX VOLUME
+const duration = 0.6;  // 600ms single beep
 
-// Generate samples
 const numSamples = Math.floor(sampleRate * duration);
 const samples = new Int16Array(numSamples);
 
+// Write tone
 for (let i = 0; i < numSamples; i++) {
   const t = i / sampleRate;
-  const fadeOut = 1 - (i / numSamples);
-  const sample = Math.sin(2 * Math.PI * frequency * t) * volume * fadeOut;
-  samples[i] = Math.floor(sample * 32767);
+  const sample = Math.sin(2 * Math.PI * frequency * t) * volume;
+  
+  // Envelope to prevent clicking
+  let envelope = 1;
+  if (i < 500) envelope = i / 500;
+  if (i > numSamples - 500) envelope = (numSamples - i) / 500;
+  
+  samples[i] = Math.floor(sample * 32767 * envelope);
 }
 
-// Create WAV file
+// Create WAV Header
 function createWav(samples, sampleRate) {
   const numChannels = 1;
   const bitsPerSample = 16;
@@ -31,12 +40,9 @@ function createWav(samples, sampleRate) {
   const buffer = Buffer.alloc(44 + dataSize);
   let offset = 0;
 
-  // RIFF header
   buffer.write('RIFF', offset); offset += 4;
   buffer.writeUInt32LE(fileSize, offset); offset += 4;
   buffer.write('WAVE', offset); offset += 4;
-
-  // fmt chunk
   buffer.write('fmt ', offset); offset += 4;
   buffer.writeUInt32LE(16, offset); offset += 4;
   buffer.writeUInt16LE(1, offset); offset += 2;
@@ -45,12 +51,9 @@ function createWav(samples, sampleRate) {
   buffer.writeUInt32LE(byteRate, offset); offset += 4;
   buffer.writeUInt16LE(blockAlign, offset); offset += 2;
   buffer.writeUInt16LE(bitsPerSample, offset); offset += 2;
-
-  // data chunk
   buffer.write('data', offset); offset += 4;
   buffer.writeUInt32LE(dataSize, offset); offset += 4;
 
-  // Write samples
   for (let i = 0; i < samples.length; i++) {
     buffer.writeInt16LE(samples[i], offset);
     offset += 2;
@@ -61,24 +64,18 @@ function createWav(samples, sampleRate) {
 
 const wavBuffer = createWav(samples, sampleRate);
 
-// DEFINING TARGET PATHS
 const paths = [
-  // For NativeAudio (Foreground)
-  path.join(__dirname, '..', 'android/app/src/main/assets/beep.wav'),
-  // For Notification Sound (Background)
-  path.join(__dirname, '..', 'android/app/src/main/res/raw/beep.wav')
+    path.join(__dirname, '..', 'beep.wav'),
+    path.join(__dirname, '..', 'android', 'app', 'src', 'main', 'res', 'raw', 'beep.wav'),
 ];
 
-console.log('Generating beep files...');
-
-paths.forEach(targetPath => {
-  const dir = path.dirname(targetPath);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-    console.log(`Created directory: ${dir}`);
-  }
-  fs.writeFileSync(targetPath, wavBuffer);
-  console.log(`✓ Wrote: ${targetPath}`);
+paths.forEach(p => {
+    try {
+        const dir = path.dirname(p);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(p, wavBuffer);
+        console.log(`✓ Wrote loud beep to: ${p}`);
+    } catch (e) {
+        console.error(`X Failed to write to ${p}`);
+    }
 });
-
-console.log('\nSuccess! Audio files present in both assets and raw folders.');
