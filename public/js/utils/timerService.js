@@ -894,7 +894,7 @@
   var onTickCallback = null;
   var onCompleteCallback = null;
   var ALERT_ID = 99999;
-  var ALERT_CHANNEL_ID = "workout-timer-alert-v6";
+  var ALERT_CHANNEL_ID = "workout-timer-alert-v7";
   var ALERT_SOUND = "beep";
   async function init() {
     if (Capacitor.isNativePlatform()) {
@@ -907,7 +907,6 @@
           importance: 5,
           visibility: 1,
           sound: ALERT_SOUND,
-          // Needs res/raw/beep.wav
           vibration: true
         });
         await ForegroundService.createNotificationChannel({
@@ -1038,10 +1037,9 @@
           await LocalNotifications.cancel({ notifications: [{ id: ALERT_ID }] });
           await ForegroundService.stopForegroundService();
           if (!isLate) {
-            console.log("App is active: Playing In-App Beep");
             await playBeep();
           } else {
-            console.log(`App resumed late (${timeSinceTarget}ms). Silencing App (Notification handled it).`);
+            console.log("App resumed late. Silencing App (Notification handled it).");
           }
           if (onCompleteCallback)
             onCompleteCallback(false);
@@ -1068,12 +1066,12 @@
     if (document.visibilityState === "visible") {
       try {
         await LocalNotifications.cancel({ notifications: [{ id: ALERT_ID }] });
+        if (!window.wakeLockManager.wakeLock) {
+          const hasActiveWorkout = document.querySelector(".zz_btn_toggle_set_complete");
+          if (hasActiveWorkout)
+            await window.wakeLockManager.request();
+        }
       } catch (e) {
-      }
-      if (!window.wakeLockManager.wakeLock) {
-        const hasActiveWorkout = document.querySelector(".zz_btn_toggle_set_complete");
-        if (hasActiveWorkout)
-          await window.wakeLockManager.request();
       }
     }
   });

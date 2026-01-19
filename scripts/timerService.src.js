@@ -9,9 +9,9 @@ let timerEndTime = null;
 let onTickCallback = null;
 let onCompleteCallback = null;
 
-// CONSTANTS - V6 for clean slate
+// CONSTANTS - V7 (New Channel to force sound update)
 const ALERT_ID = 99999; 
-const ALERT_CHANNEL_ID = 'workout-timer-alert-v6'; 
+const ALERT_CHANNEL_ID = 'workout-timer-alert-v7'; 
 const ALERT_SOUND = 'beep'; 
 
 async function init() {
@@ -19,18 +19,18 @@ async function init() {
     try {
       await LocalNotifications.requestPermissions();
       
-      // Create the Channel
+      // 1. Create Channel V7
       await LocalNotifications.createChannel({
         id: ALERT_CHANNEL_ID,
         name: 'Workout Timer (Complete)',
         description: 'Alerts when rest is done',
         importance: 5, 
-        visibility: 1, 
-        sound: ALERT_SOUND, // Needs res/raw/beep.wav
+        visibility: 1,
+        sound: ALERT_SOUND,
         vibration: true
       });
 
-      // Create Silent Channel
+      // 2. Create Silent Channel
       await ForegroundService.createNotificationChannel({
         id: 'workout-timer-silent',
         name: 'Workout Timer (Countdown)',
@@ -39,7 +39,7 @@ async function init() {
         visibility: 1
       });
 
-      // Preload NativeAudio
+      // 3. Preload NativeAudio
       await NativeAudio.preload({
         assetId: 'timerBeep',
         assetPath: 'beep.wav',
@@ -66,7 +66,7 @@ async function startNativeTimer(seconds, exerciseName) {
   const endTime = new Date(Date.now() + seconds * 1000);
 
   try {
-    // Schedule Notification with allowWhileIdle (Crucial for Lock Screen)
+    // Schedule Notification
     await LocalNotifications.schedule({
       notifications: [{
         id: ALERT_ID,
@@ -175,15 +175,14 @@ window.timerService = {
         const timeSinceTarget = Date.now() - timerEndTime;
         const isLate = timeSinceTarget > 1500;
         
-        // Kill the notification immediately to prevent "Double Sound" on unlock
+        // Kill the notification immediately so it doesn't ring when we unlock
         await LocalNotifications.cancel({ notifications: [{ id: ALERT_ID }] });
         await ForegroundService.stopForegroundService();
         
         if (!isLate) {
-            console.log('App is active: Playing In-App Beep');
             await playBeep(); 
         } else {
-            console.log(`App resumed late (${timeSinceTarget}ms). Silencing App (Notification handled it).`);
+            console.log('App resumed late. Silencing App (Notification handled it).');
         }
 
         if (onCompleteCallback) onCompleteCallback(false);
@@ -208,20 +207,20 @@ window.timerService = {
   _lastSecond: null
 };
 
-// --- KILL SWITCH ---
-// When user unlocks phone, immediately kill the notification
-// to stop Android from re-playing the sound.
+// --- AGGRESSIVE KILL SWITCH ---
+// The moment the app becomes visible, kill any ringing notification
 document.addEventListener('visibilitychange', async () => {
   if (document.visibilityState === 'visible') {
       try {
+          // Immediately kill the alert notification
           await LocalNotifications.cancel({ notifications: [{ id: ALERT_ID }] });
+          
+          // Re-acquire wake lock if needed
+          if (!window.wakeLockManager.wakeLock) {
+            const hasActiveWorkout = document.querySelector('.zz_btn_toggle_set_complete');
+            if (hasActiveWorkout) await window.wakeLockManager.request();
+          }
       } catch(e) {}
-      
-      // Re-acquire wake lock if needed
-      if (!window.wakeLockManager.wakeLock) {
-        const hasActiveWorkout = document.querySelector('.zz_btn_toggle_set_complete');
-        if (hasActiveWorkout) await window.wakeLockManager.request();
-      }
   }
 });
 
