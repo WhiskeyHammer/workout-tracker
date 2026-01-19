@@ -11,7 +11,7 @@ let onCompleteCallback = null;
 
 // CONSTANTS - V7 (New Channel to force sound update)
 const ALERT_ID = 99999; 
-const ALERT_CHANNEL_ID = 'workout-timer-alert-v8'; 
+const ALERT_CHANNEL_ID = 'workout-timer-alert-v11'; 
 const ALERT_SOUND = 'beep'; 
 
 async function init() {
