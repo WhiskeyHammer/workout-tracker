@@ -894,7 +894,7 @@
   var onTickCallback = null;
   var onCompleteCallback = null;
   var ALERT_ID = 99999;
-  var ALERT_CHANNEL_ID = "workout-timer-alert-v11";
+  var ALERT_CHANNEL_ID = "workout-timer-alert-v13";
   var ALERT_SOUND = "beep";
   async function init() {
     if (Capacitor.isNativePlatform()) {
