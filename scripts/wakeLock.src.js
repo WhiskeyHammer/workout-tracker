@@ -438,28 +438,6 @@ document.addEventListener('visibilitychange', async () => {
 // ============================================================
 window.showDebugLogs = createLogViewer;
 
-setTimeout(() => {
-  const btn = document.createElement('button');
-  btn.textContent = '🔔';
-  btn.style.cssText = `
-    position: fixed;
-    bottom: 90px;
-    right: 15px;
-    z-index: 99999;
-    width: 50px;
-    height: 50px;
-    background: #c00;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    font-size: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
-  `;
-  btn.onclick = createLogViewer;
-  document.body.appendChild(btn);
-  logInfo('Debug button added');
-}, 1500);
-
 logInfo('============================================================');
 logInfo('SERVICE READY - tap red 🔔 button to view logs');
 logInfo('============================================================');
