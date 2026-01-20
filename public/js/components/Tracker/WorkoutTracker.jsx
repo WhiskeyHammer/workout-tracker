@@ -989,6 +989,18 @@ const confirmUncomplete = () => {
                     i = t.some((t, n) => n > r && t.completed),
                     o = e.completed && i,
                     isLastSet = r === t.length - 1;
+                    
+                  // Timer logic vars
+                  // Fix: Ensure we only treat it as a current timer if time is > 0
+                  // This prevents the "stuck at 0:00" state if onComplete is delayed
+                  const isCurrentTimer = activeTimer === e.id && timeRemaining > 0;
+                  const isTimerActive = activeTimer !== null && timeRemaining > 0;
+                  const totalRest = parseRestTime(e.rest);
+                  const percent = totalRest > 0 ? (timeRemainingMs / (totalRest * 1000)) * 100 : 0;
+                  const radius = 24;
+                  const circumference = 2 * Math.PI * radius;
+                  const strokeDashoffset = circumference - (percent / 100) * circumference;
+                  
                   return (
                     <React.Fragment key={e.id}>
                     <div
@@ -1136,11 +1148,59 @@ const confirmUncomplete = () => {
                             </button>
                           )}
                           <button
-                            onClick={() => toggleComplete(e.id)}
-                            disabled={s || (activeTimer !== null && timeRemaining > 0)}
-                            className={`zz_btn_toggle_set_complete flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center transition-colors ${e.completed ? (o ? "bg-green-800 text-white cursor-not-allowed" : "bg-green-500 text-white") : (s || (activeTimer !== null && timeRemaining > 0)) ? "bg-gray-300 text-gray-400 cursor-not-allowed" : "bg-gray-200 text-gray-400 hover:bg-gray-300"}`}
+                            onClick={() => {
+                                if (isCurrentTimer) {
+                                    handleSkipRestClick();
+                                } else {
+                                    toggleComplete(e.id);
+                                }
+                            }}
+                            disabled={s || (isTimerActive && !isCurrentTimer)}
+                            className={`zz_btn_toggle_set_complete flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center transition-colors relative 
+                                ${e.completed
+                                    ? (isCurrentTimer 
+                                        ? (darkMode ? "bg-gray-800" : "bg-white")
+                                        : (isTimerActive 
+                                            ? (darkMode ? "bg-green-900 text-gray-500 opacity-50 cursor-not-allowed border border-gray-700" : "bg-green-100 text-gray-400 opacity-50 cursor-not-allowed border border-gray-200")
+                                            : (o ? "bg-green-800 text-white cursor-not-allowed" : "bg-green-500 text-white hover:bg-green-600")
+                                          )
+                                    )
+                                    : (s || isTimerActive) 
+                                        ? "bg-gray-300 text-gray-400 cursor-not-allowed opacity-60" 
+                                        : "bg-gray-200 text-gray-400 hover:bg-gray-300"
+                                }`}
                           >
-                            <Check className="w-8 h-8" />
+                            {isCurrentTimer ? (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <svg className="absolute w-full h-full -rotate-90 pointer-events-none">
+                                        <circle
+                                            stroke={darkMode ? "#374151" : "#e5e7eb"}
+                                            strokeWidth="4"
+                                            fill="transparent"
+                                            r={radius}
+                                            cx="28"
+                                            cy="28"
+                                        />
+                                        <circle
+                                            stroke="#3b82f6"
+                                            strokeWidth="4"
+                                            fill="transparent"
+                                            r={radius}
+                                            cx="28"
+                                            cy="28"
+                                            strokeDasharray={circumference}
+                                            strokeDashoffset={strokeDashoffset}
+                                            className={`${timerJustStarted ? '' : 'transition-all duration-100 ease-linear'}`}
+                                            strokeLinecap="round"
+                                        />
+                                    </svg>
+                                    <span className={`text-xs font-bold z-10 ${darkMode ? "text-blue-400" : "text-blue-600"}`}>
+                                        {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, "0")}
+                                    </span>
+                                </div>
+                            ) : (
+                                <Check className="w-8 h-8" />
+                            )}
                           </button>
                         </div>
                       </div>
@@ -1601,48 +1661,12 @@ const confirmUncomplete = () => {
           </div>
         </div>
       )}
-      {/* Countdown Timer Bar - appears above footer when active */}
-      {exercises.length > 0 && activeTimer !== null && timeRemaining > 0 && (
-        <div
-          className={`fixed left-0 right-0 border-t shadow-lg transition-colors ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}
-          style={{ 
-            bottom: 'calc(73px + env(safe-area-inset-bottom))', // <--- UPDATED
-            marginBottom: '8px' 
-          }}
-        >
-          <div className="px-4 py-2">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex-1 flex justify-center">
-                <button
-                  onClick={handleSkipRestClick}
-                  className={`zz_btn_skip_rest inline-flex items-center gap-2 px-4 py-1 rounded-lg transition-colors ${darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
-                >
-                  <Clock className={`w-5 h-5 ${darkMode ? "text-blue-400" : "text-blue-600"}`} />
-                  <span className={`text-lg font-bold ${darkMode ? "text-gray-100" : "text-gray-900"}`}>
-                    {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, "0")}
-                  </span>
-                </button>
-              </div>
-            </div>
-            
-            {/* Timer progress bar */}
-            <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-              <div
-                className={`bg-sky-500 h-2 rounded-full ${timerJustStarted ? '' : 'transition-all duration-50 ease-linear'}`}
-                style={{
-                  width: `${(timeRemainingMs / ((exercises.find((e) => e.id === activeTimer)?.rest ? parseRestTime(exercises.find((e) => e.id === activeTimer).rest) : timeRemaining) * 1000)) * 100}%`,
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
       
       {/* Footer Bar */}
       {exercises.length > 0 && (
         <div
           className={`fixed bottom-0 left-0 right-0 border-t shadow-lg transition-colors ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}
-          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }} // <--- ADDED
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
           <div className="px-4 py-3">
             <div className="flex items-center justify-between">
