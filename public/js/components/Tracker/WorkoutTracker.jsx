@@ -1273,15 +1273,6 @@ const confirmUncomplete = () => {
                   </>
                 )}
               </div>
-              {r < Object.entries(groupedExercises).length - 1 && editMode && (
-                <button
-                  onClick={() => openAddExerciseDialog(exerciseName)}
-                  className={`zz_btn_add_exercise_between w-full py-2 border-2 border-dashed rounded-lg transition-colors flex items-center justify-center gap-2 ${darkMode ? "border-gray-600 text-gray-500 hover:border-blue-500 hover:text-blue-400" : "border-gray-300 text-gray-400 hover:border-blue-400 hover:text-blue-500"}`}
-                >
-                  <Plus className="w-5 h-5" />
-                  <span className="text-sm font-medium">Add Exercise</span>
-                </button>
-              )}
             </React.Fragment>
           ))}
           {editMode && (
