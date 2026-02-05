@@ -1,5 +1,5 @@
 // SERVICE WORKER - NETWORK FIRST STRATEGY (No Plugins)
-const CACHE_NAME = 'workout-tracker-net-first-v3'; 
+const CACHE_NAME = 'workout-tracker-net-first-v5'; 
 
 const STATIC_ASSETS = [
   '/',
@@ -10,6 +10,7 @@ const STATIC_ASSETS = [
   '/js/utils/workoutHelpers.js',
   '/js/utils/wakeLock.js',
   '/js/utils/timerWorker.js',
+  '/js/utils/timerService.js',
   '/js/components/icons/AuthIcons.jsx',
   '/js/components/icons/TrackerIcons.jsx',
   '/js/components/Auth/AuthScreen.jsx',

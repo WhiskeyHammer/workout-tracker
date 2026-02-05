@@ -17,6 +17,7 @@ INCLUDE_FILES = [
     'android/app/build.gradle',
     'android/app/proguard-rules.pro',
     'android/app/src/main/AndroidManifest.xml',
+    'public/service-worker.js',
 ]
 
 # 2. Critical Directories to verify recursively
@@ -25,7 +26,8 @@ INCLUDE_DIRS = [
     'models',
     'routes',
     'public',
-    'android/app/src/main/java', # Native Android code
+    'scripts',  # Source files like timerService.src.js
+    'android/app/src/main/java',  # Native Android code
 ]
 
 # 3. Only include files with these extensions (filters out images, mp3s, binaries)

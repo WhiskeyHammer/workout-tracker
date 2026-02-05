@@ -1,3 +1,4 @@
+// whiskeyhammer/workout-tracker/workout-tracker-8276d47834898423559b318e0915690087936fb1/public/js/components/Library/WorkoutLibrary.jsx
 // WorkoutLibrary component - Loaded as global
 function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setDarkMode }) {
     const { useState, useEffect } = React;
@@ -409,15 +410,13 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            moveWorkout(workout._id, 'up');
+                                                            if (index !== 0) moveWorkout(workout._id, 'up');
                                                         }}
                                                         disabled={index === 0}
                                                         className={`p-1 rounded transition-colors ${
                                                             index === 0
-                                                                ? 'opacity-30 cursor-not-allowed'
-                                                                : darkMode
-                                                                    ? 'bg-gray-700 hover:bg-gray-600 text-gray-200'
-                                                                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                                                                ? (darkMode ? 'bg-gray-900 text-gray-600 cursor-not-allowed' : 'bg-gray-100 text-gray-300 cursor-not-allowed')
+                                                                : (darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700')
                                                         }`}
                                                         title="Move up"
                                                     >
@@ -426,15 +425,13 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            moveWorkout(workout._id, 'down');
+                                                            if (index !== workouts.length - 1) moveWorkout(workout._id, 'down');
                                                         }}
                                                         disabled={index === workouts.length - 1}
                                                         className={`p-1 rounded transition-colors ${
                                                             index === workouts.length - 1
-                                                                ? 'opacity-30 cursor-not-allowed'
-                                                                : darkMode
-                                                                    ? 'bg-gray-700 hover:bg-gray-600 text-gray-200'
-                                                                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                                                                ? (darkMode ? 'bg-gray-900 text-gray-600 cursor-not-allowed' : 'bg-gray-100 text-gray-300 cursor-not-allowed')
+                                                                : (darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700')
                                                         }`}
                                                         title="Move down"
                                                     >

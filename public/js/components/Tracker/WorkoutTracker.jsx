@@ -1,4 +1,5 @@
-﻿// Full WorkoutTracker component - Loaded as global
+﻿// whiskeyhammer/workout-tracker/workout-tracker-8276d47834898423559b318e0915690087936fb1/public/js/components/Tracker/WorkoutTracker.jsx
+// Full WorkoutTracker component - Loaded as global
 function WorkoutTracker({
   exercises: propExercises,
   setExercises: propSetExercises,
@@ -933,10 +934,10 @@ const confirmUncomplete = () => {
                           disabled={r === 0}
                           className={`zz_btn_move_exercise_up p-1 rounded transition-colors ${
                             r === 0
-                              ? 'opacity-30 cursor-not-allowed'
-                              : darkMode
+                              ? (darkMode ? 'bg-gray-900 text-gray-600 cursor-not-allowed' : 'bg-gray-100 text-gray-300 cursor-not-allowed')
+                              : (darkMode
                                 ? 'bg-gray-700 hover:bg-gray-600 text-gray-200'
-                                : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                                : 'bg-gray-200 hover:bg-gray-300 text-gray-700')
                           }`}
                           title="Move up"
                         >
@@ -947,10 +948,10 @@ const confirmUncomplete = () => {
                           disabled={r === Object.entries(groupedExercises).length - 1}
                           className={`zz_btn_move_exercise_down p-1 rounded transition-colors ${
                             r === Object.entries(groupedExercises).length - 1
-                              ? 'opacity-30 cursor-not-allowed'
-                              : darkMode
+                              ? (darkMode ? 'bg-gray-900 text-gray-600 cursor-not-allowed' : 'bg-gray-100 text-gray-300 cursor-not-allowed')
+                              : (darkMode
                                 ? 'bg-gray-700 hover:bg-gray-600 text-gray-200'
-                                : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                                : 'bg-gray-200 hover:bg-gray-300 text-gray-700')
                           }`}
                           title="Move down"
                         >

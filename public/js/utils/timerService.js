@@ -894,21 +894,12 @@
   var onTickCallback = null;
   var onCompleteCallback = null;
   var ALERT_ID = 99999;
-  var ALERT_CHANNEL_ID = "workout-timer-alert-v13";
+  var ALERT_CHANNEL_ID = "workout-timer-alert-v16";
   var ALERT_SOUND = "beep";
   async function init() {
     if (Capacitor.isNativePlatform()) {
       try {
         await LocalNotifications.requestPermissions();
-        await LocalNotifications.createChannel({
-          id: ALERT_CHANNEL_ID,
-          name: "Workout Timer (Complete)",
-          description: "Alerts when rest is done",
-          importance: 5,
-          visibility: 1,
-          sound: ALERT_SOUND,
-          vibration: true
-        });
         await ForegroundService.createNotificationChannel({
           id: "workout-timer-silent",
           name: "Workout Timer (Countdown)",

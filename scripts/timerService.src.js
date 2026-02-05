@@ -9,9 +9,9 @@ let timerEndTime = null;
 let onTickCallback = null;
 let onCompleteCallback = null;
 
-// CONSTANTS - V7 (New Channel to force sound update)
+// CONSTANTS - V16 (Channel created in MainActivity.java with USAGE_ALARM)
 const ALERT_ID = 99999; 
-const ALERT_CHANNEL_ID = 'workout-timer-alert-v13'; 
+const ALERT_CHANNEL_ID = 'workout-timer-alert-v16'; 
 const ALERT_SOUND = 'beep'; 
 
 async function init() {
@@ -19,18 +19,10 @@ async function init() {
     try {
       await LocalNotifications.requestPermissions();
       
-      // 1. Create Channel V7
-      await LocalNotifications.createChannel({
-        id: ALERT_CHANNEL_ID,
-        name: 'Workout Timer (Complete)',
-        description: 'Alerts when rest is done',
-        importance: 5, 
-        visibility: 1,
-        sound: ALERT_SOUND,
-        vibration: true
-      });
+      // Alert channel is created in MainActivity.java with USAGE_ALARM
+      // audio attributes to bypass silent mode - do NOT create it here
 
-      // 2. Create Silent Channel
+      // Create Silent Channel for countdown
       await ForegroundService.createNotificationChannel({
         id: 'workout-timer-silent',
         name: 'Workout Timer (Countdown)',
@@ -39,7 +31,7 @@ async function init() {
         visibility: 1
       });
 
-      // 3. Preload NativeAudio
+      // Preload NativeAudio
       await NativeAudio.preload({
         assetId: 'timerBeep',
         assetPath: 'beep.wav',
