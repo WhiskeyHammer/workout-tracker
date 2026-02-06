@@ -1,3 +1,5 @@
+// whiskeyhammer/workout-tracker/workout-tracker-8276d47834898423559b318e0915690087936fb1/routes/workouts.js
+
 const express = require('express');
 const Workout = require('../models/Workout');
 const WorkoutSession = require('../models/WorkoutSession');
@@ -21,8 +23,9 @@ router.get('/', async (req, res) => {
 // Get workout names only (for library view) - MUST come before /:id route
 router.get('/library', async (req, res) => {
   try {
+    // Added 'lastCompletedSession' to the select string
     const workouts = await Workout.find({ userId: req.user.userId })
-      .select('name updatedAt createdAt')
+      .select('name updatedAt createdAt lastCompletedSession') 
       .sort({ order: 1, createdAt: -1 });
     
     res.json(workouts);

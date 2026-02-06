@@ -140,7 +140,7 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
     const loadWorkouts = async () => {
         setLoading(true);
         try {
-            const response = await api.call('/workouts');
+            const response = await api.call('/workouts/library');
             if (response.ok) {
                 const data = await response.json();
                 setWorkouts(data);
@@ -397,9 +397,16 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
                                                 onClick={() => editMode ? startEditingName(workout) : onSelectWorkout(workout._id)}
                                             >
                                                 <h3 className={`text-lg font-bold transition-colors ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>{workout.name}</h3>
-                                                <p className={`text-sm transition-colors ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                                    Last updated: {formatDate(workout.updatedAt)}
-                                                </p>
+                                                <div className="flex flex-col gap-0.5 mt-1">
+                                                    <p className={`text-sm transition-colors ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                        Last updated: {formatDate(workout.updatedAt)}
+                                                    </p>
+                                                    {workout.lastCompletedSession && workout.lastCompletedSession.completedAt && (
+                                                        <p className={`text-sm transition-colors ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
+                                                            Last completed: {formatDate(workout.lastCompletedSession.completedAt)}
+                                                        </p>
+                                                    )}
+                                                </div>
                                             </div>
                                         )}
                                     </div>
