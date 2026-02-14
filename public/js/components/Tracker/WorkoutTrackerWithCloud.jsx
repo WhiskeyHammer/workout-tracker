@@ -286,6 +286,7 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
                 
                 // Clear the template exercises after completing workout
                 // This ensures next time we load, we import from the completed session
+                // Also update lastCompletedSession so it displays in the workout library
                 const clearTemplateResponse = await api.call(`/workouts/${workoutIdToUse}`, {
                     method: 'PUT',
                     body: JSON.stringify({
@@ -295,7 +296,8 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
                             nextWeights: {},
                             weightsSet: []
                         },
-                        exerciseNotes: {}
+                        exerciseNotes: {},
+                        lastCompletedSession: completedSessionData
                     })
                 });
                 
