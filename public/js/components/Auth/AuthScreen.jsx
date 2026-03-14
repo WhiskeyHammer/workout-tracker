@@ -8,9 +8,13 @@ function AuthScreen({ onLogin, darkMode, setDarkMode }) {
     const [loading, setLoading] = useState(false);
     const [showForgotPassword, setShowForgotPassword] = useState(false);
     const [forgotEmail, setForgotEmail] = useState('');
-    const [forgotSuccess, setForgotSuccess] = useState('');
     const [forgotError, setForgotError] = useState('');
     const [forgotLoading, setForgotLoading] = useState(false);
+    const [emailVerified, setEmailVerified] = useState(false);
+    const [resetCode, setResetCode] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [resetSuccess, setResetSuccess] = useState(false);
     
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -40,16 +44,12 @@ function AuthScreen({ onLogin, darkMode, setDarkMode }) {
         }
     };
     
-    const handleForgotPassword = async (e) => {
+    const handleVerifyEmail = async (e) => {
         e.preventDefault();
         setForgotError('');
-        setForgotSuccess('');
         setForgotLoading(true);
         
-        console.log('Forgot password: sending request for', forgotEmail);
-        
         try {
-            // Use fetch directly instead of api.call since user is not authenticated
             const baseUrl = window.location.hostname === 'localhost' 
                 ? 'http://localhost:3000/api'
                 : '/api';
@@ -61,19 +61,76 @@ function AuthScreen({ onLogin, darkMode, setDarkMode }) {
             });
             
             const data = await response.json();
-            console.log('Forgot password response:', response.status, data);
             
             if (!response.ok) {
-                throw new Error(data.error || 'Failed to send reset email');
+                throw new Error(data.error || 'Email not found');
             }
             
-            setForgotSuccess(data.message);
+            setEmailVerified(true);
         } catch (err) {
-            console.error('Forgot password error:', err);
             setForgotError(err.message);
         } finally {
             setForgotLoading(false);
         }
+    };
+    
+    const handleResetPassword = async (e) => {
+        e.preventDefault();
+        setForgotError('');
+        
+        if (!resetCode) {
+            setForgotError('Please enter the reset code');
+            return;
+        }
+        if (!newPassword || newPassword.length < 6) {
+            setForgotError('Password must be at least 6 characters');
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            setForgotError('Passwords do not match');
+            return;
+        }
+        
+        setForgotLoading(true);
+        
+        try {
+            const baseUrl = window.location.hostname === 'localhost' 
+                ? 'http://localhost:3000/api'
+                : '/api';
+            
+            const response = await fetch(`${baseUrl}/auth/reset-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    email: forgotEmail, 
+                    code: resetCode, 
+                    newPassword: newPassword 
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to reset password');
+            }
+            
+            setResetSuccess(true);
+        } catch (err) {
+            setForgotError(err.message);
+        } finally {
+            setForgotLoading(false);
+        }
+    };
+    
+    const resetForgotState = () => {
+        setShowForgotPassword(false);
+        setForgotEmail('');
+        setForgotError('');
+        setEmailVerified(false);
+        setResetCode('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setResetSuccess(false);
     };
     
     if (showForgotPassword) {
@@ -91,57 +148,114 @@ function AuthScreen({ onLogin, darkMode, setDarkMode }) {
                         <p className={`transition-colors ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Reset your password</p>
                     </div>
                     
-                    <form onSubmit={handleForgotPassword} className="space-y-4">
-                        <div>
-                            <label className={`block text-sm font-medium mb-2 transition-colors ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Email Address</label>
-                            <input
-                                type="email"
-                                value={forgotEmail}
-                                onChange={(e) => setForgotEmail(e.target.value)}
-                                className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none transition-colors ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'}`}
-                                placeholder="you@example.com"
-                                required
-                            />
-                            <p className={`text-xs mt-2 transition-colors ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                                We'll send a password reset link to this email
-                            </p>
-                        </div>
-                        
-                        {forgotError && (
-                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                                {forgotError}
-                            </div>
-                        )}
-                        
-                        {forgotSuccess && (
+                    {resetSuccess ? (
+                        <div className="space-y-4">
                             <div className={`border px-4 py-3 rounded-lg text-sm ${darkMode ? 'bg-green-900/30 border-green-800 text-green-400' : 'bg-green-50 border-green-200 text-green-700'}`}>
-                                {forgotSuccess}
+                                Password reset successful! You can now log in.
                             </div>
-                        )}
-                        
-                        <button
-                            type="submit"
-                            disabled={forgotLoading}
-                            onClick={(e) => { e.preventDefault(); handleForgotPassword(e); }}
-                            className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:bg-gray-400"
-                        >
-                            {forgotLoading ? 'Sending...' : 'Send Reset Link'}
-                        </button>
-                    </form>
+                            <button
+                                onClick={resetForgotState}
+                                className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                            >
+                                Back to Login
+                            </button>
+                        </div>
+                    ) : !emailVerified ? (
+                        <form onSubmit={handleVerifyEmail} className="space-y-4">
+                            <div>
+                                <label className={`block text-sm font-medium mb-2 transition-colors ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Email Address</label>
+                                <input
+                                    type="email"
+                                    value={forgotEmail}
+                                    onChange={(e) => setForgotEmail(e.target.value)}
+                                    className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none transition-colors ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'}`}
+                                    placeholder="you@example.com"
+                                    required
+                                />
+                            </div>
+                            
+                            {forgotError && (
+                                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                                    {forgotError}
+                                </div>
+                            )}
+                            
+                            <button
+                                type="submit"
+                                disabled={forgotLoading}
+                                className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:bg-gray-400"
+                            >
+                                {forgotLoading ? 'Checking...' : 'Continue'}
+                            </button>
+                        </form>
+                    ) : (
+                        <form onSubmit={handleResetPassword} className="space-y-4">
+                            <div>
+                                <label className={`block text-sm font-medium mb-2 transition-colors ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Reset Code</label>
+                                <input
+                                    type="text"
+                                    value={resetCode}
+                                    onChange={(e) => setResetCode(e.target.value)}
+                                    className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none transition-colors text-center text-2xl tracking-widest ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'}`}
+                                    placeholder="••••"
+                                    maxLength="4"
+                                    required
+                                    autoFocus
+                                />
+                            </div>
+                            
+                            <div>
+                                <label className={`block text-sm font-medium mb-2 transition-colors ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>New Password</label>
+                                <input
+                                    type="password"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none transition-colors ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'}`}
+                                    placeholder="••••••••"
+                                    required
+                                    minLength="6"
+                                />
+                            </div>
+                            
+                            <div>
+                                <label className={`block text-sm font-medium mb-2 transition-colors ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Confirm Password</label>
+                                <input
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none transition-colors ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'}`}
+                                    placeholder="••••••••"
+                                    required
+                                    minLength="6"
+                                />
+                            </div>
+                            
+                            {forgotError && (
+                                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                                    {forgotError}
+                                </div>
+                            )}
+                            
+                            <button
+                                type="submit"
+                                disabled={forgotLoading}
+                                className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:bg-gray-400"
+                            >
+                                {forgotLoading ? 'Resetting...' : 'Reset Password'}
+                            </button>
+                        </form>
+                    )}
                     
-                    <div className="mt-6 text-center">
-                        <button
-                            onClick={() => {
-                                setShowForgotPassword(false);
-                                setForgotError('');
-                                setForgotSuccess('');
-                                setForgotEmail('');
-                            }}
-                            className={`text-sm font-medium transition-colors ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
-                        >
-                            ← Back to Login
-                        </button>
-                    </div>
+                    {!resetSuccess && (
+                        <div className="mt-6 text-center">
+                            <button
+                                onClick={resetForgotState}
+                                className={`text-sm font-medium transition-colors ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+                            >
+                                ← Back to Login
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         );
@@ -193,7 +307,7 @@ function AuthScreen({ onLogin, darkMode, setDarkMode }) {
                                 type="button"
                                 onClick={() => {
                                     setShowForgotPassword(true);
-                                    setForgotEmail(email); // Pre-fill with current email
+                                    setForgotEmail(email);
                                     setError('');
                                 }}
                                 className={`text-sm font-medium transition-colors ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}

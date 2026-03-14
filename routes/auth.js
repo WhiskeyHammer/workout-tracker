@@ -77,7 +77,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Forgot Password - Request reset link
+// Forgot Password - Verify email exists, then prompt for code
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
@@ -88,46 +88,24 @@ router.post('/forgot-password', async (req, res) => {
 
     const user = await User.findOne({ email: email.toLowerCase().trim() });
 
-    // Always return success to prevent email enumeration
     if (!user) {
-      return res.json({ message: 'If an account with that email exists, a reset link has been sent.' });
+      return res.status(400).json({ error: 'No account found with that email' });
     }
 
-    // Generate a secure random token
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
-
-    // Store hashed token with 1-hour expiry
-    user.resetToken = resetTokenHash;
-    user.resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-    await user.save();
-
-    // Build reset URL
-    const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
-    const resetUrl = `${baseUrl}/reset-password.html?token=${resetToken}&email=${encodeURIComponent(user.email)}`;
-
-    // Send email
-    const emailSent = await sendResetEmail(user.email, resetUrl);
-
-    if (!emailSent) {
-      console.error('Failed to send reset email to:', user.email);
-      return res.status(500).json({ error: 'Failed to send reset email. Please try again later.' });
-    }
-
-    console.log(`✅ Password reset email sent to: ${user.email}`);
-    res.json({ message: 'If an account with that email exists, a reset link has been sent.' });
+    // Just confirm the email exists - the code is hardcoded
+    res.json({ message: 'Enter the reset code to continue.' });
   } catch (error) {
     console.error('Forgot password error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// Reset Password - Complete the reset
+// Reset Password - Verify hardcoded code and set new password
 router.post('/reset-password', async (req, res) => {
   try {
-    const { email, token, newPassword } = req.body;
+    const { email, code, newPassword } = req.body;
 
-    if (!email || !token || !newPassword) {
+    if (!email || !code || !newPassword) {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
@@ -135,25 +113,15 @@ router.post('/reset-password', async (req, res) => {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
 
+    // Hardcoded reset code
+    if (code !== '2255') {
+      return res.status(400).json({ error: 'Invalid reset code' });
+    }
+
     const user = await User.findOne({ email: email.toLowerCase().trim() });
 
-    if (!user || !user.resetToken || !user.resetTokenExpiry) {
-      return res.status(400).json({ error: 'Invalid or expired reset link' });
-    }
-
-    // Check token expiry
-    if (user.resetTokenExpiry < new Date()) {
-      // Clean up expired token
-      user.resetToken = null;
-      user.resetTokenExpiry = null;
-      await user.save();
-      return res.status(400).json({ error: 'Reset link has expired. Please request a new one.' });
-    }
-
-    // Verify token (compare hash)
-    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-    if (tokenHash !== user.resetToken) {
-      return res.status(400).json({ error: 'Invalid or expired reset link' });
+    if (!user) {
+      return res.status(400).json({ error: 'No account found with that email' });
     }
 
     // Update password
@@ -170,89 +138,5 @@ router.post('/reset-password', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
-
-// Email sending helper - Uses Maileroo HTTP API (works on Render free tier)
-async function sendResetEmail(toEmail, resetUrl) {
-  const mailerooApiKey = process.env.MAILEROO_API_KEY;
-
-  if (!mailerooApiKey) {
-    console.error('❌ MAILEROO_API_KEY environment variable not configured');
-    console.log('Reset URL (for manual use):', resetUrl);
-    return false;
-  }
-
-  // MAILEROO_FROM_EMAIL should be set to an address on your verified Maileroo domain
-  // If using their free sandbox domain, it will be something like: noreply@your-sandbox.maileroo.org
-  // You can find your sandbox domain in the Maileroo dashboard under Domains
-  const fromEmail = process.env.MAILEROO_FROM_EMAIL;
-
-  if (!fromEmail) {
-    console.error('❌ MAILEROO_FROM_EMAIL environment variable not configured');
-    console.error('   Set this to an address on your Maileroo domain, e.g.: noreply@your-sandbox.maileroo.org');
-    console.log('Reset URL (for manual use):', resetUrl);
-    return false;
-  }
-
-  try {
-    const response = await fetch('https://smtp.maileroo.com/api/v2/emails', {
-      method: 'POST',
-      headers: {
-        'X-API-Key': mailerooApiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: {
-          address: fromEmail,
-          display_name: 'Workout Tracker',
-        },
-        to: [{
-          address: toEmail,
-        }],
-        subject: 'Workout Tracker - Password Reset',
-        html: `
-          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #3b82f6;">💪 Workout Tracker</h2>
-            <h3>Password Reset Request</h3>
-            <p>You requested a password reset. Click the button below to set a new password:</p>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${resetUrl}" 
-                 style="background-color: #3b82f6; color: white; padding: 14px 28px; 
-                        text-decoration: none; border-radius: 8px; font-weight: bold;
-                        display: inline-block;">
-                Reset My Password
-              </a>
-            </div>
-            <p style="color: #666; font-size: 14px;">
-              This link will expire in <strong>1 hour</strong>.
-            </p>
-            <p style="color: #666; font-size: 14px;">
-              If you didn't request this, you can safely ignore this email.
-            </p>
-            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-            <p style="color: #999; font-size: 12px;">
-              If the button doesn't work, copy and paste this link into your browser:<br>
-              <a href="${resetUrl}" style="color: #3b82f6; word-break: break-all;">${resetUrl}</a>
-            </p>
-          </div>
-        `,
-        plain: `Password Reset\n\nYou requested a password reset for Workout Tracker.\n\nClick this link to reset your password: ${resetUrl}\n\nThis link expires in 1 hour.\n\nIf you didn't request this, ignore this email.`,
-        tracking: false,
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok || !data.success) {
-      console.error('Maileroo API error:', response.status, data);
-      return false;
-    }
-
-    console.log('✅ Email sent via Maileroo:', data.message || 'success');
-    return true;
-  } catch (error) {
-    console.error('Email send error:', error);
-    return false;
-  }
-}
 
 module.exports = router;
