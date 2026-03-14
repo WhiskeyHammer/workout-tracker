@@ -6,6 +6,11 @@ function AuthScreen({ onLogin, darkMode, setDarkMode }) {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showForgotPassword, setShowForgotPassword] = useState(false);
+    const [forgotEmail, setForgotEmail] = useState('');
+    const [forgotSuccess, setForgotSuccess] = useState('');
+    const [forgotError, setForgotError] = useState('');
+    const [forgotLoading, setForgotLoading] = useState(false);
     
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -34,6 +39,102 @@ function AuthScreen({ onLogin, darkMode, setDarkMode }) {
             setLoading(false);
         }
     };
+    
+    const handleForgotPassword = async (e) => {
+        e.preventDefault();
+        setForgotError('');
+        setForgotSuccess('');
+        setForgotLoading(true);
+        
+        try {
+            const response = await api.call('/auth/forgot-password', {
+                method: 'POST',
+                body: JSON.stringify({ email: forgotEmail })
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to send reset email');
+            }
+            
+            setForgotSuccess(data.message);
+        } catch (err) {
+            setForgotError(err.message);
+        } finally {
+            setForgotLoading(false);
+        }
+    };
+    
+    if (showForgotPassword) {
+        return (
+            <div className={`min-h-screen flex items-center justify-center p-4 transition-colors ${darkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-blue-500 to-purple-600'}`}>
+                <div className={`rounded-2xl shadow-2xl p-8 max-w-md w-full transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                    <button
+                        onClick={() => setDarkMode(!darkMode)}
+                        className={`absolute top-4 right-4 p-2 rounded-lg transition-colors ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-white/20 hover:bg-white/30'}`}
+                    >
+                        {darkMode ? <Sun className="w-5 h-5 text-yellow-300" /> : <Moon className="w-5 h-5 text-white" />}
+                    </button>
+                    <div className="text-center mb-8">
+                        <h1 className={`text-3xl font-bold mb-2 transition-colors ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>💪 Workout Tracker</h1>
+                        <p className={`transition-colors ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Reset your password</p>
+                    </div>
+                    
+                    <form onSubmit={handleForgotPassword} className="space-y-4">
+                        <div>
+                            <label className={`block text-sm font-medium mb-2 transition-colors ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Email Address</label>
+                            <input
+                                type="email"
+                                value={forgotEmail}
+                                onChange={(e) => setForgotEmail(e.target.value)}
+                                className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none transition-colors ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500 placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'}`}
+                                placeholder="you@example.com"
+                                required
+                            />
+                            <p className={`text-xs mt-2 transition-colors ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                We'll send a password reset link to this email
+                            </p>
+                        </div>
+                        
+                        {forgotError && (
+                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                                {forgotError}
+                            </div>
+                        )}
+                        
+                        {forgotSuccess && (
+                            <div className={`border px-4 py-3 rounded-lg text-sm ${darkMode ? 'bg-green-900/30 border-green-800 text-green-400' : 'bg-green-50 border-green-200 text-green-700'}`}>
+                                {forgotSuccess}
+                            </div>
+                        )}
+                        
+                        <button
+                            type="submit"
+                            disabled={forgotLoading}
+                            className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:bg-gray-400"
+                        >
+                            {forgotLoading ? 'Sending...' : 'Send Reset Link'}
+                        </button>
+                    </form>
+                    
+                    <div className="mt-6 text-center">
+                        <button
+                            onClick={() => {
+                                setShowForgotPassword(false);
+                                setForgotError('');
+                                setForgotSuccess('');
+                                setForgotEmail('');
+                            }}
+                            className={`text-sm font-medium transition-colors ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+                        >
+                            ← Back to Login
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
     
     return (
         <div className={`min-h-screen flex items-center justify-center p-4 transition-colors ${darkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-blue-500 to-purple-600'}`}>
@@ -74,6 +175,22 @@ function AuthScreen({ onLogin, darkMode, setDarkMode }) {
                             minLength="6"
                         />
                     </div>
+                    
+                    {isLogin && (
+                        <div className="text-right">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowForgotPassword(true);
+                                    setForgotEmail(email); // Pre-fill with current email
+                                    setError('');
+                                }}
+                                className={`text-sm font-medium transition-colors ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+                            >
+                                Forgot password?
+                            </button>
+                        </div>
+                    )}
                     
                     {error && (
                         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
