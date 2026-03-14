@@ -171,62 +171,69 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
-// Email sending helper
+// Email sending helper - Uses Resend API (HTTPS, works on Render free tier)
 async function sendResetEmail(toEmail, resetUrl) {
-  // Check if nodemailer SMTP credentials are configured
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    console.error('❌ SMTP environment variables not configured (SMTP_HOST, SMTP_USER, SMTP_PASS)');
+  const resendApiKey = process.env.RESEND_API_KEY;
+
+  if (!resendApiKey) {
+    console.error('❌ RESEND_API_KEY environment variable not configured');
     console.log('Reset URL (for manual use):', resetUrl);
     return false;
   }
 
-  try {
-    const nodemailer = require('nodemailer');
+  // Resend requires a verified "from" domain, or you can use their default onboarding address
+  // Once you add & verify your own domain in Resend, change this to your domain email
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'Workout Tracker <onboarding@resend.dev>';
 
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: process.env.SMTP_SECURE === 'true', // true for 465, false for 587
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        from: fromEmail,
+        to: [toEmail],
+        subject: 'Workout Tracker - Password Reset',
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #3b82f6;">💪 Workout Tracker</h2>
+            <h3>Password Reset Request</h3>
+            <p>You requested a password reset. Click the button below to set a new password:</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${resetUrl}" 
+                 style="background-color: #3b82f6; color: white; padding: 14px 28px; 
+                        text-decoration: none; border-radius: 8px; font-weight: bold;
+                        display: inline-block;">
+                Reset My Password
+              </a>
+            </div>
+            <p style="color: #666; font-size: 14px;">
+              This link will expire in <strong>1 hour</strong>.
+            </p>
+            <p style="color: #666; font-size: 14px;">
+              If you didn't request this, you can safely ignore this email.
+            </p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="color: #999; font-size: 12px;">
+              If the button doesn't work, copy and paste this link into your browser:<br>
+              <a href="${resetUrl}" style="color: #3b82f6; word-break: break-all;">${resetUrl}</a>
+            </p>
+          </div>
+        `,
+        text: `Password Reset\n\nYou requested a password reset for Workout Tracker.\n\nClick this link to reset your password: ${resetUrl}\n\nThis link expires in 1 hour.\n\nIf you didn't request this, ignore this email.`,
+      }),
     });
 
-    const mailOptions = {
-      from: process.env.SMTP_FROM || process.env.SMTP_USER,
-      to: toEmail,
-      subject: 'Workout Tracker - Password Reset',
-      html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #3b82f6;">💪 Workout Tracker</h2>
-          <h3>Password Reset Request</h3>
-          <p>You requested a password reset. Click the button below to set a new password:</p>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${resetUrl}" 
-               style="background-color: #3b82f6; color: white; padding: 14px 28px; 
-                      text-decoration: none; border-radius: 8px; font-weight: bold;
-                      display: inline-block;">
-              Reset My Password
-            </a>
-          </div>
-          <p style="color: #666; font-size: 14px;">
-            This link will expire in <strong>1 hour</strong>.
-          </p>
-          <p style="color: #666; font-size: 14px;">
-            If you didn't request this, you can safely ignore this email.
-          </p>
-          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-          <p style="color: #999; font-size: 12px;">
-            If the button doesn't work, copy and paste this link into your browser:<br>
-            <a href="${resetUrl}" style="color: #3b82f6; word-break: break-all;">${resetUrl}</a>
-          </p>
-        </div>
-      `,
-      text: `Password Reset\n\nYou requested a password reset for Workout Tracker.\n\nClick this link to reset your password: ${resetUrl}\n\nThis link expires in 1 hour.\n\nIf you didn't request this, ignore this email.`,
-    };
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Resend API error:', response.status, errorData);
+      return false;
+    }
 
-    await transporter.sendMail(mailOptions);
+    const data = await response.json();
+    console.log('✅ Email sent via Resend, id:', data.id);
     return true;
   } catch (error) {
     console.error('Email send error:', error);
