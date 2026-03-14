@@ -46,13 +46,22 @@ function AuthScreen({ onLogin, darkMode, setDarkMode }) {
         setForgotSuccess('');
         setForgotLoading(true);
         
+        console.log('Forgot password: sending request for', forgotEmail);
+        
         try {
-            const response = await api.call('/auth/forgot-password', {
+            // Use fetch directly instead of api.call since user is not authenticated
+            const baseUrl = window.location.hostname === 'localhost' 
+                ? 'http://localhost:3000/api'
+                : '/api';
+            
+            const response = await fetch(`${baseUrl}/auth/forgot-password`, {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: forgotEmail })
             });
             
             const data = await response.json();
+            console.log('Forgot password response:', response.status, data);
             
             if (!response.ok) {
                 throw new Error(data.error || 'Failed to send reset email');
@@ -60,6 +69,7 @@ function AuthScreen({ onLogin, darkMode, setDarkMode }) {
             
             setForgotSuccess(data.message);
         } catch (err) {
+            console.error('Forgot password error:', err);
             setForgotError(err.message);
         } finally {
             setForgotLoading(false);
@@ -112,6 +122,7 @@ function AuthScreen({ onLogin, darkMode, setDarkMode }) {
                         <button
                             type="submit"
                             disabled={forgotLoading}
+                            onClick={(e) => { e.preventDefault(); handleForgotPassword(e); }}
                             className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:bg-gray-400"
                         >
                             {forgotLoading ? 'Sending...' : 'Send Reset Link'}
