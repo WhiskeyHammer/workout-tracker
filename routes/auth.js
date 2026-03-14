@@ -171,30 +171,43 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
-// Email sending helper - Uses Resend API (HTTPS, works on Render free tier)
+// Email sending helper - Uses Maileroo HTTP API (works on Render free tier)
 async function sendResetEmail(toEmail, resetUrl) {
-  const resendApiKey = process.env.RESEND_API_KEY;
+  const mailerooApiKey = process.env.MAILEROO_API_KEY;
 
-  if (!resendApiKey) {
-    console.error('❌ RESEND_API_KEY environment variable not configured');
+  if (!mailerooApiKey) {
+    console.error('❌ MAILEROO_API_KEY environment variable not configured');
     console.log('Reset URL (for manual use):', resetUrl);
     return false;
   }
 
-  // Resend requires a verified "from" domain, or you can use their default onboarding address
-  // Once you add & verify your own domain in Resend, change this to your domain email
-  const fromEmail = process.env.RESEND_FROM_EMAIL || 'Workout Tracker <onboarding@resend.dev>';
+  // MAILEROO_FROM_EMAIL should be set to an address on your verified Maileroo domain
+  // If using their free sandbox domain, it will be something like: noreply@your-sandbox.maileroo.org
+  // You can find your sandbox domain in the Maileroo dashboard under Domains
+  const fromEmail = process.env.MAILEROO_FROM_EMAIL;
+
+  if (!fromEmail) {
+    console.error('❌ MAILEROO_FROM_EMAIL environment variable not configured');
+    console.error('   Set this to an address on your Maileroo domain, e.g.: noreply@your-sandbox.maileroo.org');
+    console.log('Reset URL (for manual use):', resetUrl);
+    return false;
+  }
 
   try {
-    const response = await fetch('https://api.resend.com/emails', {
+    const response = await fetch('https://smtp.maileroo.com/api/v2/emails', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${resendApiKey}`,
+        'X-API-Key': mailerooApiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: fromEmail,
-        to: [toEmail],
+        from: {
+          address: fromEmail,
+          display_name: 'Workout Tracker',
+        },
+        to: [{
+          address: toEmail,
+        }],
         subject: 'Workout Tracker - Password Reset',
         html: `
           <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -222,18 +235,19 @@ async function sendResetEmail(toEmail, resetUrl) {
             </p>
           </div>
         `,
-        text: `Password Reset\n\nYou requested a password reset for Workout Tracker.\n\nClick this link to reset your password: ${resetUrl}\n\nThis link expires in 1 hour.\n\nIf you didn't request this, ignore this email.`,
+        plain: `Password Reset\n\nYou requested a password reset for Workout Tracker.\n\nClick this link to reset your password: ${resetUrl}\n\nThis link expires in 1 hour.\n\nIf you didn't request this, ignore this email.`,
+        tracking: false,
       }),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Resend API error:', response.status, errorData);
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      console.error('Maileroo API error:', response.status, data);
       return false;
     }
 
-    const data = await response.json();
-    console.log('✅ Email sent via Resend, id:', data.id);
+    console.log('✅ Email sent via Maileroo:', data.message || 'success');
     return true;
   } catch (error) {
     console.error('Email send error:', error);
