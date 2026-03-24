@@ -8,11 +8,15 @@ let timerInterval = null;
 let timerEndTime = null;
 let onTickCallback = null;
 let onCompleteCallback = null;
+let timerCompletedAt = null; // NEW: Track when timer completed to prevent race conditions
 
 // CONSTANTS - V16 (Channel created in MainActivity.java with USAGE_ALARM)
 const ALERT_ID = 99999; 
 const ALERT_CHANNEL_ID = 'workout-timer-alert-v16'; 
 const ALERT_SOUND = 'beep'; 
+
+// NEW: Grace period (ms) - don't cancel notification if timer completed within this window
+const CANCEL_GRACE_PERIOD_MS = 3000;
 
 async function init() {
   if (Capacitor.isNativePlatform()) {
@@ -114,7 +118,9 @@ async function updateForegroundService(seconds, exerciseName) {
 async function playBeep() {
   try {
     await NativeAudio.play({ assetId: 'timerBeep' });
-  } catch (e) {}
+  } catch (e) {
+    console.error('playBeep failed:', e);
+  }
 }
 
 async function setupButtonListener() {
@@ -141,6 +147,7 @@ window.timerService = {
     
     this.stop(false); 
     
+    timerCompletedAt = null; // Reset completion timestamp
     timerEndTime = Date.now() + (seconds * 1000);
     
     await startNativeTimer(seconds, exerciseName);
@@ -163,18 +170,34 @@ window.timerService = {
             timerInterval = null;
         }
         
-        // Smart Logic: Check if we are "late" (app was asleep)
+        // FIX: Record when the timer completed
+        timerCompletedAt = Date.now();
+        
         const timeSinceTarget = Date.now() - timerEndTime;
         const isLate = timeSinceTarget > 1500;
         
-        // Kill the notification immediately so it doesn't ring when we unlock
-        await LocalNotifications.cancel({ notifications: [{ id: ALERT_ID }] });
-        await ForegroundService.stopForegroundService();
+        // FIX: Stop the foreground service countdown, but DON'T cancel the 
+        // notification immediately - let it finish playing its sound.
+        // The visibilitychange handler or a delayed cleanup will handle it.
+        try {
+          await ForegroundService.stopForegroundService();
+        } catch (err) {}
         
         if (!isLate) {
-            await playBeep(); 
+          // App was in foreground the whole time - play in-app beep
+          // and cancel the notification (since we're handling sound ourselves)
+          await LocalNotifications.cancel({ notifications: [{ id: ALERT_ID }] });
+          await playBeep(); 
         } else {
-            console.log('App resumed late. Silencing App (Notification handled it).');
+          // App was backgrounded - the notification already fired with sound.
+          // FIX: Do NOT cancel it here. Let the notification sound finish.
+          // It will be cleaned up by visibilitychange after the grace period,
+          // or by the next timer start.
+          console.log('App resumed late. Letting notification sound finish.');
+          
+          // FIX: Also play the in-app beep as a fallback, because sometimes
+          // the notification sound gets cut short or doesn't play at all.
+          await playBeep();
         }
 
         if (onCompleteCallback) onCompleteCallback(false);
@@ -188,6 +211,7 @@ window.timerService = {
       timerInterval = null;
     }
     timerEndTime = null;
+    timerCompletedAt = null;
     this._lastSecond = null;
     
     if (shouldStopNative) {
@@ -196,16 +220,36 @@ window.timerService = {
   },
   
   isRunning: function() { return timerInterval !== null; },
+  
+  // NEW: Expose completion timestamp for visibilitychange handler
+  getCompletedAt: function() { return timerCompletedAt; },
+  
   _lastSecond: null
 };
 
-// --- AGGRESSIVE KILL SWITCH ---
-// The moment the app becomes visible, kill any ringing notification
+// --- VISIBILITY CHANGE HANDLER (FIXED) ---
+// FIX: Don't aggressively cancel the notification if the timer just completed.
+// This was the primary cause of silence when switching back to the app.
 document.addEventListener('visibilitychange', async () => {
   if (document.visibilityState === 'visible') {
       try {
-          // Immediately kill the alert notification
-          await LocalNotifications.cancel({ notifications: [{ id: ALERT_ID }] });
+          const completedAt = window.timerService.getCompletedAt();
+          const now = Date.now();
+          
+          if (completedAt && (now - completedAt) < CANCEL_GRACE_PERIOD_MS) {
+            // Timer completed very recently - DON'T cancel the notification.
+            // Let it finish playing its sound. Schedule a delayed cleanup instead.
+            console.log('Timer just completed, delaying notification cancel to let sound finish.');
+            setTimeout(async () => {
+              try {
+                await LocalNotifications.cancel({ notifications: [{ id: ALERT_ID }] });
+              } catch (e) {}
+            }, CANCEL_GRACE_PERIOD_MS);
+          } else if (!window.timerService.isRunning()) {
+            // Timer is not running and didn't just complete - safe to cancel
+            await LocalNotifications.cancel({ notifications: [{ id: ALERT_ID }] });
+          }
+          // If timer IS running, don't cancel - it's still counting down
           
           // Re-acquire wake lock if needed
           if (!window.wakeLockManager.wakeLock) {

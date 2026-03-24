@@ -893,9 +893,11 @@
   var timerEndTime = null;
   var onTickCallback = null;
   var onCompleteCallback = null;
+  var timerCompletedAt = null;
   var ALERT_ID = 99999;
   var ALERT_CHANNEL_ID = "workout-timer-alert-v16";
   var ALERT_SOUND = "beep";
+  var CANCEL_GRACE_PERIOD_MS = 3e3;
   async function init() {
     if (Capacitor.isNativePlatform()) {
       try {
@@ -983,6 +985,7 @@
     try {
       await NativeAudio.play({ assetId: "timerBeep" });
     } catch (e) {
+      console.error("playBeep failed:", e);
     }
   }
   async function setupButtonListener() {
@@ -1006,6 +1009,7 @@
       onTickCallback = onTick;
       onCompleteCallback = onComplete;
       this.stop(false);
+      timerCompletedAt = null;
       timerEndTime = Date.now() + seconds * 1e3;
       await startNativeTimer(seconds, exerciseName);
       timerInterval = setInterval(async () => {
@@ -1023,14 +1027,19 @@
             clearInterval(timerInterval);
             timerInterval = null;
           }
+          timerCompletedAt = Date.now();
           const timeSinceTarget = Date.now() - timerEndTime;
           const isLate = timeSinceTarget > 1500;
-          await LocalNotifications.cancel({ notifications: [{ id: ALERT_ID }] });
-          await ForegroundService.stopForegroundService();
+          try {
+            await ForegroundService.stopForegroundService();
+          } catch (err) {
+          }
           if (!isLate) {
+            await LocalNotifications.cancel({ notifications: [{ id: ALERT_ID }] });
             await playBeep();
           } else {
-            console.log("App resumed late. Silencing App (Notification handled it).");
+            console.log("App resumed late. Letting notification sound finish.");
+            await playBeep();
           }
           if (onCompleteCallback)
             onCompleteCallback(false);
@@ -1043,6 +1052,7 @@
         timerInterval = null;
       }
       timerEndTime = null;
+      timerCompletedAt = null;
       this._lastSecond = null;
       if (shouldStopNative) {
         await stopNativeTimer();
@@ -1051,12 +1061,28 @@
     isRunning: function() {
       return timerInterval !== null;
     },
+    // NEW: Expose completion timestamp for visibilitychange handler
+    getCompletedAt: function() {
+      return timerCompletedAt;
+    },
     _lastSecond: null
   };
   document.addEventListener("visibilitychange", async () => {
     if (document.visibilityState === "visible") {
       try {
-        await LocalNotifications.cancel({ notifications: [{ id: ALERT_ID }] });
+        const completedAt = window.timerService.getCompletedAt();
+        const now = Date.now();
+        if (completedAt && now - completedAt < CANCEL_GRACE_PERIOD_MS) {
+          console.log("Timer just completed, delaying notification cancel to let sound finish.");
+          setTimeout(async () => {
+            try {
+              await LocalNotifications.cancel({ notifications: [{ id: ALERT_ID }] });
+            } catch (e) {
+            }
+          }, CANCEL_GRACE_PERIOD_MS);
+        } else if (!window.timerService.isRunning()) {
+          await LocalNotifications.cancel({ notifications: [{ id: ALERT_ID }] });
+        }
         if (!window.wakeLockManager.wakeLock) {
           const hasActiveWorkout = document.querySelector(".zz_btn_toggle_set_complete");
           if (hasActiveWorkout)
