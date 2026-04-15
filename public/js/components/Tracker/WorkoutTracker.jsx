@@ -303,16 +303,13 @@ function WorkoutTracker({
     const exerciseSets = groupedExercises[exerciseName];
     if (!exerciseSets) return;
 
-    const newExercises = exercises.map((set) => {
-      if (set.exercise === exerciseName || set.name === exerciseName) {
-        if (!set.completed) {
-          return { ...set, completed: true };
-        }
-      }
-      return set;
+    // Collapse the exercise instead of marking sets as completed
+    setCollapsedExercises(prev => {
+      const newCollapsed = new Set(prev);
+      newCollapsed.add(exerciseName);
+      return newCollapsed;
     });
 
-    setExercises(newExercises);
     setShowCompleteExerciseDialog(false);
     setExerciseToCompleteEarly(null);
     longPressFired.current = false;
