@@ -7,6 +7,7 @@ import shutil
 import platform
 import time
 from urllib.parse import quote as url_quote
+import urllib.request
 
 def set_java_home():
     """Auto-detects Java from Android Studio if JAVA_HOME is missing."""
@@ -21,6 +22,11 @@ def set_java_home():
             r"C:\Program Files\Android\Android Studio\jbr",
             r"C:\Program Files\Android\Android Studio\jre",
         ]
+        # Also check for standalone JDK installs (e.g. Eclipse Adoptium)
+        jdk_base = r"C:\Program Files\Eclipse Adoptium"
+        if os.path.isdir(jdk_base):
+            for entry in sorted(os.listdir(jdk_base), reverse=True):
+                candidates.append(os.path.join(jdk_base, entry))
     elif system == "Darwin": 
         candidates = [
             "/Applications/Android Studio.app/Contents/jbr/Contents/Home",
@@ -117,7 +123,36 @@ def generate_qr(data):
     qr.add_data(data)
     qr.print_ascii()
 
+def shorten_url(url):
+    """Shorten a URL using multiple services (tries each until one works)."""
+    services = [
+        # is.gd - simple and reliable
+        ("is.gd", f"https://is.gd/create.php?format=simple&url={url_quote(url, safe='')}"),
+        # v.gd - backup from same provider
+        ("v.gd", f"https://v.gd/create.php?format=simple&url={url_quote(url, safe='')}"),
+        # TinyURL
+        ("TinyURL", f"http://tinyurl.com/api-create.php?url={url_quote(url, safe='')}"),
+    ]
+
+    for name, api_url in services:
+        try:
+            with urllib.request.urlopen(api_url, timeout=10) as response:
+                short_url = response.read().decode('utf-8').strip()
+                if short_url and short_url.startswith('http'):
+                    print(f"   ✓ Shortened via {name}")
+                    return short_url
+        except Exception as e:
+            print(f"   ⚠️  {name} failed: {e}")
+            continue
+
+    return None
+
 def main():
+    # Fix Windows console encoding for emoji/unicode output
+    if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
+
     print("🚀 Starting Local Build Process...")
 
     # Define Output Paths
@@ -144,7 +179,7 @@ def main():
     # 2. Build
     print("\n🔨 Compiling APK...")
     is_windows = os.name == 'nt'
-    gradle_cmd = "gradlew.bat assembleDebug" if is_windows else "./gradlew assembleDebug"
+    gradle_cmd = ".\\gradlew.bat assembleDebug" if is_windows else "./gradlew assembleDebug"
     run_command(gradle_cmd, cwd="android")
 
     # 3. Locate & Verify Freshness
@@ -212,19 +247,45 @@ def main():
         print(f"      - {f} ({size / 1024:.1f} KB)")
     print("-"*40)
 
-    # 11. QR code and final output (last thing before server starts)
+    # 11. Generate shortened URL for easy manual typing
+    print("\n🔗 Generating shortened URL...")
+    short_url = shorten_url(url)
+
+    # 12. QR code and final output (last thing before server starts)
     print("\n" + "="*40)
     print(f"✅ BUILD SUCCESSFUL!")
     print(f"Scan the QR code below to install:")
     print("="*40)
-    
+
     generate_qr(url)
-    
-    print(f"\n🔗 Link: {url}")
-    print(f"💡 Test locally first: http://127.0.0.1:{port}/{encoded_filename}")
+
+    print(f"\n🔗 Full Link: {url}")
+    if short_url:
+        print(f"📱 Short URL: {short_url}")
+
+    # Easy-to-type format for manual phone entry
+    print("\n" + "="*40)
+    print("📱 EASY TYPE FORMAT FOR PHONE:")
+    print("="*40)
+    print(f"   1. Open browser on phone")
+    print(f"   2. Type in address bar:")
+    print(f"")
+    print(f"      {ip}:{port}/a.apk")
+    print(f"")
+    print("="*40)
+
+    print(f"\n💡 Test locally first: http://127.0.0.1:{port}/{encoded_filename}")
     print("\n📡 Server running... Press Ctrl+C to stop.")
-    
-    # 11. Start server bound to all IPv4 interfaces
+
+    # Create a copy of the APK with a short name for easy typing
+    try:
+        short_apk = "a.apk"
+        shutil.copy2(custom_apk, short_apk)
+        print(f"✓ Created short filename copy: {ip}:{port}/{short_apk}")
+    except Exception as e:
+        print(f"⚠️  Could not create short filename copy: {e}")
+
+    # 13. Start server bound to all IPv4 interfaces
     subprocess.run([sys.executable, "-m", "http.server", str(port), "--bind", "0.0.0.0"])
 
 if __name__ == "__main__":

@@ -66,6 +66,11 @@ function WorkoutTracker({
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [infoModalContent, setInfoModalContent] = useState({ title: '', message: '' });
   const [bypassImportScreen, setBypassImportScreen] = useState(false);
+  const [showCompleteExerciseDialog, setShowCompleteExerciseDialog] = useState(false);
+  const [exerciseToCompleteEarly, setExerciseToCompleteEarly] = useState(null);
+  const longPressTimer = useRef(null);
+  const longPressStarted = useRef(false);
+  const longPressFired = useRef(false);
 
   // Use external darkMode if provided, otherwise use internal state
   const darkMode = propDarkMode !== undefined ? propDarkMode : internalDarkMode;
@@ -124,6 +129,15 @@ function WorkoutTracker({
     if (propSetExercisesWithWeightSet)
       propSetExercisesWithWeightSet(exercisesWithWeightSet);
   }, [exercisesWithWeightSet]);
+
+  // Cleanup long-press timer on unmount
+  useEffect(() => {
+    return () => {
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+      }
+    };
+  }, []);
 
   // Helper function to start the timer with foreground service
   const startRestTimer = async (seconds, exerciseName) => {
@@ -261,6 +275,49 @@ function WorkoutTracker({
       return isNaN(e) ? 0 : Math.round(60 * e);
     }
   };
+
+  const handleSetLongPressStart = (exerciseName) => {
+    console.log('Long press started on:', exerciseName);
+    longPressStarted.current = true;
+    longPressFired.current = false;
+    longPressTimer.current = setTimeout(() => {
+      console.log('Long press timer fired for:', exerciseName);
+      if (longPressStarted.current) {
+        longPressFired.current = true;
+        setExerciseToCompleteEarly(exerciseName);
+        setShowCompleteExerciseDialog(true);
+      }
+    }, 700);
+  };
+
+  const handleSetLongPressEnd = () => {
+    longPressStarted.current = false;
+    // Only clear the timer if the long press hasn't fired yet
+    if (!longPressFired.current && longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
+  const completeExerciseEarly = (exerciseName) => {
+    const exerciseSets = groupedExercises[exerciseName];
+    if (!exerciseSets) return;
+
+    const newExercises = exercises.map((set) => {
+      if (set.exercise === exerciseName || set.name === exerciseName) {
+        if (!set.completed) {
+          return { ...set, completed: true };
+        }
+      }
+      return set;
+    });
+
+    setExercises(newExercises);
+    setShowCompleteExerciseDialog(false);
+    setExerciseToCompleteEarly(null);
+    longPressFired.current = false;
+  };
+
 const toggleComplete = (e) => {
     const t = exercises.find((t) => t.id === e),
       r = t.exercise || t.name || "Exercise",
@@ -1007,6 +1064,11 @@ const confirmUncomplete = () => {
                     <div
                       key={e.id}
                       ref={(t) => (exerciseRefs.current[e.id] = t)}
+                      onMouseDown={() => handleSetLongPressStart(exerciseName)}
+                      onMouseUp={handleSetLongPressEnd}
+                      onMouseLeave={handleSetLongPressEnd}
+                      onTouchStart={() => handleSetLongPressStart(exerciseName)}
+                      onTouchEnd={handleSetLongPressEnd}
                       className={`rounded-lg border transition-all ${e.completed ? (darkMode ? "border-green-600 bg-green-900/30" : "border-green-500 bg-green-50") : s ? (darkMode ? "border-gray-600 bg-gray-900 opacity-60" : "border-gray-300 bg-gray-100 opacity-60") : darkMode ? "border-gray-600 bg-gray-700" : "border-gray-300 bg-gray-50"}`}
                     >
                       <div className="p-4 flex items-center gap-4">
@@ -1653,7 +1715,37 @@ const confirmUncomplete = () => {
           </div>
         </div>
       )}
-      
+      {showCompleteExerciseDialog && exerciseToCompleteEarly && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-30 p-4 pt-[15vh]">
+          <div className={`rounded-2xl p-6 max-w-sm w-full shadow-2xl transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <h2 className={`text-xl font-bold mb-4 transition-colors ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+              Skip Remaining Sets?
+            </h2>
+            <p className={`mb-6 transition-colors ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              Complete all remaining sets for <strong>{exerciseToCompleteEarly}</strong> and move on?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowCompleteExerciseDialog(false);
+                  setExerciseToCompleteEarly(null);
+                  longPressFired.current = false;
+                }}
+                className={`zz_btn_cancel_complete_exercise flex-1 py-3 rounded-lg font-medium transition-colors ${darkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => completeExerciseEarly(exerciseToCompleteEarly)}
+                className="zz_btn_confirm_complete_exercise flex-1 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+              >
+                Skip
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Footer Bar */}
       {exercises.length > 0 && (
         <div
