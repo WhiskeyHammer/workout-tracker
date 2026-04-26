@@ -8,10 +8,19 @@ const authMiddleware = require('../middleware/auth');
 const router = express.Router();
 router.use(authMiddleware);
 
+// Build archived filter from query string. ?archived=true returns archived only,
+// ?archived=all returns both, anything else (default) returns active only.
+function archivedFilter(req) {
+  const v = req.query.archived;
+  if (v === 'true') return { archivedAt: { $ne: null } };
+  if (v === 'all') return {};
+  return { archivedAt: null };
+}
+
 // Get all workouts
 router.get('/', async (req, res) => {
   try {
-    const workouts = await Workout.find({ userId: req.user.userId })
+    const workouts = await Workout.find({ userId: req.user.userId, ...archivedFilter(req) })
       .sort({ order: 1, createdAt: -1 });
     res.json(workouts);
   } catch (error) {
@@ -24,10 +33,10 @@ router.get('/', async (req, res) => {
 router.get('/library', async (req, res) => {
   try {
     // Added 'lastCompletedSession' to the select string
-    const workouts = await Workout.find({ userId: req.user.userId })
-      .select('name updatedAt createdAt lastCompletedSession') 
+    const workouts = await Workout.find({ userId: req.user.userId, ...archivedFilter(req) })
+      .select('name updatedAt createdAt lastCompletedSession archivedAt')
       .sort({ order: 1, createdAt: -1 });
-    
+
     res.json(workouts);
   } catch (error) {
     console.error('Get library error:', error);
@@ -125,14 +134,55 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// Archive workout (hide without deleting)
+router.post('/:id/archive', async (req, res) => {
+  try {
+    const workout = await Workout.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.userId },
+      { archivedAt: new Date(), updatedAt: Date.now() },
+      { new: true }
+    );
+
+    if (!workout) {
+      return res.status(404).json({ error: 'Workout not found' });
+    }
+
+    res.json({ message: 'Workout archived', workout });
+  } catch (error) {
+    console.error('Archive error:', error);
+    res.status(500).json({ error: 'Error archiving workout' });
+  }
+});
+
+// Unarchive workout
+router.post('/:id/unarchive', async (req, res) => {
+  try {
+    const workout = await Workout.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.userId },
+      { archivedAt: null, updatedAt: Date.now() },
+      { new: true }
+    );
+
+    if (!workout) {
+      return res.status(404).json({ error: 'Workout not found' });
+    }
+
+    res.json({ message: 'Workout unarchived', workout });
+  } catch (error) {
+    console.error('Unarchive error:', error);
+    res.status(500).json({ error: 'Error unarchiving workout' });
+  }
+});
+
 // Reorder workout (move up or down) - MUST come before /:id route
 router.post('/:id/reorder', async (req, res) => {
   try {
     const { direction } = req.body; // 'up' or 'down'
     const workoutId = req.params.id;
 
-    // Get all user's workouts sorted by current order
-    const workouts = await Workout.find({ userId: req.user.userId })
+    // Reorder only operates on active (non-archived) workouts since archived
+    // ones are hidden from the list.
+    const workouts = await Workout.find({ userId: req.user.userId, archivedAt: null })
       .sort({ order: 1, createdAt: -1 });
 
     // Find the index of the workout to move
@@ -166,7 +216,7 @@ router.post('/:id/reorder', async (req, res) => {
     await Promise.all(updatePromises);
 
     // Fetch updated workouts
-    const updatedWorkouts = await Workout.find({ userId: req.user.userId })
+    const updatedWorkouts = await Workout.find({ userId: req.user.userId, archivedAt: null })
       .sort({ order: 1, createdAt: -1 });
 
     res.json({ message: 'Workout reordered', workouts: updatedWorkouts });

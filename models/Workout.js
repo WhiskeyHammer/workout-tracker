@@ -30,6 +30,10 @@ const workoutSchema = new mongoose.Schema({
     type: Object,
     default: {}
   },
+  archivedAt: {
+    type: Date,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -41,5 +45,6 @@ const workoutSchema = new mongoose.Schema({
 });
 
 workoutSchema.index({ userId: 1, updatedAt: -1 });
+workoutSchema.index({ userId: 1, archivedAt: 1 });
 
 module.exports = mongoose.model('Workout', workoutSchema);

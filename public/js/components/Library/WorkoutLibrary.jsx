@@ -12,6 +12,10 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
     const [newWorkoutName, setNewWorkoutName] = useState('');
     const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
     const [workoutToDelete, setWorkoutToDelete] = useState(null);
+    const [archivedWorkouts, setArchivedWorkouts] = useState([]);
+    const [showArchived, setShowArchived] = useState(false);
+    const [archivedLoaded, setArchivedLoaded] = useState(false);
+    const [loadingArchived, setLoadingArchived] = useState(false);
     const [updateAvailable, setUpdateAvailable] = useState(false);
     const [checkingUpdate, setCheckingUpdate] = useState(false);
     const [currentVersion, setCurrentVersion] = useState(null);
@@ -180,21 +184,116 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
         }
     };
     
+    const loadArchivedWorkouts = async () => {
+        setLoadingArchived(true);
+        try {
+            const response = await api.call('/workouts/library?archived=true');
+            if (response.ok) {
+                const data = await response.json();
+                setArchivedWorkouts(data);
+                setArchivedLoaded(true);
+            } else {
+                setInfoModalContent({
+                    title: 'Error',
+                    message: 'Failed to load archived workouts'
+                });
+                setShowInfoModal(true);
+            }
+        } catch (err) {
+            setInfoModalContent({
+                title: 'Error',
+                message: 'Error loading archived workouts'
+            });
+            setShowInfoModal(true);
+        } finally {
+            setLoadingArchived(false);
+        }
+    };
+
+    const toggleShowArchived = () => {
+        const next = !showArchived;
+        setShowArchived(next);
+        if (next && !archivedLoaded) {
+            loadArchivedWorkouts();
+        }
+    };
+
+    const archiveWorkout = async (id) => {
+        try {
+            const response = await api.call(`/workouts/${id}/archive`, {
+                method: 'POST'
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                const archived = workouts.find(w => w._id === id);
+                setWorkouts(workouts.filter(w => w._id !== id));
+                if (archivedLoaded && archived) {
+                    setArchivedWorkouts([
+                        { ...archived, archivedAt: result.workout.archivedAt },
+                        ...archivedWorkouts
+                    ]);
+                }
+            } else {
+                setInfoModalContent({
+                    title: 'Error',
+                    message: 'Failed to archive workout'
+                });
+                setShowInfoModal(true);
+            }
+        } catch (err) {
+            setInfoModalContent({
+                title: 'Error',
+                message: 'Error archiving workout'
+            });
+            setShowInfoModal(true);
+        }
+    };
+
+    const unarchiveWorkout = async (id) => {
+        try {
+            const response = await api.call(`/workouts/${id}/unarchive`, {
+                method: 'POST'
+            });
+
+            if (response.ok) {
+                const restored = archivedWorkouts.find(w => w._id === id);
+                setArchivedWorkouts(archivedWorkouts.filter(w => w._id !== id));
+                if (restored) {
+                    setWorkouts([...workouts, { ...restored, archivedAt: null }]);
+                }
+            } else {
+                setInfoModalContent({
+                    title: 'Error',
+                    message: 'Failed to unarchive workout'
+                });
+                setShowInfoModal(true);
+            }
+        } catch (err) {
+            setInfoModalContent({
+                title: 'Error',
+                message: 'Error unarchiving workout'
+            });
+            setShowInfoModal(true);
+        }
+    };
+
     const deleteWorkout = async (id, name) => {
         setWorkoutToDelete({ id, name });
         setShowDeleteConfirmModal(true);
     };
-    
+
     const confirmDelete = async () => {
         if (!workoutToDelete) return;
-        
+
         try {
             const response = await api.call(`/workouts/${workoutToDelete.id}`, {
                 method: 'DELETE'
             });
-            
+
             if (response.ok) {
                 setWorkouts(workouts.filter(w => w._id !== workoutToDelete.id));
+                setArchivedWorkouts(archivedWorkouts.filter(w => w._id !== workoutToDelete.id));
             } else {
                 setInfoModalContent({
                     title: 'Error',
@@ -456,6 +555,18 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
+                                                        archiveWorkout(workout._id);
+                                                    }}
+                                                    className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                                                    title="Hide this workout without deleting it"
+                                                >
+                                                    Archive
+                                                </button>
+                                            )}
+                                            {editMode && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
                                                         deleteWorkout(workout._id, workout.name);
                                                     }}
                                                     className="px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
@@ -494,7 +605,69 @@ function WorkoutLibrary({ onSelectWorkout, onCreateNew, onLogout, darkMode, setD
                         </div>
                     </>
                 )}
-                
+
+                {!loading && !error && (
+                    <div className="mt-6">
+                        <button
+                            onClick={toggleShowArchived}
+                            className={`w-full py-2 rounded-lg text-sm font-medium transition-colors ${darkMode ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-800' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
+                        >
+                            {showArchived ? '▾' : '▸'} Archived workouts{archivedLoaded ? ` (${archivedWorkouts.length})` : ''}
+                        </button>
+
+                        {showArchived && (
+                            <div className="mt-3 space-y-3">
+                                {loadingArchived ? (
+                                    <p className={`text-center text-sm py-4 transition-colors ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                        Loading archived workouts...
+                                    </p>
+                                ) : archivedWorkouts.length === 0 ? (
+                                    <p className={`text-center text-sm py-4 transition-colors ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                        No archived workouts
+                                    </p>
+                                ) : (
+                                    archivedWorkouts.map((workout) => (
+                                        <div
+                                            key={workout._id}
+                                            className={`rounded-xl shadow-sm p-4 flex items-center justify-between transition-all opacity-75 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}
+                                        >
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className={`text-lg font-bold transition-colors ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{workout.name}</h3>
+                                                <div className="flex flex-col gap-0.5 mt-1">
+                                                    <p className={`text-sm transition-colors ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                                                        Last updated: {formatDate(workout.updatedAt)}
+                                                    </p>
+                                                    {workout.archivedAt && (
+                                                        <p className={`text-sm transition-colors ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                                                            Archived: {formatDate(workout.archivedAt)}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => unarchiveWorkout(workout._id)}
+                                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                                >
+                                                    Unarchive
+                                                </button>
+                                                {editMode && (
+                                                    <button
+                                                        onClick={() => deleteWorkout(workout._id, workout.name)}
+                                                        className="px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {/* Update check button and version display */}
                 <div className="flex flex-col items-center justify-end mt-auto pt-12 pb-6">
                     {updateAvailable ? (
