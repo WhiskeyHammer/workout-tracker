@@ -49,10 +49,12 @@ for (let i = 0; i < samples.length; i++) {
   o += 2;
 }
 
-// Write to raw (for Notification) and assets (for App)
+// Write to raw (for Notification), Android assets (for native NativeAudio),
+// and public/ (for the pure web fallback served by express.static).
 const paths = [
     path.join(__dirname, '..', 'android/app/src/main/res/raw/beep.wav'),
-    path.join(__dirname, '..', 'android/app/src/main/assets/beep.wav')
+    path.join(__dirname, '..', 'android/app/src/main/assets/beep.wav'),
+    path.join(__dirname, '..', 'public/beep.wav')
 ];
 
 paths.forEach(p => {

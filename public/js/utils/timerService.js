@@ -981,11 +981,24 @@
     } catch (err) {
     }
   }
+  var webBeepAudio = null;
   async function playBeep() {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await NativeAudio.play({ assetId: "timerBeep" });
+      } catch (e) {
+        console.error("playBeep failed:", e);
+      }
+      return;
+    }
     try {
-      await NativeAudio.play({ assetId: "timerBeep" });
+      if (!webBeepAudio) {
+        webBeepAudio = new Audio("/beep.wav");
+      }
+      webBeepAudio.currentTime = 0;
+      await webBeepAudio.play();
     } catch (e) {
-      console.error("playBeep failed:", e);
+      console.error("web playBeep failed:", e);
     }
   }
   async function setupButtonListener() {
@@ -1039,7 +1052,6 @@
             await playBeep();
           } else {
             console.log("App resumed late. Letting notification sound finish.");
-            await playBeep();
           }
           if (onCompleteCallback)
             onCompleteCallback(false);

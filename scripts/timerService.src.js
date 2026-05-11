@@ -115,11 +115,29 @@ async function updateForegroundService(seconds, exerciseName) {
   } catch (err) {}
 }
 
+let webBeepAudio = null;
+
 async function playBeep() {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      await NativeAudio.play({ assetId: 'timerBeep' });
+    } catch (e) {
+      console.error('playBeep failed:', e);
+    }
+    return;
+  }
+
+  // Web fallback: HTMLAudioElement pointed at /beep.wav (served from public/).
+  // Lazily created and reused so we don't allocate per beep. play() needs a
+  // prior user gesture on most browsers; starting a workout timer counts.
   try {
-    await NativeAudio.play({ assetId: 'timerBeep' });
+    if (!webBeepAudio) {
+      webBeepAudio = new Audio('/beep.wav');
+    }
+    webBeepAudio.currentTime = 0;
+    await webBeepAudio.play();
   } catch (e) {
-    console.error('playBeep failed:', e);
+    console.error('web playBeep failed:', e);
   }
 }
 
@@ -190,14 +208,12 @@ window.timerService = {
           await playBeep(); 
         } else {
           // App was backgrounded - the notification already fired with sound.
-          // FIX: Do NOT cancel it here. Let the notification sound finish.
+          // Do NOT cancel it here. Let the notification sound finish.
           // It will be cleaned up by visibilitychange after the grace period,
           // or by the next timer start.
+          // Do NOT play the in-app beep either: the system notification already
+          // played it. Playing again on resume causes a duplicate beep.
           console.log('App resumed late. Letting notification sound finish.');
-          
-          // FIX: Also play the in-app beep as a fallback, because sometimes
-          // the notification sound gets cut short or doesn't play at all.
-          await playBeep();
         }
 
         if (onCompleteCallback) onCompleteCallback(false);
