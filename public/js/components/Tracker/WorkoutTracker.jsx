@@ -816,39 +816,6 @@ const confirmUncomplete = () => {
     }
   };
 
-  const exportWorkout = () => {
-    const grouped = {};
-    exercises.forEach((ex) => {
-      const exerciseName = ex.exercise || ex.name || "Exercise";
-      if (!grouped[exerciseName]) {
-        grouped[exerciseName] = {
-          exercise: exerciseName,
-          exerciseNotes: exerciseNotes[exerciseName] || "",
-          sets: [],
-        };
-      }
-      const { exercise, name, ...setData } = ex;
-      grouped[exerciseName].sets.push(setData);
-    });
-    const exportData = {
-      exercises: Object.values(grouped),
-      nextWeights: nextWeightValues,
-      weightsSet: Array.from(exercisesWithWeightSet),
-    };
-    const dataStr = JSON.stringify(exportData, null, 2);
-    const blob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    const timestamp = new Date().toISOString().split("T")[0];
-    const name = fileName ? fileName.replace(/\.[^/.]+$/, "") : "workout";
-    link.download = `${name}-export-${timestamp}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
   // Auto-import lastCompletedSession data when provided
   useEffect(() => {
     if (autoImportData) {

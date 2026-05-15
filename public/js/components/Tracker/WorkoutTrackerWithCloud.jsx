@@ -14,6 +14,9 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
     const isInitialLoadRef = useRef(true);
     const [showInfoModal, setShowInfoModal] = useState(false);
     const [infoModalContent, setInfoModalContent] = useState({ title: '', message: '' });
+    const fileInputRef = useRef(null);
+    const [pendingImport, setPendingImport] = useState(null);
+    const [showImportConfirm, setShowImportConfirm] = useState(false);
     
     useEffect(() => {
         if (workoutId) {
@@ -316,6 +319,175 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
         }
     };
 
+    const handleExport = () => {
+        if (!exercises || exercises.length === 0) {
+            setInfoModalContent({
+                title: 'Nothing to Export',
+                message: 'This workout has no exercises yet.'
+            });
+            setShowInfoModal(true);
+            return;
+        }
+
+        const grouped = {};
+        exercises.forEach((ex) => {
+            const exerciseName = ex.exercise || ex.name || 'Exercise';
+            if (!grouped[exerciseName]) {
+                grouped[exerciseName] = {
+                    exercise: exerciseName,
+                    exerciseNotes: exerciseNotes[exerciseName] || '',
+                    sets: []
+                };
+            }
+            const { exercise, name, ...setData } = ex;
+            grouped[exerciseName].sets.push(setData);
+        });
+
+        const exportData = {
+            schemaVersion: 1,
+            exportedAt: new Date().toISOString(),
+            name: workoutName,
+            exercises: Object.values(grouped),
+            exerciseNotes: exerciseNotes,
+            nextWeights: nextWeightValues,
+            weightsSet: Array.from(exercisesWithWeightSet)
+        };
+
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        const timestamp = new Date().toISOString().split('T')[0];
+        const safeName = (workoutName || 'workout').replace(/[^a-z0-9-_]+/gi, '_');
+        link.download = `${safeName}-export-${timestamp}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
+    const parseImportPayload = (data) => {
+        let flatExercises = null;
+        let importedNotes = {};
+        let importedNextWeights = {};
+        let importedWeightsSet = [];
+        let importedName = null;
+
+        const isGroupedArray = (arr) => Array.isArray(arr) && arr.length > 0 && arr[0] && Array.isArray(arr[0].sets);
+
+        if (data && isGroupedArray(data.exercises)) {
+            flatExercises = [];
+            let idCounter = 0;
+            data.exercises.forEach((group) => {
+                const exerciseName = group.exercise;
+                (group.sets || []).forEach((set) => {
+                    flatExercises.push({
+                        ...set,
+                        exercise: exerciseName,
+                        id: idCounter++,
+                        completed: set.completed || false
+                    });
+                });
+                if (group.exerciseNotes) {
+                    importedNotes[exerciseName] = group.exerciseNotes;
+                }
+            });
+            if (data.exerciseNotes && typeof data.exerciseNotes === 'object') {
+                importedNotes = { ...importedNotes, ...data.exerciseNotes };
+            }
+            importedNextWeights = data.nextWeights || {};
+            importedWeightsSet = Array.isArray(data.weightsSet) ? data.weightsSet : [];
+            if (typeof data.name === 'string' && data.name.trim()) importedName = data.name.trim();
+        } else if (isGroupedArray(data)) {
+            flatExercises = [];
+            let idCounter = 0;
+            data.forEach((group) => {
+                const exerciseName = group.exercise;
+                (group.sets || []).forEach((set) => {
+                    flatExercises.push({
+                        ...set,
+                        exercise: exerciseName,
+                        id: idCounter++,
+                        completed: set.completed || false
+                    });
+                });
+                if (group.exerciseNotes) {
+                    importedNotes[exerciseName] = group.exerciseNotes;
+                }
+            });
+        } else if (Array.isArray(data)) {
+            flatExercises = data.map((e, i) => ({ ...e, id: i, completed: e.completed || false }));
+        } else {
+            return null;
+        }
+
+        return {
+            exercises: flatExercises,
+            exerciseNotes: importedNotes,
+            nextWeights: importedNextWeights,
+            weightsSet: importedWeightsSet,
+            name: importedName
+        };
+    };
+
+    const handleImportClick = () => {
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+            fileInputRef.current.click();
+        }
+    };
+
+    const handleImportFile = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (!file.name.toLowerCase().endsWith('.json')) {
+            setInfoModalContent({ title: 'Invalid File', message: 'Please select a JSON file.' });
+            setShowInfoModal(true);
+            return;
+        }
+        try {
+            const text = await file.text();
+            const data = JSON.parse(text);
+            const parsed = parseImportPayload(data);
+            if (!parsed || !parsed.exercises) {
+                setInfoModalContent({
+                    title: 'Invalid File Format',
+                    message: 'Could not find any exercises in this file.'
+                });
+                setShowInfoModal(true);
+                return;
+            }
+            const exerciseCount = new Set(parsed.exercises.map(ex => ex.exercise)).size;
+            const setCount = parsed.exercises.length;
+            setPendingImport({
+                ...parsed,
+                fileName: file.name,
+                exerciseCount,
+                setCount
+            });
+            setShowImportConfirm(true);
+        } catch (err) {
+            setInfoModalContent({ title: 'Error', message: 'Error parsing JSON file: ' + err.message });
+            setShowInfoModal(true);
+        }
+    };
+
+    const confirmImport = () => {
+        if (!pendingImport) return;
+        setExercises(pendingImport.exercises);
+        setExerciseNotes(pendingImport.exerciseNotes);
+        setNextWeightValues(pendingImport.nextWeights);
+        setExercisesWithWeightSet(new Set(pendingImport.weightsSet));
+        if (pendingImport.name) setWorkoutName(pendingImport.name);
+        setShowImportConfirm(false);
+        setPendingImport(null);
+    };
+
+    const cancelImport = () => {
+        setShowImportConfirm(false);
+        setPendingImport(null);
+    };
+
     const handleBackClick = () => {
         onBack();
     };
@@ -346,6 +518,30 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
                         <span className="text-sm text-red-600 flex-shrink-0">Error</span>
                     )}
                     
+                    <button
+                        onClick={handleExport}
+                        className={`p-2 rounded-lg transition-colors flex-shrink-0 ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                        title="Export workout as JSON"
+                    >
+                        <Download className={`w-6 h-6 ${darkMode ? 'text-gray-200' : 'text-gray-900'}`} />
+                    </button>
+
+                    <button
+                        onClick={handleImportClick}
+                        className={`p-2 rounded-lg transition-colors flex-shrink-0 ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                        title="Replace workout from JSON file"
+                    >
+                        <Upload className={`w-6 h-6 ${darkMode ? 'text-gray-200' : 'text-gray-900'}`} />
+                    </button>
+
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".json,application/json"
+                        onChange={handleImportFile}
+                        style={{ display: 'none' }}
+                    />
+
                     <button
                         onClick={openDebugLogs}
                         className={`p-2 rounded-lg transition-colors flex-shrink-0 ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
@@ -415,6 +611,43 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
                         >
                             OK
                         </button>
+                    </div>
+                </div>
+            )}
+            {showImportConfirm && pendingImport && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-4 pt-[15vh]">
+                    <div className={`rounded-2xl p-6 max-w-md w-full shadow-2xl transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                        <h2 className={`text-xl font-bold mb-4 transition-colors ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                            Replace this workout?
+                        </h2>
+                        <p className={`mb-2 transition-colors ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                            <span className="font-medium">File:</span> {pendingImport.fileName}
+                        </p>
+                        <p className={`mb-2 transition-colors ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                            <span className="font-medium">Contains:</span> {pendingImport.exerciseCount} exercise{pendingImport.exerciseCount === 1 ? '' : 's'}, {pendingImport.setCount} set{pendingImport.setCount === 1 ? '' : 's'}
+                        </p>
+                        {pendingImport.name && pendingImport.name !== workoutName && (
+                            <p className={`mb-2 transition-colors ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                <span className="font-medium">Renames to:</span> {pendingImport.name}
+                            </p>
+                        )}
+                        <p className={`mb-6 mt-4 text-sm transition-colors ${darkMode ? 'text-red-400' : 'text-red-600'}`}>
+                            Current exercises, notes, and weights will be overwritten. This cannot be undone.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={cancelImport}
+                                className={`flex-1 py-3 rounded-lg font-medium transition-colors ${darkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmImport}
+                                className="flex-1 py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+                            >
+                                Replace
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
