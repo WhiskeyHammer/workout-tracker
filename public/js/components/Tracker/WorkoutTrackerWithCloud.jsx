@@ -518,29 +518,34 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
                         <span className="text-sm text-red-600 flex-shrink-0">Error</span>
                     )}
                     
-                    <button
-                        onClick={handleExport}
-                        className={`p-2 rounded-lg transition-colors flex-shrink-0 ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
-                        title="Export workout as JSON"
-                    >
-                        <Download className={`w-6 h-6 ${darkMode ? 'text-gray-200' : 'text-gray-900'}`} />
-                    </button>
+                    {exercises.length > 0 && (
+                        <>
+                            <button
+                                onClick={handleExport}
+                                className={`zz_btn_export_workout p-2 rounded-lg transition-colors flex-shrink-0 ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                                title="Export workout as JSON"
+                            >
+                                <Download className={`w-6 h-6 ${darkMode ? 'text-gray-200' : 'text-gray-900'}`} />
+                            </button>
 
-                    <button
-                        onClick={handleImportClick}
-                        className={`p-2 rounded-lg transition-colors flex-shrink-0 ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
-                        title="Replace workout from JSON file"
-                    >
-                        <Upload className={`w-6 h-6 ${darkMode ? 'text-gray-200' : 'text-gray-900'}`} />
-                    </button>
+                            <button
+                                onClick={handleImportClick}
+                                className={`zz_btn_replace_workout p-2 rounded-lg transition-colors flex-shrink-0 ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                                title="Replace workout from JSON file"
+                            >
+                                <Upload className={`w-6 h-6 ${darkMode ? 'text-gray-200' : 'text-gray-900'}`} />
+                            </button>
 
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept=".json,application/json"
-                        onChange={handleImportFile}
-                        style={{ display: 'none' }}
-                    />
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".json,application/json"
+                                onChange={handleImportFile}
+                                className="zz_input_replace_workout_file"
+                                style={{ display: 'none' }}
+                            />
+                        </>
+                    )}
 
                     <button
                         onClick={openDebugLogs}
