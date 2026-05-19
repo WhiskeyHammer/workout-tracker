@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($tmpZip = \"$env:TEMP\\\\render-cli.zip\"; $tmpDir = \"$env:TEMP\\\\render-cli-extract\"; Invoke-WebRequest -Uri \"https://github.com/render-oss/cli/releases/download/v2.17.0/cli_2.17.0_windows_amd64.zip\" -OutFile $tmpZip; if \\(Test-Path $tmpDir\\) { Remove-Item -Recurse -Force $tmpDir }; Expand-Archive -Path $tmpZip -DestinationPath $tmpDir; Get-ChildItem $tmpDir | Format-Table Name, Length)"
+    ]
+  }
+}

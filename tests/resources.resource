@@ -124,7 +124,7 @@ ${EDIT_WORKOUT_BTN}         //button[contains(@class,'zz_btn_edit_mode')]
 # Export / Replace Buttons (in tracker header; only render when exercises exist)
 ${EXPORT_WORKOUT_BTN}       //button[contains(@class,'zz_btn_export_workout')]
 ${REPLACE_WORKOUT_BTN}      //button[contains(@class,'zz_btn_replace_workout')]
-${REPLACE_FILE_INPUT}       //input[contains(@class,'zz_input_replace_workout_file')]
+${REPLACE_FILE_INPUT}       //input[contains(@class,'zz_file_replace_workout')]
 ${REPLACE_CONFIRM_MODAL}    //div[contains(@class,'fixed') and .//h2[text()='Replace this workout?']]
 ${REPLACE_CONFIRM_BTN}      ${REPLACE_CONFIRM_MODAL}//button[text()='Replace']
 ${REPLACE_CANCEL_BTN}       ${REPLACE_CONFIRM_MODAL}//button[text()='Cancel']

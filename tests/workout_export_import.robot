@@ -32,16 +32,9 @@ Export and Replace buttons appear once a workout has exercises
 
 Cancel replace leaves workout untouched
     [Documentation]    Picking a file then hitting Cancel in the confirm modal must
-    ...                NOT modify the workout.
-    ${file_input} =    Set Variable    //input[@type='file']
-    Choose File    ${file_input}    ${CURDIR}/data/test.json
-    Wait Until Element Is Visible    //h2[contains(text(),'Underhand Pullups')]    5s
-    Click Element    ${EDIT_WORKOUT_BTN}
-    Wait Until Element Is Visible    ${SET_REPS}    5s
-    Edit Complete Exercise Set    Underhand Pullups    1    SET_WEIGHT=777
-
-    # Verify the edit took
-    Verify exercise set field value    Underhand Pullups    ${SET_WEIGHT}    1    777
+    ...                NOT modify the workout. Mutate by adding a new exercise on
+    ...                top of the imported workout; assert it survives the cancel.
+    Add Squats On Top Of Imported Workout
 
     # Pick the file, then bail out of the confirm modal
     Choose File    ${REPLACE_FILE_INPUT}    ${CURDIR}/data/test.json
@@ -50,24 +43,15 @@ Cancel replace leaves workout untouched
     Click Element    ${REPLACE_CANCEL_BTN}
     Wait For Modal To Disappear    ${REPLACE_CONFIRM_MODAL}
 
-    # Edit should still be present
-    Verify exercise set field value    Underhand Pullups    ${SET_WEIGHT}    1    777
+    # The Squats exercise we added must still be there
+    Element Should Be Visible    //h2[contains(text(),'Squats')]
+    Element Should Be Visible    //h2[contains(text(),'Underhand Pullups')]
 
 Confirming replace overwrites local edits with file contents
-    [Documentation]    Edit a value, then Replace from the same file → the edit must
-    ...                be reverted to the value in the file.
-    ${file_input} =    Set Variable    //input[@type='file']
-    Choose File    ${file_input}    ${CURDIR}/data/test.json
-    Wait Until Element Is Visible    //h2[contains(text(),'Underhand Pullups')]    5s
-    Click Element    ${EDIT_WORKOUT_BTN}
-    Wait Until Element Is Visible    ${SET_REPS}    5s
-
-    # Sanity: the file's value for set 1 weight is "10"
-    Verify exercise set field value    Underhand Pullups    ${SET_WEIGHT}    1    10
-
-    # Mutate the value locally
-    Edit Complete Exercise Set    Underhand Pullups    1    SET_WEIGHT=777
-    Verify exercise set field value    Underhand Pullups    ${SET_WEIGHT}    1    777
+    [Documentation]    Add a new exercise on top of an imported workout, then Replace
+    ...                from the same file → the added exercise must be gone, and
+    ...                only the file's exercises remain.
+    Add Squats On Top Of Imported Workout
 
     # Replace from the same file → confirm
     Choose File    ${REPLACE_FILE_INPUT}    ${CURDIR}/data/test.json
@@ -75,11 +59,11 @@ Confirming replace overwrites local edits with file contents
     Click Element    ${REPLACE_CONFIRM_BTN}
     Wait For Modal To Disappear    ${REPLACE_CONFIRM_MODAL}
 
-    # The local edit must be reverted to the file's value
-    Wait Until Element Is Visible    ${SET_REPS}    5s
-    Click Element    ${EDIT_WORKOUT_BTN}
-    Wait Until Element Is Visible    ${SET_REPS}    5s
-    Verify exercise set field value    Underhand Pullups    ${SET_WEIGHT}    1    10
+    # File contents present, Squats reverted away
+    Wait Until Element Is Visible    //h2[contains(text(),'Underhand Pullups')]    5s
+    Wait Until Element Is Visible    //h2[contains(text(),'Dumbbell Curls')]    5s
+    Wait Until Element Is Visible    //h2[contains(text(),'Incline DB Press')]    5s
+    Element Should Not Be Visible    //h2[contains(text(),'Squats')]
 
 Replace persists to server (survives reload)
     [Documentation]    After Replace, the auto-save debounce (~1s) must persist the new
@@ -129,3 +113,27 @@ Export click does not error on a populated workout
     # Still on the tracker page, no info-modal popped up
     Element Should Be Visible    //h2[contains(text(),'Underhand Pullups')]
     Element Should Not Be Visible    //h2[text()='Nothing to Export']
+
+
+*** Keywords ***
+Add Squats On Top Of Imported Workout
+    [Documentation]    Drop test.json via the empty-state dropzone, then add an extra
+    ...                "Squats" exercise via the in-tracker add-exercise button so the
+    ...                workout differs from a clean re-import of test.json.
+    ${file_input} =    Set Variable    //input[@type='file']
+    Choose File    ${file_input}    ${CURDIR}/data/test.json
+    Wait Until Element Is Visible    //h2[contains(text(),'Underhand Pullups')]    5s
+    Wait Until Element Is Visible    //h2[contains(text(),'Incline DB Press')]    5s
+
+    # Enter edit mode so the inline add-exercise buttons render
+    ${edit_btn_value} =    Get Text    ${EDIT_WORKOUT_BTN}
+    IF    $edit_btn_value != 'Done'
+        Click Element    ${EDIT_WORKOUT_BTN}
+        Wait Until Element Is Visible    ${ADD_EXERCISE_BTN}    5s
+    END
+
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
+    Sleep    0.3s
+    Click Element    xpath=(${ADD_EXERCISE_BTN})[last()]
+    Populate New Exercise Info    Squats
+    Wait Until Element Is Visible    //h2[contains(text(),'Squats')]    5s

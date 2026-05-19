@@ -541,7 +541,7 @@ function WorkoutTrackerWithCloud({ workoutId, onBack }) {
                                 type="file"
                                 accept=".json,application/json"
                                 onChange={handleImportFile}
-                                className="zz_input_replace_workout_file"
+                                className="zz_file_replace_workout"
                                 style={{ display: 'none' }}
                             />
                         </>
