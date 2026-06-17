@@ -6,3 +6,5 @@ tests/test_logs
 public/version.json
 .vscode
 troubleshooting*
+.claude/settings.local.json
+.mcp.json

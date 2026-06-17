@@ -80,7 +80,7 @@ ${SAVE_WORKOUT_EDIT}        //button[contains(@class,'zz_btn_save')]
 ${CANCEL_WORKOUT_EDIT}      //button[contains(@class,'zz_btn_cancel_edit ')]
 ${INPUT_EDIT_WORKOUT}       //input[contains(@class,'zz_input')]
 
-${SKIP_WAIT}                //button[contains(@class,'zz_btn_skip_rest')]
+${SKIP_WAIT}                //button[contains(@class,'zz_btn_toggle_set_complete') and .//span[contains(@class,'z-10')]]
 ${CONFIRM_SKIP_WAIT}        //button[contains(@class,'zz_btn_confirm_skip_rest')]
 ${CANCEL_SKIP_WAIT}         //button[contains(@class,'zz_btn_cancel_skip_rest')]
 
@@ -156,7 +156,7 @@ Open Browser And Login
 
 Go To Library Page
     Reload Page
-    Wait Until Element Is Visible    ${CREATE_NEW_BTN}
+    Wait Until Element Is Visible    ${CREATE_NEW_BTN}    15s
 
 Go To Import Page
     ${exists} =     Run Keyword And Return Status    Element should be visible    ${CREATE_NEW_BTN}
@@ -174,18 +174,21 @@ Create Manual Exercise
     ...                Note: Clicking manual import button now bypasses import screen and goes directly to tracker
     [Arguments]    ${exercise_name}    ${num_sets}=1
     Click Element    ${MANUAL_IMPORT_BTN}
-    
+
     # After clicking manual import, we should be on tracker page with add exercise dialog open
     # Edit mode should already be enabled
     Populate New Exercise Info    ${exercise_name}
-    
-    # Add additional sets if needed (exercise is created with 1 set by default)
-    # Edit mode is already enabled from the manual import flow
+
+    # Add additional sets if needed (exercise is created with 1 set by default).
+    # Wait for each new set's reps span to render before continuing — bare Sleeps
+    # silently drop the click on a slow Render.
     IF    ${num_sets} > 1
         ${additional_sets}=    Evaluate    ${num_sets} - 1
         FOR    ${i}    IN RANGE    ${additional_sets}
+            ${target_set_index}=    Evaluate    ${i} + 2
+            Wait Until Element Is Visible    ${ADD_SET}    5s
             Click Element    ${ADD_SET}
-            Sleep    0.3s
+            Wait Until Element Is Visible    (${SET_REPS})[${target_set_index}]    5s
         END
     END
 
@@ -226,34 +229,16 @@ Go To A Workout, raw code
     END
 
 Create Three Workouts
-    [Documentation]    Create three test workouts, deleting Test Workout if it exists
-    # Delete Test Workout if it exists
+    [Documentation]    Create three test workouts. Order may vary across tests because
+    ...                prior tests can reorder them; consumers should use Verify Exercise
+    ...                Order helpers rather than asserting Prime/Alpha/First positions.
     Reload Page
-    Wait Until Element Is Visible    ${CREATE_NEW_BTN}    5s
-    ${test_workout_exists}=    Run Keyword And Return Status    Page Should Contain Element    //h3[text()='Test Workout']
-    IF    ${test_workout_exists}
-        Enter Edit Mode
-        ${workout_names}=    Get WebElements    //h3[contains(@class, 'font-bold')]
-        ${delete_buttons}=    Get WebElements    ${DELETE_BTN}
-        FOR    ${index}    IN RANGE    ${workout_names.__len__()}
-            ${name}=    Get Text    ${workout_names}[${index}]
-            IF    '${name}' == 'Test Workout'
-                Click Element    ${delete_buttons}[${index}]
-                Wait Until Page Contains Element    ${DELETE_MODAL}    5s
-                Click Element    ${DELETE_MODAL_DELETE}
-                Wait For Modal To Disappear    ${DELETE_MODAL}
-                BREAK
-            END
-        END
-        Exit Edit Mode
-    END
-    
-    # Create the three test workouts
+    Wait Until Element Is Visible    ${CREATE_NEW_BTN}    30s
     Create A Workout    First workout
     Create A Workout    Alpha workout
     Create A Workout    Prime workout
     Reload Page
-    Wait Until Element Is Visible    ${EDIT_WORKOUTS_BTN}
+    Wait Until Element Is Visible    ${EDIT_WORKOUTS_BTN}    15s
 
 # =============================================================================
 # WORKOUT LIBRARY PAGE KEYWORDS
@@ -296,7 +281,7 @@ Create A Workout
     [Arguments]    ${workout_name}
     # First reload and check if on library page
     Reload Page
-    Wait Until Element Is Visible    ${CREATE_NEW_BTN}    5s
+    Wait Until Element Is Visible    ${CREATE_NEW_BTN}    30s
     
     # Check if workout already exists
     ${workout_exists}=    Run Keyword And Return Status    Page Should Contain Element    //h3[text()='${workout_name}']
@@ -306,9 +291,12 @@ Create A Workout
         Open New Workout Modal
         Input Text    ${NEW_MODAL_INPUT}    ${workout_name}
         Click Element    ${NEW_MODAL_CONTINUE}
-        Wait Until Page Contains Element    ${WORKOUT_TITLE}    5s
+        Wait Until Page Contains Element    ${WORKOUT_TITLE}    15s
+        # Reset history before Back to avoid handleBackToLibrary's history.back()
+        # landing on a stale tracker entry (see import_page.robot back-button test).
+        Execute JavaScript    window.history.replaceState({view:'library',workoutId:null}, '', window.location.pathname); window.history.pushState({view:'tracker',workoutId:'current'}, '', window.location.pathname);
         Click Element    ${BACK_BUTTON}
-        Wait Until Page Contains Element    ${CREATE_NEW_BTN}    5s
+        Wait Until Page Contains Element    ${CREATE_NEW_BTN}    30s
     END
 
 Delete All Workouts

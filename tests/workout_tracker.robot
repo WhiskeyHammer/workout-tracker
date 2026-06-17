@@ -830,10 +830,12 @@ Reorder buttons appear in edit mode
     Element Should Be Visible    ${EXERCISE_REORDER_DOWN}
 
 Reorder buttons have correct disabled states
-    [Documentation]    First exercise up arrow and last exercise down arrow are disabled
+    [Documentation]    First exercise up arrow and last exercise down arrow are disabled.
+    ...                Order is determined by add-at-end insertion: Pullups (from setup)
+    ...                first, then Chin Ups, then Dips.
     [Setup]    Setup for workout tests    Manual Test Workout 21
-    
-    # Add two more exercises
+
+    # Add two more exercises (each inserts at end)
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
     Click Element    ${ADD_EXERCISE_BTN}
     Populate New Exercise Info    Chin Ups
@@ -843,26 +845,26 @@ Reorder buttons have correct disabled states
     Populate New Exercise Info    Dips
     Click Element    ${ADD_SET}
     Sleep    1s
-    
-    # Check first exercise (Pullups) - up arrow should be disabled
+
+    # First exercise (Pullups): up disabled, down enabled
     Execute JavaScript    window.scrollTo(0, 0)
     ${first_up_arrow} =    Get nth exercise reorder button    Pullups    up
     ${first_down_arrow} =    Get nth exercise reorder button    Pullups    down
-    Element Should Have Class    ${first_up_arrow}    opacity-30
-    Element Should Not Have Class    ${first_down_arrow}    opacity-30
-    
-    # Check middle exercise (Dips) - both arrows should be enabled
-    ${middle_up_arrow} =    Get nth exercise reorder button    Dips    up
-    ${middle_down_arrow} =    Get nth exercise reorder button    Dips    down
-    Element Should Not Have Class    ${middle_up_arrow}    opacity-30
-    Element Should Not Have Class    ${middle_down_arrow}    opacity-30
-    
-    # Check last exercise (Chin Ups) - down arrow should be disabled
+    Element Should Have Class    ${first_up_arrow}    cursor-not-allowed
+    Element Should Not Have Class    ${first_down_arrow}    cursor-not-allowed
+
+    # Middle exercise (Chin Ups): both enabled
+    ${middle_up_arrow} =    Get nth exercise reorder button    Chin Ups    up
+    ${middle_down_arrow} =    Get nth exercise reorder button    Chin Ups    down
+    Element Should Not Have Class    ${middle_up_arrow}    cursor-not-allowed
+    Element Should Not Have Class    ${middle_down_arrow}    cursor-not-allowed
+
+    # Last exercise (Dips): up enabled, down disabled
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
-    ${last_up_arrow} =    Get nth exercise reorder button    Chin Ups    up
-    ${last_down_arrow} =    Get nth exercise reorder button    Chin Ups    down
-    Element Should Not Have Class    ${last_up_arrow}    opacity-30
-    Element Should Have Class    ${last_down_arrow}    opacity-30
+    ${last_up_arrow} =    Get nth exercise reorder button    Dips    up
+    ${last_down_arrow} =    Get nth exercise reorder button    Dips    down
+    Element Should Not Have Class    ${last_up_arrow}    cursor-not-allowed
+    Element Should Have Class    ${last_down_arrow}    cursor-not-allowed
 
 Exercise can be moved down
     [Documentation]    Clicking down arrow moves exercise down in the list
@@ -912,10 +914,15 @@ Exercise can be moved up
     Verify Exercise Order    Chin Ups    Pullups
 
 Multiple exercises can be reordered
-    [Documentation]    Multiple exercises can be reordered to any position
+    [Documentation]    Multiple exercises can be reordered to any position.
+    ...                ADD_EXERCISE_BTN now only matches the "at end" button (the
+    ...                "between" variant was removed from the app), so additions
+    ...                always append. The reorder sequence below is rewritten to
+    ...                exercise up/down moves starting from the actual add-at-end
+    ...                initial state.
     [Setup]    Setup for workout tests    Manual Test Workout 24
-    
-    # Add two more exercises
+
+    # Add two more exercises (each appends at the end)
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
     Click Element    ${ADD_EXERCISE_BTN}
     Populate New Exercise Info    Chin Ups
@@ -925,31 +932,31 @@ Multiple exercises can be reordered
     Populate New Exercise Info    Dips
     Click Element    ${ADD_SET}
     Sleep    1s
-    
-    # Verify initial order (Pullups, Dips, Chin Ups)
+
+    # Verify initial order (add-at-end): Pullups, Chin Ups, Dips
     Execute JavaScript    window.scrollTo(0, 0)
-    Verify Exercise Order    Pullups    Dips    Chin Ups
-    
-    # Move Dips down to last position
-    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight / 2)
-    ${dips_down_arrow} =    Get nth exercise reorder button    Dips    down
-    Click Element    ${dips_down_arrow}
-    Sleep    0.5s
     Verify Exercise Order    Pullups    Chin Ups    Dips
-    
-    # Move Chin Ups up to first position
+
+    # Move Chin Ups down (middle → last): Pullups, Dips, Chin Ups
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight / 2)
-    ${chinups_up_arrow} =    Get nth exercise reorder button    Chin Ups    up
-    Click Element    ${chinups_up_arrow}
+    ${chinups_down_arrow} =    Get nth exercise reorder button    Chin Ups    down
+    Click Element    ${chinups_down_arrow}
     Sleep    0.5s
-    Verify Exercise Order    Chin Ups    Pullups    Dips
-    
-    # Move Pullups down to last position
+    Verify Exercise Order    Pullups    Dips    Chin Ups
+
+    # Move Dips up (middle → first): Dips, Pullups, Chin Ups
+    Execute JavaScript    window.scrollTo(0, document.body.scrollHeight / 2)
+    ${dips_up_arrow} =    Get nth exercise reorder button    Dips    up
+    Click Element    ${dips_up_arrow}
+    Sleep    0.5s
+    Verify Exercise Order    Dips    Pullups    Chin Ups
+
+    # Move Pullups down (middle → last): Dips, Chin Ups, Pullups
     Execute JavaScript    window.scrollTo(0, document.body.scrollHeight)
     ${pullups_down_arrow} =    Get nth exercise reorder button    Pullups    down
     Click Element    ${pullups_down_arrow}
     Sleep    0.5s
-    Verify Exercise Order    Chin Ups    Dips    Pullups
+    Verify Exercise Order    Dips    Chin Ups    Pullups
 
 Exercise reorder persists after reload
     [Documentation]    Reordered exercises maintain their position after page reload
@@ -1227,6 +1234,12 @@ Type Text Slowly
 
 Setup for workout tests
     [Arguments]    ${workout_name}
+    # App stores exercise collapse state in localStorage keyed by exercise names
+    # (e.g. collapsedExercises_Pullups), NOT by workout ID. A previous test that
+    # auto-collapsed Pullups will cause the next Pullups workout to inherit that
+    # collapsed state — sets won't render, ADD_SET button won't appear, setup
+    # silently fails. Clear the keys before each test.
+    Execute JavaScript    Object.keys(localStorage).filter(k=>k.startsWith('collapsedExercises_')).forEach(k=>localStorage.removeItem(k));
     Go To A Workout    ${workout_name}
     ${edit_btn_value} =    Get Text    ${EDIT_WORKOUT_BTN}
     IF    $edit_btn_value != 'Done'
@@ -1239,7 +1252,11 @@ Make edit to field that uses single input modal
     ${target} =    Get nth set elem of exercise    ${exercise}    ${elem}    ${n_set}
     Click Element    ${target}
     Wait Until Element Is Visible    ${SAVE_WORKOUT_EDIT}
-    Input Text    ${INPUT_EDIT_WORKOUT}    ${value}
+    # React controlled inputs re-fill after element.clear() and Input Text appends
+    # rather than replaces. Use the React-safe native setter + 'input' event so
+    # React's onChange fires with the new value.
+    ${input}=    Get WebElement    ${INPUT_EDIT_WORKOUT}
+    Execute JavaScript    var s=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;s.call(arguments[0],arguments[1]);arguments[0].dispatchEvent(new Event('input',{bubbles:true}));    ARGUMENTS    ${input}    ${value}
     Click Element    ${SAVE_WORKOUT_EDIT}
 
 Edit set note field
@@ -1253,16 +1270,23 @@ Toggle complete set field
     [Arguments]    ${exercise}   ${n_set}
     ${target_complete} =    Get nth set elem of exercise    ${exercise}    ${SET_COMPLETE}    ${n_set}
     Click Element  ${target_complete}
-    ${is_visible}=    Run Keyword And Return Status    Wait Until Element Is Visible    ${SKIP_WAIT}    timeout=2s
+    ${is_visible}=    Run Keyword And Return Status    Wait Until Element Is Visible    ${SKIP_WAIT}    timeout=5s
     IF    ${is_visible}
         Click Element    ${SKIP_WAIT}
+        Wait Until Element Is Visible    ${CONFIRM_SKIP_WAIT}    5s
         Click Element    ${CONFIRM_SKIP_WAIT}
+        Wait Until Element Is Not Visible    ${SKIP_WAIT}    5s
     END
 
 Set exercise level notes
     [Arguments]     ${exercise}    ${text}
     ${target_exercise_notes} =     Get nth set elem of exercise    ${exercise}     ${EXERCISE_NOTES}    1
-    Click Element    ${target_exercise_notes}
+    # Fixed-position footer bar can intercept native clicks when the exercise notes
+    # paragraph scrolls behind it. Use JS click + scrollIntoView({block:'center'})
+    # to bypass Selenium's auto-scroll-then-click coordinate check.
+    ${elem}=    Get WebElement    ${target_exercise_notes}
+    Execute JavaScript    arguments[0].scrollIntoView({block: 'center'});    ARGUMENTS    ${elem}
+    Execute JavaScript    arguments[0].click();    ARGUMENTS    ${elem}
     Wait Until Element Is Visible    ${EXERCISE_NOTES_INPUT}
     Input Text    ${EXERCISE_NOTES_INPUT}    ${text}
     Click Element    ${EXERCISE_NOTES_SAVE}

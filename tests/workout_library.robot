@@ -36,15 +36,16 @@ Verify All Workout Cards Have Start Buttons
 # =============================================================================
 
 Click Dark Mode Toggle Button
-    [Documentation]    Test clicking the dark mode toggle button
-    ${initial_bg}=    Get Element Attribute    //div[contains(@class, 'min-h-screen')]    class
+    [Documentation]    Test clicking the dark mode toggle button. App.jsx outer
+    ...                wrapper now keeps a static class and puts the bg color in
+    ...                an inline style, so check the style attribute, not class.
+    ${initial_bg}=    Get Element Attribute    //div[contains(@class, 'min-h-screen')]    style
     Click Element    ${DARKMODE_BTN}
     Sleep    0.5s
-    ${new_bg}=    Get Element Attribute    //div[contains(@class, 'min-h-screen')]    class
+    ${new_bg}=    Get Element Attribute    //div[contains(@class, 'min-h-screen')]    style
     Should Not Be Equal    ${initial_bg}    ${new_bg}
     Click Element    ${DARKMODE_BTN}
     Sleep    0.5s
-    # Approved
 
 # =============================================================================
 # NEW WORKOUT MODAL TESTS
@@ -240,22 +241,28 @@ Move Workout Down Successfully
     Exit Edit Mode
 
 Move Workout Up Successfully
-    [Documentation]    Test moving a workout up in the list
+    [Documentation]    Test moving a workout up in the list. Order-independent: capture
+    ...                the current order, click the 2nd workout's up-arrow, verify the
+    ...                first two swapped while the third is unchanged.
+    [Setup]    Create Three Workouts
+
     Click Element    ${EDIT_WORKOUTS_BTN}
-    
-    # Move second workout up
+    ${names_before}=    Get WebElements    //h3[contains(@class, 'font-bold')]
+    ${pre_first}=    Get Text    ${names_before}[0]
+    ${pre_second}=    Get Text    ${names_before}[1]
+    ${pre_third}=    Get Text    ${names_before}[2]
+
     ${up_buttons}=    Get WebElements    ${REORDER_UP_BTN}
     Click Element    ${up_buttons}[1]
     Sleep    1s
-    
-    # Verify order changed back to original
-    ${workout_names}=    Get WebElements    //h3[contains(@class, 'font-bold')]
-    ${first_name}=    Get Text    ${workout_names}[0]
-    ${second_name}=    Get Text    ${workout_names}[1]
-    ${third_name}=    Get Text    ${workout_names}[2]
-    Should Be Equal    ${first_name}    Prime workout
-    Should Be Equal    ${second_name}    Alpha workout
-    Should Be Equal    ${third_name}    First workout
+
+    ${names_after}=    Get WebElements    //h3[contains(@class, 'font-bold')]
+    ${first_name}=    Get Text    ${names_after}[0]
+    ${second_name}=    Get Text    ${names_after}[1]
+    ${third_name}=    Get Text    ${names_after}[2]
+    Should Be Equal    ${first_name}    ${pre_second}
+    Should Be Equal    ${second_name}    ${pre_first}
+    Should Be Equal    ${third_name}    ${pre_third}
     Exit Edit Mode
 
 Verify Top Workout Cannot Move Up
