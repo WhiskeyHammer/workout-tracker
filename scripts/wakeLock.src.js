@@ -100,24 +100,36 @@ function createLogViewer() {
   };
   
   const saveBtn = document.createElement('button');
-  saveBtn.textContent = 'SAVE FILE';
+  saveBtn.textContent = 'SEND LOGS';
   saveBtn.style.cssText = 'padding: 8px 16px; background: #6f42c1; color: white; border: none; border-radius: 4px;';
-  saveBtn.onclick = () => {
-    // Same download approach the workout export uses (Blob + anchor),
-    // which already works in the running app on web and Android.
+  saveBtn.onclick = async () => {
+    // The WebView can't save files (no DownloadListener), so ship the logs to
+    // the backend instead, where they're stored and can be read off-device.
     const text = logHistory.map(l => `[${l.timestamp}] [${l.level.toUpperCase()}] ${l.message}`).join('\n');
-    const blob = new Blob([text], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    link.download = `workout-debug-${timestamp}.log`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    saveBtn.textContent = 'SAVED!';
-    setTimeout(() => saveBtn.textContent = 'SAVE FILE', 2000);
+    const original = 'SEND LOGS';
+    saveBtn.textContent = 'SENDING...';
+    try {
+      const base = location.hostname === 'localhost' ? 'http://localhost:3000/api' : '/api';
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${base}/debug-logs`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          content: text,
+          entryCount: logHistory.length,
+          platform: Capacitor.getPlatform(),
+          userAgent: navigator.userAgent
+        })
+      });
+      saveBtn.textContent = res.ok ? 'SENT!' : `FAILED ${res.status}`;
+    } catch (e) {
+      logError('SEND LOGS failed:', e.message);
+      saveBtn.textContent = 'FAILED';
+    }
+    setTimeout(() => saveBtn.textContent = original, 2500);
   };
 
   const clearBtn = document.createElement('button');

@@ -822,22 +822,34 @@
       });
     };
     const saveBtn = document.createElement("button");
-    saveBtn.textContent = "SAVE FILE";
+    saveBtn.textContent = "SEND LOGS";
     saveBtn.style.cssText = "padding: 8px 16px; background: #6f42c1; color: white; border: none; border-radius: 4px;";
-    saveBtn.onclick = () => {
+    saveBtn.onclick = async () => {
       const text = logHistory.map((l) => `[${l.timestamp}] [${l.level.toUpperCase()}] ${l.message}`).join("\n");
-      const blob = new Blob([text], { type: "text/plain" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      const timestamp = (/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-");
-      link.download = `workout-debug-${timestamp}.log`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      saveBtn.textContent = "SAVED!";
-      setTimeout(() => saveBtn.textContent = "SAVE FILE", 2e3);
+      const original = "SEND LOGS";
+      saveBtn.textContent = "SENDING...";
+      try {
+        const base = location.hostname === "localhost" ? "http://localhost:3000/api" : "/api";
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${base}/debug-logs`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...token ? { Authorization: `Bearer ${token}` } : {}
+          },
+          body: JSON.stringify({
+            content: text,
+            entryCount: logHistory.length,
+            platform: Capacitor.getPlatform(),
+            userAgent: navigator.userAgent
+          })
+        });
+        saveBtn.textContent = res.ok ? "SENT!" : `FAILED ${res.status}`;
+      } catch (e) {
+        logError("SEND LOGS failed:", e.message);
+        saveBtn.textContent = "FAILED";
+      }
+      setTimeout(() => saveBtn.textContent = original, 2500);
     };
     const clearBtn = document.createElement("button");
     clearBtn.textContent = "CLEAR";

@@ -7,6 +7,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const workoutRoutes = require('./routes/workouts');
 const workoutSessionRoutes = require('./routes/workoutSessions');
+const debugLogRoutes = require('./routes/debugLogs');
 
 const app = express();
 
@@ -27,6 +28,7 @@ mongoose.connect(process.env.MONGODB_URI)
 app.use('/api/auth', authRoutes);
 app.use('/api/workouts', workoutRoutes);
 app.use('/api/workout-sessions', workoutSessionRoutes);
+app.use('/api/debug-logs', debugLogRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
