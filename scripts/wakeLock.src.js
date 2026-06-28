@@ -99,6 +99,27 @@ function createLogViewer() {
     });
   };
   
+  const saveBtn = document.createElement('button');
+  saveBtn.textContent = 'SAVE FILE';
+  saveBtn.style.cssText = 'padding: 8px 16px; background: #6f42c1; color: white; border: none; border-radius: 4px;';
+  saveBtn.onclick = () => {
+    // Same download approach the workout export uses (Blob + anchor),
+    // which already works in the running app on web and Android.
+    const text = logHistory.map(l => `[${l.timestamp}] [${l.level.toUpperCase()}] ${l.message}`).join('\n');
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    link.download = `workout-debug-${timestamp}.log`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    saveBtn.textContent = 'SAVED!';
+    setTimeout(() => saveBtn.textContent = 'SAVE FILE', 2000);
+  };
+
   const clearBtn = document.createElement('button');
   clearBtn.textContent = 'CLEAR';
   clearBtn.style.cssText = 'padding: 8px 16px; background: #666; color: white; border: none; border-radius: 4px;';
@@ -129,6 +150,7 @@ function createLogViewer() {
   
   header.appendChild(closeBtn);
   header.appendChild(copyBtn);
+  header.appendChild(saveBtn);
   header.appendChild(clearBtn);
   header.appendChild(testBtn);
   header.appendChild(channelBtn);

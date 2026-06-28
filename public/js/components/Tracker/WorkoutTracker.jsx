@@ -71,6 +71,7 @@ function WorkoutTracker({
   const longPressTimer = useRef(null);
   const longPressStarted = useRef(false);
   const longPressFired = useRef(false);
+  const longPressStartPos = useRef(null);
 
   // Use external darkMode if provided, otherwise use internal state
   const darkMode = propDarkMode !== undefined ? propDarkMode : internalDarkMode;
@@ -276,22 +277,41 @@ function WorkoutTracker({
     }
   };
 
-  const handleSetLongPressStart = (exerciseName) => {
-    console.log('Long press started on:', exerciseName);
+  const handleSetLongPressStart = (exerciseName, event) => {
+    // Record where the press began so we can cancel if the user scrolls/drags.
+    const point = event?.touches?.[0] ?? event;
+    longPressStartPos.current =
+      point && typeof point.clientX === 'number'
+        ? { x: point.clientX, y: point.clientY }
+        : null;
     longPressStarted.current = true;
     longPressFired.current = false;
     longPressTimer.current = setTimeout(() => {
-      console.log('Long press timer fired for:', exerciseName);
       if (longPressStarted.current) {
         longPressFired.current = true;
         setExerciseToCompleteEarly(exerciseName);
         setShowCompleteExerciseDialog(true);
       }
-    }, 700);
+    }, 900);
+  };
+
+  // Cancel a pending long press if the pointer moves beyond a small threshold
+  // (i.e. the user is scrolling, not deliberately holding). Fixes the
+  // "Skip Remaining Sets?" dialog firing accidentally while scrolling.
+  const handleSetLongPressMove = (event) => {
+    if (!longPressStarted.current || longPressFired.current || !longPressStartPos.current) return;
+    const point = event?.touches?.[0] ?? event;
+    if (!point || typeof point.clientX !== 'number') return;
+    const dx = point.clientX - longPressStartPos.current.x;
+    const dy = point.clientY - longPressStartPos.current.y;
+    if (Math.hypot(dx, dy) > 10) {
+      handleSetLongPressEnd();
+    }
   };
 
   const handleSetLongPressEnd = () => {
     longPressStarted.current = false;
+    longPressStartPos.current = null;
     // Only clear the timer if the long press hasn't fired yet
     if (!longPressFired.current && longPressTimer.current) {
       clearTimeout(longPressTimer.current);
@@ -980,7 +1000,7 @@ const confirmUncomplete = () => {
                         </button>
                       </div>
                     )}
-                    {exercisesWithWeightSet.has(exerciseName) && (
+                    {t.length > 0 && t.every((e) => e.completed) && exercisesWithWeightSet.has(exerciseName) && (
                       <div className="flex items-center">
                         <Check className={`w-5 h-5 ${darkMode ? "text-green-400" : "text-green-600"}`} />
                       </div>
@@ -1028,10 +1048,12 @@ const confirmUncomplete = () => {
                     <div
                       key={e.id}
                       ref={(t) => (exerciseRefs.current[e.id] = t)}
-                      onMouseDown={() => handleSetLongPressStart(exerciseName)}
+                      onMouseDown={(ev) => handleSetLongPressStart(exerciseName, ev)}
+                      onMouseMove={handleSetLongPressMove}
                       onMouseUp={handleSetLongPressEnd}
                       onMouseLeave={handleSetLongPressEnd}
-                      onTouchStart={() => handleSetLongPressStart(exerciseName)}
+                      onTouchStart={(ev) => handleSetLongPressStart(exerciseName, ev)}
+                      onTouchMove={handleSetLongPressMove}
                       onTouchEnd={handleSetLongPressEnd}
                       className={`rounded-lg border transition-all ${e.completed ? (darkMode ? "border-green-600 bg-green-900/30" : "border-green-500 bg-green-50") : s ? (darkMode ? "border-gray-600 bg-gray-900 opacity-60" : "border-gray-300 bg-gray-100 opacity-60") : darkMode ? "border-gray-600 bg-gray-700" : "border-gray-300 bg-gray-50"}`}
                     >
@@ -1293,7 +1315,7 @@ const confirmUncomplete = () => {
                       onClick={() => openWeightGroupModal(exerciseName, t)}
                       className={`zz_btn_set_next_weight w-full mt-3 py-3 text-white rounded-lg font-medium transition-colors ${darkMode ? "bg-green-700 hover:bg-green-600" : "bg-green-600 hover:bg-green-700"}`}
                     >
-                      Complete Exercise & Set Next Weight
+                      Set Weight For Next Lift
                     </button>
                   ))}
                   </>
